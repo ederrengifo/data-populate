@@ -299,16 +299,48 @@
             },
             number: {
                 int: function(options) {
-                    var min = (options && options.min) || 1;
-                    var max = (options && options.max) || 1000;
+                    var min = (options && options.min !== undefined) ? options.min : 0;
+                    var max = (options && options.max !== undefined) ? options.max : 100;
                     return Math.floor(Math.random() * (max - min + 1)) + min;
+                },
+                float: function(options) {
+                    var min = (options && options.min !== undefined) ? options.min : 0;
+                    var max = (options && options.max !== undefined) ? options.max : 100;
+                    var fractionDigits = (options && options.fractionDigits !== undefined) ? options.fractionDigits : 2;
+                    var value = Math.random() * (max - min) + min;
+                    return parseFloat(value.toFixed(fractionDigits));
                 }
             },
             date: {
+                anytime: function() {
+                    var now = new Date();
+                    var pastDays = Math.floor(Math.random() * 365 * 2); // Random date within 2 years
+                    return new Date(now.getTime() - (pastDays * 24 * 60 * 60 * 1000));
+                },
                 recent: function() {
                     var now = new Date();
                     var daysAgo = Math.floor(Math.random() * 30);
-                    return new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+                    return new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+                }
+            },
+            phone: {
+                number: function() {
+                    var formats = [
+                        function() { return '+1-' + (Math.floor(Math.random() * 900) + 100) + '-' + (Math.floor(Math.random() * 900) + 100) + '-' + (Math.floor(Math.random() * 9000) + 1000); },
+                        function() { return '(' + (Math.floor(Math.random() * 900) + 100) + ') ' + (Math.floor(Math.random() * 900) + 100) + '-' + (Math.floor(Math.random() * 9000) + 1000); },
+                        function() { return (Math.floor(Math.random() * 900) + 100) + '.' + (Math.floor(Math.random() * 900) + 100) + '.' + (Math.floor(Math.random() * 9000) + 1000); },
+                        function() { return (Math.floor(Math.random() * 900) + 100) + '-' + (Math.floor(Math.random() * 900) + 100) + '-' + (Math.floor(Math.random() * 9000) + 1000); },
+                        function() { return '+44 ' + (Math.floor(Math.random() * 9000) + 1000) + ' ' + (Math.floor(Math.random() * 900000) + 100000); },
+                        function() { return '+33 ' + (Math.floor(Math.random() * 9) + 1) + ' ' + (Math.floor(Math.random() * 90000000) + 10000000); },
+                        function() { return '+49 ' + (Math.floor(Math.random() * 900) + 100) + ' ' + (Math.floor(Math.random() * 9000000) + 1000000); },
+                        function() { return '+61 ' + (Math.floor(Math.random() * 9) + 1) + ' ' + (Math.floor(Math.random() * 90000000) + 10000000); }
+                    ];
+                    return formats[Math.floor(Math.random() * formats.length)]();
+                }
+            },
+            finance: {
+                amount: function() {
+                    return (Math.random() * 999 + 1).toFixed(2);
                 }
             }
         };
@@ -570,7 +602,7 @@ function generateDataWithFaker(dataTypeId, count, fakerLib) {
                 // Fallback to faker
                 var fallback = [];
                 for (var i = 0; i < count; i++) {
-                    fallback.push(fakerLib ? fakerLib.person.fullName() : 'API Error');
+                    fallback.push(window.faker ? window.faker.person.fullName() : 'API Error');
                 }
                 return fallback;
             });
@@ -595,7 +627,7 @@ function generateDataWithFaker(dataTypeId, count, fakerLib) {
                 // Fallback to faker
                 var fallback = [];
                 for (var i = 0; i < count; i++) {
-                    fallback.push(fakerLib ? fakerLib.commerce.productName() : 'API Error');
+                    fallback.push(window.faker ? window.faker.commerce.productName() : 'API Error');
                 }
                 return fallback;
             });
@@ -669,22 +701,22 @@ function generateDataWithFaker(dataTypeId, count, fakerLib) {
     
     // Faker.js generators
     var generators = {
-        name: function() { return fakerLib.person.fullName(); },
-        username: function() { return fakerLib.internet.userName(); },
-        city: function() { return fakerLib.location.city(); },
-        country: function() { return fakerLib.location.country(); },
-        company: function() { return fakerLib.company.name(); },
-        email: function() { return fakerLib.internet.email(); },
-        product_name: function() { return fakerLib.commerce.productName(); },
-        post_title: function() { return fakerLib.lorem.sentence(); },
-        description: function() { return fakerLib.lorem.paragraph(); },
-        lorem: function() { return fakerLib.lorem.words(); },
-        integer: function() { return fakerLib.number.int({ min: 1, max: 1000 }); },
-        decimal: function() { return fakerLib.number.float({ min: 0, max: 100, fractionDigits: 2 }); },
-        currency: function() { return '$' + fakerLib.finance.amount(); },
-        date: function() { return fakerLib.date.anytime().toLocaleDateString(); },
-        phone: function() { return fakerLib.phone.number(); },
-        percentage: function() { return fakerLib.number.int({ min: 0, max: 100 }) + '%'; }
+        name: function() { return window.faker.person.fullName(); },
+        username: function() { return window.faker.internet.userName(); },
+        city: function() { return window.faker.location.city(); },
+        country: function() { return window.faker.location.country(); },
+        company: function() { return window.faker.company.name(); },
+        email: function() { return window.faker.internet.email(); },
+        product_name: function() { return window.faker.commerce.productName(); },
+        post_title: function() { return window.faker.lorem.sentence(); },
+        description: function() { return window.faker.lorem.paragraph(); },
+        lorem: function() { return window.faker.lorem.words(); },
+        integer: function() { return window.faker.number.int({ min: 1, max: 1000 }); },
+        decimal: function() { return window.faker.number.float({ min: 0, max: 100, fractionDigits: 2 }); },
+        currency: function() { return '$' + window.faker.finance.amount(); },
+        date: function() { return window.faker.date.anytime().toLocaleDateString(); },
+        phone: function() { return window.faker.phone.number(); },
+        percentage: function() { return window.faker.number.int({ min: 0, max: 100 }) + '%'; }
     };
     
     var generator = generators[dataTypeId];
