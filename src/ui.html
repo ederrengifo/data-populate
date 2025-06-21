@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f8f9fa;
+            font-size: 13px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1a1a1a;
+        }
+
+        .scan-button, .apply-button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .scan-button {
+            background: #0066ff;
+            color: white;
+        }
+
+        .scan-button:hover {
+            background: #0052cc;
+        }
+
+        .apply-button {
+            background: #00aa00;
+            color: white;
+        }
+
+        .apply-button:hover {
+            background: #008800;
+        }
+
+        .apply-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .mapping-item {
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .mapping-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .layer-name {
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        .layer-count {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .remove-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .data-type-selector {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .category-select, .type-select {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .type-select:disabled {
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        .status-message {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .mappings-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Scan Section -->
+        <div class="section">
+            <div class="section-title">🔍 Scan Layers</div>
+            <button id="scan-button" class="scan-button">
+                <span id="scan-text">Scan for % layers</span>
+                <div id="scan-loading" class="loading-spinner" style="display: none;"></div>
+            </button>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="status-container"></div>
+
+        <!-- Mappings Section -->
+        <div class="section">
+            <div class="section-title">📝 Layer Mappings</div>
+            <div id="mappings-container" class="mappings-container">
+                <div class="empty-state">
+                    Click "Scan for % layers" to find layers that need data
+                </div>
+            </div>
+        </div>
+
+        <!-- Apply Section -->
+        <div class="section">
+            <div class="section-title">✨ Apply Data</div>
+            <button id="apply-button" class="apply-button" disabled>
+                <span id="apply-text">Apply Data to Layers</span>
+                <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Load Faker.js from CDN with fallback -->
+    <script>
+        // Debug script loading
+        console.log('Starting to load Faker.js...');
+        
+        // Try to load Faker.js and add error handling
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@faker-js/faker@8.4.1/dist/faker.min.js';
+        script.onload = function() {
+            console.log('Faker.js script loaded successfully');
+            console.log('window.faker available:', !!window.faker);
+            if (window.faker) {
+                console.log('Faker.js version:', window.faker.version || 'unknown');
+                console.log('Faker.js modules:', Object.keys(window.faker));
+            }
+        };
+        script.onerror = function() {
+            console.error('Failed to load Faker.js from CDN');
+        };
+        document.head.appendChild(script);
+    </script>
+
+    <script>
+// Global variables
+var currentMappings = [];
+var scanButton = document.getElementById('scan-button');
+var scanText = document.getElementById('scan-text');
+var scanLoading = document.getElementById('scan-loading');
+var applyButton = document.getElementById('apply-button');
+var applyText = document.getElementById('apply-text');
+var applyLoading = document.getElementById('apply-loading');
+var mappingsContainer = document.getElementById('mappings-container');
+var statusContainer = document.getElementById('status-container');
+
+// Data type configurations with external APIs
+var dataTypes = {
+    text: [
+        { id: 'name', label: '👤 Full Name', description: 'Random person names (faker.js)' },
+        { id: 'username', label: '🔤 Username', description: 'Random usernames (faker.js)' },
+        { id: 'city', label: '🏙️ City', description: 'Random city names (faker.js)' },
+        { id: 'country', label: '🌍 Country', description: 'Random country names (faker.js)' },
+        { id: 'company', label: '🏢 Company', description: 'Random company names (faker.js)' },
+        { id: 'email', label: '📧 Email', description: 'Random email addresses (faker.js)' },
+        { id: 'product_name', label: '📦 Product Name', description: 'Random product names (faker.js)' },
+        { id: 'post_title', label: '📰 Post Title', description: 'Random article titles (faker.js)' },
+        { id: 'description', label: '📝 Description', description: 'Random paragraphs (faker.js)' },
+        { id: 'lorem', label: '📖 Lorem Ipsum', description: 'Random words (faker.js)' },
+        { id: 'product_api', label: '🛒 Products', description: 'Real products (DummyJSON API)' },
+        { id: 'user_api', label: '👥 User Names', description: 'Real people (RandomUser API)' }
+    ],
+    number: [
+        { id: 'integer', label: '🔢 Random Numbers', description: 'Random integers (faker.js)' },
+        { id: 'decimal', label: '💯 Decimal Numbers', description: 'Random decimals (faker.js)' },
+        { id: 'currency', label: '💰 Currency', description: 'Random prices (faker.js)' },
+        { id: 'date', label: '📅 Random Dates', description: 'Random dates (faker.js)' },
+        { id: 'phone', label: '📞 Phone Numbers', description: 'Random phone numbers (faker.js)' },
+        { id: 'percentage', label: '📊 Percentages', description: 'Random percentages (faker.js)' }
+    ],
+    image: [
+        { id: 'avatar_dicebear', label: '👤 Avatar (DiceBear)', description: 'Cartoon avatars' },
+        { id: 'avatar_randomuser', label: '👥 Real People', description: 'Real person photos (RandomUser API)' },
+        { id: 'image_picsum', label: '🎲 Random Images', description: 'Random photos (Picsum)' },
+        { id: 'image_unsplash', label: '📸 Unsplash Photos', description: 'High-quality photos (Unsplash)' },
+        { id: 'product_image', label: '🛍️ Product Images', description: 'Product photos (DummyJSON API)' }
+    ]
+};
+
+// Event listeners
+scanButton.addEventListener('click', function() {
+    setLoadingState(scanButton, scanText, scanLoading, true);
+    parent.postMessage({ pluginMessage: { type: 'scan-layers' } }, '*');
+});
+
+applyButton.addEventListener('click', function() {
+    if (currentMappings.length === 0) {
+        showStatusMessage('No mappings to apply', 'error');
+        return;
+    }
+    
+    // Collect mappings with selected data types
+    var mappingsToApply = [];
+    for (var i = 0; i < currentMappings.length; i++) {
+        var mapping = currentMappings[i];
+        if (mapping.dataTypeId) {
+            mappingsToApply.push({
+                layerName: mapping.layerName,
+                dataTypeId: mapping.dataTypeId
+            });
+        }
+    }
+    
+    if (mappingsToApply.length === 0) {
+        showStatusMessage('Please select data types for at least one mapping', 'error');
+        return;
+    }
+    
+    setLoadingState(applyButton, applyText, applyLoading, true);
+    parent.postMessage({ 
+        pluginMessage: { 
+            type: 'apply-data', 
+            mappings: mappingsToApply 
+        } 
+    }, '*');
+});
+
+// Utility functions
+function setLoadingState(button, textElement, loadingElement, isLoading) {
+    if (isLoading) {
+        textElement.style.display = 'none';
+        loadingElement.style.display = 'block';
+        button.disabled = true;
+    } else {
+        textElement.style.display = 'block';
+        loadingElement.style.display = 'none';
+        button.disabled = false;
+    }
+}
+
+function showStatusMessage(message, type) {
+    var messageDiv = document.createElement('div');
+    messageDiv.className = 'status-message status-' + (type || 'success');
+    messageDiv.textContent = message;
+    
+    statusContainer.innerHTML = '';
+    statusContainer.appendChild(messageDiv);
+    
+    setTimeout(function() {
+        if (statusContainer.contains(messageDiv)) {
+            statusContainer.removeChild(messageDiv);
+        }
+    }, 5000);
+}
+
+function renderMappings(mappings) {
+    currentMappings = mappings;
+    
+    if (mappings.length === 0) {
+        mappingsContainer.innerHTML = '<div class="empty-state">No layers with % prefixes found</div>';
+        applyButton.disabled = true;
+        return;
+    }
+    
+    var html = '';
+    for (var i = 0; i < mappings.length; i++) {
+        var mapping = mappings[i];
+        html += '<div class="mapping-item">';
+        html += '<div class="mapping-header">';
+        html += '<div>';
+        html += '<div class="layer-name">' + mapping.layerName + '</div>';
+        html += '<div class="layer-count">' + mapping.count + ' layer' + (mapping.count > 1 ? 's' : '') + '</div>';
+        html += '</div>';
+        html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName + '\')">Remove</button>';
+        html += '</div>';
+        html += '<div class="data-type-selector">';
+        
+        // Category selector
+        html += '<select class="category-select" onchange="handleCategoryChange(\'' + mapping.layerName + '\', this.value)">';
+        html += '<option value="">Select Category</option>';
+        html += '<option value="text">📝 Text</option>';
+        html += '<option value="number">🔢 Numbers</option>';
+        html += '<option value="image">🖼️ Images</option>';
+        html += '</select>';
+        
+        // Type selector
+        html += '<select class="type-select" disabled onchange="handleTypeChange(\'' + mapping.layerName + '\', this.value)">';
+        html += '<option value="">Select Type</option>';
+        html += '</select>';
+        
+        html += '</div>';
+        html += '</div>';
+    }
+    
+    mappingsContainer.innerHTML = html;
+    applyButton.disabled = false;
+}
+
+function handleRemoveMapping(layerName) {
+    parent.postMessage({ 
+        pluginMessage: { 
+            type: 'remove-mapping', 
+            layerName: layerName 
+        } 
+    }, '*');
+}
+
+function handleCategoryChange(layerName, category) {
+    var mappingItem = document.querySelector('[data-layer="' + layerName + '"]');
+    if (!mappingItem) {
+        // Find by layer name in the DOM
+        var mappingItems = document.querySelectorAll('.mapping-item');
+        for (var i = 0; i < mappingItems.length; i++) {
+            var item = mappingItems[i];
+            var nameElement = item.querySelector('.layer-name');
+            if (nameElement && nameElement.textContent === layerName) {
+                mappingItem = item;
+                break;
+            }
+        }
+    }
+    
+    if (!mappingItem) return;
+    
+    var typeSelect = mappingItem.querySelector('.type-select');
+    
+    // Clear and populate type select
+    typeSelect.innerHTML = '<option value="">Select Type</option>';
+    
+    if (category && dataTypes[category]) {
+        typeSelect.disabled = false;
+        var types = dataTypes[category];
+        for (var i = 0; i < types.length; i++) {
+            var type = types[i];
+            var option = document.createElement('option');
+            option.value = type.id;
+            option.textContent = type.label;
+            typeSelect.appendChild(option);
+        }
+    } else {
+        typeSelect.disabled = true;
+    }
+    
+    // Update mapping
+    for (var i = 0; i < currentMappings.length; i++) {
+        if (currentMappings[i].layerName === layerName) {
+            currentMappings[i].dataTypeId = null;
+            break;
+        }
+    }
+}
+
+function handleTypeChange(layerName, dataTypeId) {
+    for (var i = 0; i < currentMappings.length; i++) {
+        if (currentMappings[i].layerName === layerName) {
+            currentMappings[i].dataTypeId = dataTypeId;
+            break;
+        }
+    }
+}
+
+// Data generation using faker.js and external APIs
+function generateData(dataTypeId, count) {
+    var results = [];
+    
+    // Check if faker is available with detailed logging
+    var fakerLib = window.faker;
+    console.log('Checking Faker.js availability...');
+    console.log('window.faker exists:', !!fakerLib);
+    
+    if (fakerLib) {
+        console.log('Faker.js modules available:', Object.keys(fakerLib));
+        console.log('faker.person exists:', !!fakerLib.person);
+        console.log('faker.location exists:', !!fakerLib.location);
+        console.log('faker.lorem exists:', !!fakerLib.lorem);
+    }
+    
+    var hasFaker = fakerLib && fakerLib.person && fakerLib.location && fakerLib.lorem;
+    console.log('Final Faker.js status:', hasFaker ? 'fully loaded' : 'not available or incomplete');
+    
+    // External API generators
+    if (dataTypeId === 'user_api') {
+        return fetch('https://randomuser.me/api/?results=' + count)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                return data.results.map(function(user) {
+                    return user.name.first + ' ' + user.name.last;
+                });
+            })
+            .catch(function(error) {
+                console.error('RandomUser API failed:', error);
+                // Fallback to faker
+                var fallback = [];
+                for (var i = 0; i < count; i++) {
+                    fallback.push(fakerLib ? fakerLib.person.fullName() : 'API Error');
+                }
+                return fallback;
+            });
+    }
+    
+    if (dataTypeId === 'product_api') {
+        return fetch('https://dummyjson.com/products?limit=' + Math.min(count, 100))
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                var products = data.products.map(function(product) {
+                    return product.title;
+                });
+                // Repeat if we need more than available
+                var result = [];
+                for (var i = 0; i < count; i++) {
+                    result.push(products[i % products.length]);
+                }
+                return result;
+            })
+            .catch(function(error) {
+                console.error('DummyJSON API failed:', error);
+                // Fallback to faker
+                var fallback = [];
+                for (var i = 0; i < count; i++) {
+                    fallback.push(fakerLib ? fakerLib.commerce.productName() : 'API Error');
+                }
+                return fallback;
+            });
+    }
+    
+    if (dataTypeId === 'avatar_randomuser') {
+        return fetch('https://randomuser.me/api/?results=' + count)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                return data.results.map(function(user) {
+                    return user.picture.large;
+                });
+            })
+            .catch(function(error) {
+                console.error('RandomUser API failed:', error);
+                // Fallback to DiceBear
+                var fallback = [];
+                for (var i = 0; i < count; i++) {
+                    fallback.push('https://api.dicebear.com/7.x/avataaars/svg?seed=' + Math.random().toString(36).substring(7));
+                }
+                return fallback;
+            });
+    }
+    
+    if (dataTypeId === 'product_image') {
+        return fetch('https://dummyjson.com/products?limit=' + Math.min(count, 100))
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                var images = data.products.map(function(product) {
+                    return product.thumbnail;
+                });
+                // Repeat if we need more than available
+                var result = [];
+                for (var i = 0; i < count; i++) {
+                    result.push(images[i % images.length]);
+                }
+                return result;
+            })
+            .catch(function(error) {
+                console.error('DummyJSON API failed:', error);
+                // Fallback to Picsum
+                var fallback = [];
+                for (var i = 0; i < count; i++) {
+                    fallback.push('https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000));
+                }
+                return fallback;
+            });
+    }
+    
+    // Static URL generators (no API calls needed)
+    var staticGenerators = {
+        avatar_dicebear: function() {
+            return 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + Math.random().toString(36).substring(7);
+        },
+        image_picsum: function() {
+            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000);
+        },
+        image_unsplash: function() {
+            var topics = ['nature', 'city', 'technology', 'business', 'abstract'];
+            var topic = topics[Math.floor(Math.random() * topics.length)];
+            return 'https://source.unsplash.com/400x300/?' + topic;
+        }
+    };
+    
+    if (staticGenerators[dataTypeId]) {
+        for (var i = 0; i < count; i++) {
+            results.push(staticGenerators[dataTypeId]());
+        }
+        return Promise.resolve(results);
+    }
+    
+    // Faker.js generators
+    if (hasFaker) {
+        console.log('Using Faker.js for data type:', dataTypeId);
+        var generators = {
+            name: function() { return fakerLib.person.fullName(); },
+            username: function() { return fakerLib.internet.userName(); },
+            city: function() { return fakerLib.location.city(); },
+            country: function() { return fakerLib.location.country(); },
+            company: function() { return fakerLib.company.name(); },
+            email: function() { return fakerLib.internet.email(); },
+            product_name: function() { return fakerLib.commerce.productName(); },
+            post_title: function() { return fakerLib.lorem.sentence(); },
+            description: function() { return fakerLib.lorem.paragraph(); },
+            lorem: function() { return fakerLib.lorem.words(); },
+            integer: function() { return fakerLib.number.int({ min: 1, max: 1000 }); },
+            decimal: function() { return fakerLib.number.float({ min: 0, max: 100, fractionDigits: 2 }); },
+            currency: function() { return '$' + fakerLib.finance.amount(); },
+            date: function() { return fakerLib.date.anytime().toLocaleDateString(); },
+            phone: function() { return fakerLib.phone.number(); },
+            percentage: function() { return fakerLib.number.int({ min: 0, max: 100 }) + '%'; }
+        };
+        
+        var generator = generators[dataTypeId];
+        if (generator) {
+            try {
+                for (var i = 0; i < count; i++) {
+                    results.push(String(generator()));
+                }
+                console.log('Successfully generated', results.length, 'items using Faker.js');
+                return Promise.resolve(results);
+            } catch (error) {
+                console.error('Error generating data with Faker.js:', error);
+            }
+        }
+    }
+    
+    // If we get here, either Faker.js isn't available or the data type isn't supported
+    console.warn('Faker.js not available or data type not supported:', dataTypeId);
+    for (var i = 0; i < count; i++) {
+        results.push('Faker.js unavailable - try refreshing plugin');
+    }
+    return Promise.resolve(results);
+}
+
+// Load image data using fetch
+function loadImageData(imageUrl) {
+    return fetch(imageUrl)
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Failed to fetch image');
+            }
+            return response.arrayBuffer();
+        })
+        .then(function(arrayBuffer) {
+            return new Uint8Array(arrayBuffer);
+        })
+        .catch(function(error) {
+            console.error('Failed to load image:', error);
+            return null;
+        });
+}
+
+// Listen for messages from the main plugin code
+window.addEventListener('message', function(event) {
+    var msg = event.data.pluginMessage;
+    if (!msg) return;
+    
+    if (msg.type === 'layers-scanned') {
+        setLoadingState(scanButton, scanText, scanLoading, false);
+        renderMappings(msg.data.mappings);
+        if (msg.data.mappings.length > 0) {
+            showStatusMessage('Found ' + msg.data.mappings.length + ' layer mapping' + (msg.data.mappings.length > 1 ? 's' : ''));
+        } else {
+            showStatusMessage('No layers with % prefixes found in selection', 'error');
+        }
+    } else if (msg.type === 'mapping-removed') {
+        currentMappings = currentMappings.filter(function(m) { return m.layerName !== msg.data.layerName; });
+        renderMappings(currentMappings);
+        showStatusMessage('Mapping removed');
+    } else if (msg.type === 'data-applied') {
+        setLoadingState(applyButton, applyText, applyLoading, false);
+        showStatusMessage(msg.message);
+    } else if (msg.type === 'error') {
+        setLoadingState(scanButton, scanText, scanLoading, false);
+        setLoadingState(applyButton, applyText, applyLoading, false);
+        showStatusMessage(msg.message, 'error');
+    } else if (msg.type === 'generate-data') {
+        // Generate data and send back to main code
+        generateData(msg.dataTypeId, msg.count)
+            .then(function(data) {
+                parent.postMessage({
+                    pluginMessage: {
+                        type: 'data-generated',
+                        requestId: msg.requestId,
+                        data: data
+                    }
+                }, '*');
+            })
+            .catch(function(error) {
+                console.error('Data generation failed:', error);
+                parent.postMessage({
+                    pluginMessage: {
+                        type: 'data-generated',
+                        requestId: msg.requestId,
+                        data: Array(msg.count).fill('Generation failed')
+                    }
+                }, '*');
+            });
+    } else if (msg.type === 'load-image') {
+        // Load image and send back to main code
+        loadImageData(msg.url)
+            .then(function(imageData) {
+                parent.postMessage({
+                    pluginMessage: {
+                        type: 'image-loaded',
+                        requestId: msg.requestId,
+                        data: imageData
+                    }
+                }, '*');
+            })
+            .catch(function(error) {
+                console.error('Image loading failed:', error);
+                parent.postMessage({
+                    pluginMessage: {
+                        type: 'image-loaded',
+                        requestId: msg.requestId,
+                        data: null
+                    }
+                }, '*');
+            });
+    }
+});
+    </script>
+</body>
+</html> 
