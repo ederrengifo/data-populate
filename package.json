@@ -4,19 +4,27 @@
   "description": "Figma plugin to populate layers with data based on % prefixes",
   "main": "code.js",
   "scripts": {
-    "build": "tsc && npm run copy-files",
-    "dev": "npm run build && npm run watch",
-    "watch": "tsc --watch & node watch.js",
-    "copy-files": "cp src/ui.html dist/ && cp src/ui.js dist/"
+    "build": "webpack --mode=production && npm run copy-files",
+    "dev": "webpack --mode=development && npm run copy-files",
+    "watch": "webpack --mode=development --watch",
+    "copy-files": "cp src/ui.html dist/"
   },
   "dependencies": {
     "@faker-js/faker": "^8.3.1"
   },
   "devDependencies": {
     "@figma/plugin-typings": "^1.88.0",
-    "typescript": "^5.3.3"
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.3.3",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
   },
-  "keywords": ["figma", "plugin", "data", "populate"],
+  "keywords": [
+    "figma",
+    "plugin",
+    "data",
+    "populate"
+  ],
   "author": "",
   "license": "MIT"
-} 
+}
