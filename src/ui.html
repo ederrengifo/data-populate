@@ -393,18 +393,22 @@ var dataTypes = {
         { id: 'percentage', label: '📊 Percentages', description: 'Random percentages (faker.js)' }
     ],
     image: [
-        { id: 'avatar_dicebear', label: '👤 Avatar (DiceBear)', description: 'Cartoon avatars' },
-        { id: 'avatar_randomuser', label: '👥 Real People', description: 'Real person photos (RandomUser API)' },
-        { id: 'image_picsum', label: '🎲 Random Images', description: 'Random photos (Picsum)' },
-        { id: 'image_unsplash', label: '📸 Unsplash Photos', description: 'High-quality photos (Lorem Picsum)' },
+        { id: 'avatar_dicebear', label: '👤 Avatar (DiceBear)', description: 'Cartoon avatars - reliable ✅' },
+        { id: 'avatar_randomuser', label: '👥 Real People Photos', description: 'Actual photos with CORS proxy 🔧' },
+        { id: 'avatar_randomuser_male', label: '👨 Male Photos', description: 'Real male photos (RandomUser + CORS proxy)' },
+        { id: 'avatar_randomuser_female', label: '👩 Female Photos', description: 'Real female photos (RandomUser + CORS proxy)' },
+        { id: 'avatar_pravatar', label: '👤 Profile Avatars', description: 'Real profile photos (Pravatar + CORS proxy)' },
+        { id: 'avatar_multiavatar', label: '🎨 Multiavatar', description: 'Unique generated avatars (CORS proxy)' },
+        { id: 'avatar_robohash', label: '🤖 Robot Avatars', description: 'Fun robot/monster avatars (CORS proxy)' },
+        { id: 'image_picsum', label: '🎲 Random Images', description: 'Random photos (Picsum) - reliable ✅' },
         { id: 'product_image', label: '🛍️ Product Images', description: 'Product photos (DummyJSON API)' },
-        // Enhanced Unsplash categories
-        { id: 'unsplash_nature', label: '🌿 Nature Photos', description: 'Nature & landscape photos' },
-        { id: 'unsplash_people', label: '👥 People Photos', description: 'Portrait & people photos' },
-        { id: 'unsplash_business', label: '💼 Business Photos', description: 'Business & office photos' },
-        { id: 'unsplash_food', label: '🍽️ Food Photos', description: 'Food & culinary photos' },
-        { id: 'unsplash_travel', label: '✈️ Travel Photos', description: 'Travel & destination photos' },
-        { id: 'unsplash_tech', label: '💻 Tech Photos', description: 'Technology & computer photos' }
+        // Enhanced Unsplash categories using Picsum
+        { id: 'unsplash_nature', label: '🌿 Nature Photos', description: 'Random nature photos' },
+        { id: 'unsplash_people', label: '👥 People Photos', description: 'Random portrait photos' },
+        { id: 'unsplash_business', label: '💼 Business Photos', description: 'Random business photos' },
+        { id: 'unsplash_food', label: '🍽️ Food Photos', description: 'Random food photos' },
+        { id: 'unsplash_travel', label: '✈️ Travel Photos', description: 'Random travel photos' },
+        { id: 'unsplash_tech', label: '💻 Tech Photos', description: 'Random tech photos' }
     ]
 };
 
@@ -641,23 +645,137 @@ function generateDataWithFaker(dataTypeId, count, fakerLib) {
     }
     
     if (dataTypeId === 'avatar_randomuser') {
-        return fetch('https://randomuser.me/api/?results=' + count)
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                return data.results.map(function(user) {
-                    return user.picture.large;
-                });
-            })
-            .catch(function(error) {
-                console.error('RandomUser API failed:', error);
-                // Fallback to DiceBear
-                var fallback = [];
-                for (var i = 0; i < count; i++) {
-                    fallback.push('https://api.dicebear.com/7.x/avataaars/svg?seed=' + Math.random().toString(36).substring(7));
-                }
-                return fallback;
-            });
+        // Mixed gender real people photos
+        console.log('👥 Fetching mixed gender real people photos');
+        return fetchRandomUserPhotos(count);
     }
+    
+    if (dataTypeId === 'avatar_randomuser_male') {
+        // Male-only real people photos
+        console.log('👨 Fetching male real people photos');
+        return fetchRandomUserPhotos(count, 'male');
+    }
+    
+    if (dataTypeId === 'avatar_randomuser_female') {
+        // Female-only real people photos
+        console.log('👩 Fetching female real people photos');
+        return fetchRandomUserPhotos(count, 'female');
+    }
+    
+    if (dataTypeId === 'avatar_pravatar') {
+        // Pravatar real profile photos
+        console.log('👤 Fetching Pravatar profile photos');
+        return fetchPravatarPhotos(count);
+    }
+    
+    if (dataTypeId === 'avatar_multiavatar') {
+        // Multiavatar unique generated avatars
+        console.log('🎨 Generating Multiavatar unique avatars');
+        return fetchMultiavatarPhotos(count);
+    }
+    
+    if (dataTypeId === 'avatar_robohash') {
+        // RoboHash robot/monster avatars
+        console.log('🤖 Generating RoboHash robot avatars');
+        return fetchRobohashPhotos(count);
+    }
+    
+         // Helper function to generate DiceBear avatars
+     function generateDiceBearAvatars(count) {
+         var results = [];
+         var styles = ['avataaars', 'big-smile', 'fun-emoji', 'personas'];
+         for (var i = 0; i < count; i++) {
+             var style = styles[Math.floor(Math.random() * styles.length)];
+             var seed = Math.random().toString(36).substring(7);
+             results.push('https://api.dicebear.com/7.x/' + style + '/png?seed=' + seed + '&backgroundColor=transparent&size=200');
+         }
+         console.log('✅ Generated', results.length, 'DiceBear avatars as fallback');
+         return results;
+     }
+     
+     // RandomUser.me photos with gender selection and CORS proxy
+     function fetchRandomUserPhotos(count, gender) {
+         return new Promise(function(resolve) {
+             var genderParam = gender ? '&gender=' + gender : '';
+             var apiUrl = 'https://randomuser.me/api/?results=' + count + '&inc=picture' + genderParam;
+             
+             console.log('🔄 Trying RandomUser.me directly...');
+             fetch(apiUrl)
+                 .then(function(response) {
+                     if (!response.ok) throw new Error('RandomUser direct failed');
+                     return response.json();
+                 })
+                 .then(function(data) {
+                     var results = data.results.map(function(user) {
+                         return user.picture.large;
+                     });
+                     console.log('✅ RandomUser.me direct SUCCESS!');
+                     resolve(results);
+                 })
+                 .catch(function(error) {
+                     console.log('❌ Direct failed, trying CORS proxy...');
+                     fetch('https://corsproxy.io/?' + encodeURIComponent(apiUrl))
+                         .then(function(response) {
+                             if (!response.ok) throw new Error('CORS proxy failed');
+                             return response.json();
+                         })
+                         .then(function(data) {
+                             var results = data.results.map(function(user) {
+                                 return user.picture.large;
+                             });
+                             console.log('✅ RandomUser.me CORS proxy SUCCESS!');
+                             resolve(results);
+                         })
+                         .catch(function(proxyError) {
+                             console.log('❌ All RandomUser methods failed, using DiceBear fallback');
+                             resolve(generateDiceBearAvatars(count));
+                         });
+                 });
+         });
+     }
+     
+     // Pravatar real profile photos with CORS proxy
+     function fetchPravatarPhotos(count) {
+         return new Promise(function(resolve) {
+             var results = [];
+             for (var i = 0; i < count; i++) {
+                 var userId = Math.floor(Math.random() * 70) + 1; // They have about 70 users
+                 results.push('https://i.pravatar.cc/200?img=' + userId);
+             }
+             console.log('✅ Generated', results.length, 'Pravatar URLs (will use CORS proxy if needed)');
+             resolve(results);
+         });
+     }
+     
+     // Multiavatar unique generated avatars with CORS proxy
+     function fetchMultiavatarPhotos(count) {
+         return new Promise(function(resolve) {
+             var results = [];
+             for (var i = 0; i < count; i++) {
+                 var seed = Math.random().toString(36).substring(7);
+                 results.push('https://api.multiavatar.com/' + seed + '.png');
+             }
+             console.log('✅ Generated', results.length, 'Multiavatar URLs (will use CORS proxy if needed)');
+             resolve(results);
+         });
+     }
+     
+     // RoboHash robot/monster avatars with CORS proxy
+     function fetchRobohashPhotos(count) {
+         return new Promise(function(resolve) {
+             var results = [];
+             for (var i = 0; i < count; i++) {
+                 var seed = Math.random().toString(36).substring(7);
+                 var sets = ['set1', 'set2', 'set3', 'set4']; // robots, monsters, heads, cats
+                 var randomSet = sets[Math.floor(Math.random() * sets.length)];
+                 results.push('https://robohash.org/' + seed + '.png?size=200x200&set=' + randomSet);
+             }
+             console.log('✅ Generated', results.length, 'RoboHash URLs (will use CORS proxy if needed)');
+             resolve(results);
+         });
+     }
+    
+
     
     if (dataTypeId === 'product_image') {
         return fetch('https://dummyjson.com/products?limit=' + Math.min(count, 100))
@@ -684,10 +802,13 @@ function generateDataWithFaker(dataTypeId, count, fakerLib) {
             });
     }
     
+
+    
     // Static URL generators (no API calls needed)
     var staticGenerators = {
         avatar_dicebear: function() {
-            return 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + Math.random().toString(36).substring(7);
+            // Use PNG format instead of SVG because Figma doesn't support SVG in createImage()
+            return 'https://api.dicebear.com/7.x/avataaars/png?seed=' + Math.random().toString(36).substring(7) + '&size=200&backgroundColor=transparent';
         },
         image_picsum: function() {
             return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000);
@@ -831,22 +952,95 @@ function generateDataFallback(dataTypeId, count) {
     return results;
 }
 
-// Load image data using fetch
+// Load image data using fetch with CORS workarounds
 function loadImageData(imageUrl) {
-    return fetch(imageUrl)
-        .then(function(response) {
-            if (!response.ok) {
-                throw new Error('Failed to fetch image');
-            }
-            return response.arrayBuffer();
-        })
-        .then(function(arrayBuffer) {
-            return new Uint8Array(arrayBuffer);
-        })
-        .catch(function(error) {
-            console.error('Failed to load image:', error);
-            return null;
-        });
+    console.log('🔄 Loading image from URL:', imageUrl);
+    
+    return tryImageWithCorsWorkarounds(imageUrl);
+}
+
+// Try multiple methods to load images with CORS workarounds
+function tryImageWithCorsWorkarounds(imageUrl) {
+    return new Promise(function(resolve) {
+        // Method 1: Direct fetch
+        console.log('🔄 Image Method 1: Direct fetch...');
+        fetch(imageUrl)
+            .then(function(response) {
+                if (!response.ok) throw new Error('Direct fetch failed: ' + response.status);
+                return response.arrayBuffer();
+            })
+            .then(function(arrayBuffer) {
+                console.log('✅ Image Method 1 SUCCESS: Direct fetch worked!');
+                resolve(new Uint8Array(arrayBuffer));
+            })
+            .catch(function(error) {
+                console.log('❌ Image Method 1 failed:', error.message);
+                
+                // Method 2: Try with no-cors mode (for some services)
+                console.log('🔄 Image Method 2: Trying no-cors mode...');
+                fetch(imageUrl, { mode: 'no-cors' })
+                    .then(function(response) {
+                        // no-cors mode returns opaque response, we can't read the body
+                        // but we can at least check if the request succeeded
+                        if (response.type === 'opaque') {
+                            // For no-cors, we can't get the actual image data
+                            // So we'll try a CORS proxy instead
+                            throw new Error('No-cors mode returned opaque response');
+                        }
+                        return response.arrayBuffer();
+                    })
+                    .then(function(arrayBuffer) {
+                        console.log('✅ Image Method 2 SUCCESS: No-cors mode worked!');
+                        resolve(new Uint8Array(arrayBuffer));
+                    })
+                    .catch(function(noCorsError) {
+                        console.log('❌ Image Method 2 failed:', noCorsError.message);
+                        
+                        // Method 3: Try with CORS proxy
+                        console.log('🔄 Image Method 3: Trying CORS proxy...');
+                        var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(imageUrl);
+                        fetch(proxyUrl)
+                            .then(function(response) {
+                                if (!response.ok) throw new Error('CORS proxy failed: ' + response.status);
+                                return response.arrayBuffer();
+                            })
+                            .then(function(arrayBuffer) {
+                                console.log('✅ Image Method 3 SUCCESS: CORS proxy worked!');
+                                resolve(new Uint8Array(arrayBuffer));
+                            })
+                            .catch(function(proxyError) {
+                                console.log('❌ Image Method 3 failed:', proxyError.message);
+                                
+                                // Method 4: Generate a fallback based on the original URL type
+                                console.log('🔄 Image Method 4: Generating fallback...');
+                                var fallbackUrl;
+                                
+                                                                 if (imageUrl.includes('randomuser.me') || imageUrl.includes('ui-avatars.com') || imageUrl.includes('pravatar.cc') || imageUrl.includes('multiavatar.com') || imageUrl.includes('robohash.org')) {
+                                     // Avatar fallback
+                                     fallbackUrl = 'https://api.dicebear.com/7.x/avataaars/png?seed=' + Math.random().toString(36).substring(7) + '&size=200&backgroundColor=transparent';
+                                 } else {
+                                     // General image fallback
+                                     fallbackUrl = 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000);
+                                 }
+                                
+                                fetch(fallbackUrl)
+                                    .then(function(response) {
+                                        if (!response.ok) throw new Error('Fallback failed');
+                                        return response.arrayBuffer();
+                                    })
+                                    .then(function(arrayBuffer) {
+                                        console.log('✅ Image Method 4 SUCCESS: Fallback image loaded!');
+                                        resolve(new Uint8Array(arrayBuffer));
+                                    })
+                                    .catch(function(fallbackError) {
+                                        console.log('❌ Image Method 4 failed:', fallbackError.message);
+                                        console.error('❌ All image loading methods failed for:', imageUrl);
+                                        resolve(null);
+                                    });
+                            });
+                    });
+            });
+    });
 }
 
 // Listen for messages from the main plugin code
@@ -897,8 +1091,10 @@ window.addEventListener('message', function(event) {
             });
     } else if (msg.type === 'load-image') {
         // Load image and send back to main code
+        console.log('📨 Received image load request:', msg.requestId, msg.url);
         loadImageData(msg.url)
             .then(function(imageData) {
+                console.log('📤 Sending image data response:', msg.requestId, imageData ? 'Success' : 'Failed');
                 parent.postMessage({
                     pluginMessage: {
                         type: 'image-loaded',
@@ -908,7 +1104,7 @@ window.addEventListener('message', function(event) {
                 }, '*');
             })
             .catch(function(error) {
-                console.error('Image loading failed:', error);
+                console.error('❌ Image loading failed:', error);
                 parent.postMessage({
                     pluginMessage: {
                         type: 'image-loaded',

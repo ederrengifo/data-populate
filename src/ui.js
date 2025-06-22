@@ -260,7 +260,7 @@ async function generateData(dataTypeId, count) {
         percentage: () => `${Math.floor(Math.random() * 100)}%`,
         
         // Image types
-        avatar: () => `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random().toString(36).substring(7)}`,
+        avatar: () => `https://api.dicebear.com/7.x/avataaars/png?seed=${Math.random().toString(36).substring(7)}&size=200&backgroundColor=transparent`,
         random_image: () => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
         product_image: () => `https://source.unsplash.com/400x300/?product,technology`,
         
@@ -283,7 +283,7 @@ async function generateData(dataTypeId, count) {
             }
             return results;
         } catch (error) {
-            return Array(count).fill('https://api.dicebear.com/7.x/avataaars/svg?seed=fallback');
+            return Array(count).fill('https://api.dicebear.com/7.x/avataaars/png?seed=fallback&size=200&backgroundColor=transparent');
         }
     }
     

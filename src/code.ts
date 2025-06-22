@@ -227,25 +227,41 @@ async function applyValueToLayer(layer: SceneNode, value: string, dataTypeId: st
     // Handle image layers - check for layers that can have fills
     const canHaveFills = layer.type === 'RECTANGLE' || layer.type === 'ELLIPSE' || layer.type === 'POLYGON' || layer.type === 'STAR' || layer.type === 'VECTOR';
     
-    if (canHaveFills && (dataTypeId.includes('image') || dataTypeId.includes('avatar') || dataTypeId.includes('unsplash'))) {
+    // Improved image type detection - include more specific avatar types
+    const isImageType = dataTypeId.includes('image') || 
+                       dataTypeId.includes('avatar') || 
+                       dataTypeId.includes('unsplash') ||
+                       dataTypeId === 'avatar_randomuser' ||
+                       dataTypeId === 'avatar_pravatar' ||
+                       dataTypeId === 'avatar_multiavatar' ||
+                       dataTypeId === 'avatar_robohash' ||
+                       dataTypeId === 'avatar_dicebear' ||
+                       dataTypeId === 'product_image';
+    
+    if (canHaveFills && isImageType) {
+      console.log(`🖼️ Attempting to load image for ${dataTypeId}: ${value}`);
+      
       // For images, we need to load the image data
       const imageData = await loadImageFromURL(value);
       if (imageData) {
+        console.log(`✅ Successfully loaded image data, applying to layer`);
         const imageFill: ImagePaint = {
           type: 'IMAGE',
           scaleMode: 'FILL',
           imageHash: figma.createImage(imageData).hash
         };
         (layer as any).fills = [imageFill];
+        console.log(`✅ Image applied successfully to layer`);
       } else {
+        console.warn(`❌ Failed to load image data, falling back to layer name`);
         // If image loading failed, set layer name instead
-        layer.name = `Image: ${value}`;
+        layer.name = `Image failed: ${value}`;
       }
       return;
     }
     
     // For text data types on non-text layers, or as fallback
-    if (!dataTypeId.includes('image') && !dataTypeId.includes('avatar') && !dataTypeId.includes('unsplash')) {
+    if (!isImageType) {
       // Try to find child text layers
       if ('children' in layer) {
         for (const child of (layer as any).children) {
@@ -262,6 +278,7 @@ async function applyValueToLayer(layer: SceneNode, value: string, dataTypeId: st
     layer.name = value;
     
   } catch (error) {
+    console.error('Error in applyValueToLayer:', error);
     // Skip errors when applying values to layers, but try to set name as fallback
     try {
       layer.name = `${dataTypeId}: ${value}`;
@@ -275,10 +292,26 @@ async function applyValueToLayer(layer: SceneNode, value: string, dataTypeId: st
 async function loadImageFromURL(url: string): Promise<Uint8Array | null> {
   return new Promise((resolve) => {
     const requestId = Math.random().toString(36).substring(7);
+    console.log(`🔄 Requesting image load for: ${url} (requestId: ${requestId})`);
+    
+    // Set up timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      console.warn(`⏰ Image load timeout for: ${url}`);
+      figma.ui.off('message', messageHandler);
+      resolve(null);
+    }, 10000); // 10 second timeout
     
     const messageHandler = (msg: any) => {
       if (msg.type === 'image-loaded' && msg.requestId === requestId) {
+        clearTimeout(timeout);
         figma.ui.off('message', messageHandler);
+        
+        if (msg.data) {
+          console.log(`✅ Image loaded successfully: ${url}`);
+        } else {
+          console.warn(`❌ Image loading failed: ${url}`);
+        }
+        
         resolve(msg.data);
       }
     };

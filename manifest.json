@@ -13,6 +13,12 @@
     "allowedDomains": [
       "https://api.dicebear.com",
       "https://randomuser.me",
+      "https://corsproxy.io",
+      "https://i.pravatar.cc",
+      "https://api.multiavatar.com",
+      "https://robohash.org",
+      "https://jsonplaceholder.typicode.com",
+      "https://ui-avatars.com",
       "https://picsum.photos",
       "https://fastly.picsum.photos",
       "https://source.unsplash.com",
@@ -21,6 +27,6 @@
       "https://fakestoreapi.com",
       "https://cdn.jsdelivr.net"
     ],
-    "reasoning": "This plugin generates realistic data by fetching from various APIs: DiceBear for avatars, RandomUser for user data, Picsum/Unsplash for images (both Source API and official API), DummyJSON/FakeStore for product data, and JSDelivr CDN for the Faker.js library."
+    "reasoning": "This plugin generates realistic data by fetching from various APIs: DiceBear for cartoon avatars, RandomUser for real people photos with gender selection, Pravatar for profile photos, Multiavatar for unique avatars, RoboHash for robot avatars, all with CORS proxy support via corsproxy.io, plus Picsum/Unsplash for images, DummyJSON/FakeStore for product data, and JSDelivr CDN for the Faker.js library."
   }
 } 

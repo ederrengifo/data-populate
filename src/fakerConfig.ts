@@ -115,7 +115,7 @@ export const dataTypes: DataType[] = [
     id: 'avatar',
     name: 'Avatars',
     category: 'image',
-    generator: () => `https://api.dicebear.com/7.x/avataaars/svg?seed=${faker.string.uuid()}`
+    generator: () => `https://api.dicebear.com/7.x/avataaars/png?seed=${faker.string.uuid()}&size=200&backgroundColor=transparent`
   },
   {
     id: 'random_image',
