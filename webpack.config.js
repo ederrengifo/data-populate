@@ -7,8 +7,7 @@ module.exports = (env, argv) => ({
     devtool: argv.mode === 'production' ? false : 'inline-source-map',
     
     entry: {
-        code: './src/code.ts', // Main plugin code
-        ui: './src/ui-bundle.ts' // UI bundle that includes Faker.js
+        code: './src/code.ts' // Main plugin code
     },
     
     module: {
