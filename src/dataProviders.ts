@@ -30,6 +30,21 @@ export const externalProviders: ExternalDataProvider[] = [
     category: 'image',
     endpoint: 'https://dummyjson.com/products',
     transformer: (response) => response.products[Math.floor(Math.random() * response.products.length)].thumbnail
+  },
+  // Unsplash API providers (requires API key in production)
+  {
+    id: 'unsplash_random',
+    name: 'Unsplash Random',
+    category: 'image',
+    endpoint: 'https://api.unsplash.com/photos/random?client_id=YOUR_ACCESS_KEY',
+    transformer: (response) => response.urls.regular
+  },
+  {
+    id: 'unsplash_search_nature',
+    name: 'Unsplash Nature',
+    category: 'image',
+    endpoint: 'https://api.unsplash.com/search/photos?query=nature&client_id=YOUR_ACCESS_KEY',
+    transformer: (response) => response.results[Math.floor(Math.random() * response.results.length)]?.urls.regular
   }
 ];
 

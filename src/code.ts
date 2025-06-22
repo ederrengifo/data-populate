@@ -227,7 +227,7 @@ async function applyValueToLayer(layer: SceneNode, value: string, dataTypeId: st
     // Handle image layers - check for layers that can have fills
     const canHaveFills = layer.type === 'RECTANGLE' || layer.type === 'ELLIPSE' || layer.type === 'POLYGON' || layer.type === 'STAR' || layer.type === 'VECTOR';
     
-    if (canHaveFills && (dataTypeId.includes('image') || dataTypeId.includes('avatar'))) {
+    if (canHaveFills && (dataTypeId.includes('image') || dataTypeId.includes('avatar') || dataTypeId.includes('unsplash'))) {
       // For images, we need to load the image data
       const imageData = await loadImageFromURL(value);
       if (imageData) {
@@ -245,7 +245,7 @@ async function applyValueToLayer(layer: SceneNode, value: string, dataTypeId: st
     }
     
     // For text data types on non-text layers, or as fallback
-    if (!dataTypeId.includes('image') && !dataTypeId.includes('avatar')) {
+    if (!dataTypeId.includes('image') && !dataTypeId.includes('avatar') && !dataTypeId.includes('unsplash')) {
       // Try to find child text layers
       if ('children' in layer) {
         for (const child of (layer as any).children) {

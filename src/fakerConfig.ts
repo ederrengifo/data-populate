@@ -127,7 +127,44 @@ export const dataTypes: DataType[] = [
     id: 'product_image',
     name: 'Product Images',
     category: 'image',
-    generator: () => `https://source.unsplash.com/400x300/?product,${faker.commerce.product()}`
+    generator: () => `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`
+  },
+  // High-quality placeholder images (Unsplash Source discontinued)
+  {
+    id: 'unsplash_nature',
+    name: 'Nature Photos',
+    category: 'image',
+    generator: () => `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`
+  },
+  {
+    id: 'unsplash_people',
+    name: 'People Photos',
+    category: 'image',
+    generator: () => `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`
+  },
+  {
+    id: 'unsplash_business',
+    name: 'Business Photos',
+    category: 'image',
+    generator: () => `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`
+  },
+  {
+    id: 'unsplash_food',
+    name: 'Food Photos',
+    category: 'image',
+    generator: () => `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`
+  },
+  {
+    id: 'unsplash_travel',
+    name: 'Travel Photos',
+    category: 'image',
+    generator: () => `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`
+  },
+  {
+    id: 'unsplash_tech',
+    name: 'Technology Photos',
+    category: 'image',
+    generator: () => `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`
   }
 ];
 

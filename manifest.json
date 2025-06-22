@@ -14,11 +14,13 @@
       "https://api.dicebear.com",
       "https://randomuser.me",
       "https://picsum.photos",
+      "https://fastly.picsum.photos",
       "https://source.unsplash.com",
+      "https://api.unsplash.com",
       "https://dummyjson.com",
       "https://fakestoreapi.com",
       "https://cdn.jsdelivr.net"
     ],
-    "reasoning": "This plugin generates realistic data by fetching from various APIs: DiceBear for avatars, RandomUser for user data, Picsum/Unsplash for images, DummyJSON/FakeStore for product data, and JSDelivr CDN for the Faker.js library."
+    "reasoning": "This plugin generates realistic data by fetching from various APIs: DiceBear for avatars, RandomUser for user data, Picsum/Unsplash for images (both Source API and official API), DummyJSON/FakeStore for product data, and JSDelivr CDN for the Faker.js library."
   }
 } 

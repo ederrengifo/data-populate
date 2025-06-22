@@ -34,7 +34,14 @@ const initializeDataTypes = () => {
             { id: 'random_image', name: 'Random Images' },
             { id: 'product_image', name: 'Product Images' },
             { id: 'avatar_randomuser', name: 'Avatar (RandomUser)' },
-            { id: 'product_image_dummyjson', name: 'Product Image (DummyJSON)' }
+            { id: 'product_image_dummyjson', name: 'Product Image (DummyJSON)' },
+            // Enhanced Unsplash categories
+            { id: 'unsplash_nature', name: 'Nature Photos (Unsplash)' },
+            { id: 'unsplash_people', name: 'People Photos (Unsplash)' },
+            { id: 'unsplash_business', name: 'Business Photos (Unsplash)' },
+            { id: 'unsplash_food', name: 'Food Photos (Unsplash)' },
+            { id: 'unsplash_travel', name: 'Travel Photos (Unsplash)' },
+            { id: 'unsplash_tech', name: 'Technology Photos (Unsplash)' }
         ]
     };
 };
@@ -255,7 +262,15 @@ async function generateData(dataTypeId, count) {
         // Image types
         avatar: () => `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random().toString(36).substring(7)}`,
         random_image: () => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
-        product_image: () => `https://source.unsplash.com/400x300/?product,technology`
+        product_image: () => `https://source.unsplash.com/400x300/?product,technology`,
+        
+        // Enhanced Unsplash categories using Picsum Photos as fallback since Unsplash Source is discontinued
+        unsplash_nature: () => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 10000)}`,
+        unsplash_people: () => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 10000)}`,
+        unsplash_business: () => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 10000)}`,
+        unsplash_food: () => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 10000)}`,
+        unsplash_travel: () => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 10000)}`,
+        unsplash_tech: () => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 10000)}`
     };
     
     // External API generators

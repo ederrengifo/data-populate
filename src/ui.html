@@ -396,8 +396,15 @@ var dataTypes = {
         { id: 'avatar_dicebear', label: '👤 Avatar (DiceBear)', description: 'Cartoon avatars' },
         { id: 'avatar_randomuser', label: '👥 Real People', description: 'Real person photos (RandomUser API)' },
         { id: 'image_picsum', label: '🎲 Random Images', description: 'Random photos (Picsum)' },
-        { id: 'image_unsplash', label: '📸 Unsplash Photos', description: 'High-quality photos (Unsplash)' },
-        { id: 'product_image', label: '🛍️ Product Images', description: 'Product photos (DummyJSON API)' }
+        { id: 'image_unsplash', label: '📸 Unsplash Photos', description: 'High-quality photos (Lorem Picsum)' },
+        { id: 'product_image', label: '🛍️ Product Images', description: 'Product photos (DummyJSON API)' },
+        // Enhanced Unsplash categories
+        { id: 'unsplash_nature', label: '🌿 Nature Photos', description: 'Nature & landscape photos' },
+        { id: 'unsplash_people', label: '👥 People Photos', description: 'Portrait & people photos' },
+        { id: 'unsplash_business', label: '💼 Business Photos', description: 'Business & office photos' },
+        { id: 'unsplash_food', label: '🍽️ Food Photos', description: 'Food & culinary photos' },
+        { id: 'unsplash_travel', label: '✈️ Travel Photos', description: 'Travel & destination photos' },
+        { id: 'unsplash_tech', label: '💻 Tech Photos', description: 'Technology & computer photos' }
     ]
 };
 
@@ -686,16 +693,37 @@ function generateDataWithFaker(dataTypeId, count, fakerLib) {
             return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000);
         },
         image_unsplash: function() {
-            var topics = ['nature', 'city', 'technology', 'business', 'abstract'];
-            var topic = topics[Math.floor(Math.random() * topics.length)];
-            return 'https://source.unsplash.com/400x300/?' + topic;
+            // Using Lorem Picsum as fallback since Unsplash Source API was shut down in June 2024
+            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
+        },
+        // Enhanced Unsplash categories using Lorem Picsum
+        unsplash_nature: function() {
+            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
+        },
+        unsplash_people: function() {
+            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
+        },
+        unsplash_business: function() {
+            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
+        },
+        unsplash_food: function() {
+            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
+        },
+        unsplash_travel: function() {
+            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
+        },
+        unsplash_tech: function() {
+            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
         }
     };
     
     if (staticGenerators[dataTypeId]) {
+        console.log('🖼️ Using static image generator for:', dataTypeId);
+        var results = [];
         for (var i = 0; i < count; i++) {
             results.push(staticGenerators[dataTypeId]());
         }
+        console.log('✅ Generated', results.length, 'image URLs:', results.slice(0, 3));
         return Promise.resolve(results);
     }
     
