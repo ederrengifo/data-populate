@@ -478,6 +478,20 @@ function showStatusMessage(message, type) {
     }, 5000);
 }
 
+// Get available categories based on layer type
+function getAvailableCategoriesForLayerType(layerType) {
+    switch (layerType) {
+        case 'TEXT':
+            return ['text', 'number']; // Text layers get text and number options
+        case 'OTHER':
+            return ['image']; // Non-text layers get image options
+        case 'MIXED':
+            return ['text', 'number', 'image']; // Mixed layers get all options
+        default:
+            return ['text', 'number', 'image']; // Default fallback
+    }
+}
+
 function renderMappings(mappings) {
     currentMappings = mappings;
     
@@ -490,6 +504,36 @@ function renderMappings(mappings) {
     var html = '';
     for (var i = 0; i < mappings.length; i++) {
         var mapping = mappings[i];
+        
+        // Get available categories for this layer type
+        var availableCategories = getAvailableCategoriesForLayerType(mapping.layerType);
+        
+        // Create category options HTML
+        var categoryOptionsHTML = '<option value="">Select Category</option>';
+        if (availableCategories.indexOf('text') !== -1) {
+            categoryOptionsHTML += '<option value="text">📝 Text</option>';
+        }
+        if (availableCategories.indexOf('number') !== -1) {
+            categoryOptionsHTML += '<option value="number">🔢 Numbers</option>';
+        }
+        if (availableCategories.indexOf('image') !== -1) {
+            categoryOptionsHTML += '<option value="image">🖼️ Images</option>';
+        }
+        
+        // Add layer type indicator
+        var layerTypeIndicator = '';
+        switch (mapping.layerType) {
+            case 'TEXT':
+                layerTypeIndicator = '<div style="color: #0066ff; font-size: 11px; margin-bottom: 6px;">📝 Text layers</div>';
+                break;
+            case 'OTHER':
+                layerTypeIndicator = '<div style="color: #ff6600; font-size: 11px; margin-bottom: 6px;">🖼️ Image layers</div>';
+                break;
+            case 'MIXED':
+                layerTypeIndicator = '<div style="color: #9933cc; font-size: 11px; margin-bottom: 6px;">🎯 Mixed layers</div>';
+                break;
+        }
+        
         html += '<div class="mapping-item">';
         html += '<div class="mapping-header">';
         html += '<div>';
@@ -498,14 +542,12 @@ function renderMappings(mappings) {
         html += '</div>';
         html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName + '\')">Remove</button>';
         html += '</div>';
+        html += layerTypeIndicator;
         html += '<div class="data-type-selector">';
         
-        // Category selector
+        // Category selector with filtered options
         html += '<select class="category-select" onchange="handleCategoryChange(\'' + mapping.layerName + '\', this.value)">';
-        html += '<option value="">Select Category</option>';
-        html += '<option value="text">📝 Text</option>';
-        html += '<option value="number">🔢 Numbers</option>';
-        html += '<option value="image">🖼️ Images</option>';
+        html += categoryOptionsHTML;
         html += '</select>';
         
         // Type selector

@@ -5,6 +5,7 @@ interface LayerMapping {
   dataTypeId: string | null;
   count: number;
   layers: SceneNode[];
+  layerType: 'TEXT' | 'MIXED' | 'OTHER'; // Add layer type information
 }
 
 interface PluginMessage {
@@ -110,11 +111,27 @@ async function scanSelectedLayers() {
   
   // Convert to layer mappings
   for (const [layerName, layers] of foundLayers) {
+    // Determine the predominant layer type
+    const textLayers = layers.filter(layer => layer.type === 'TEXT');
+    let layerType: 'TEXT' | 'MIXED' | 'OTHER';
+    
+    if (textLayers.length === layers.length) {
+      // All layers are text
+      layerType = 'TEXT';
+    } else if (textLayers.length > 0) {
+      // Mix of text and non-text layers
+      layerType = 'MIXED';
+    } else {
+      // All layers are non-text
+      layerType = 'OTHER';
+    }
+    
     layerMappings.push({
       layerName,
       dataTypeId: null,
       count: layers.length,
-      layers
+      layers,
+      layerType
     });
   }
   
@@ -125,7 +142,8 @@ async function scanSelectedLayers() {
       mappings: layerMappings.map(mapping => ({
         layerName: mapping.layerName,
         dataTypeId: mapping.dataTypeId,
-        count: mapping.count
+        count: mapping.count,
+        layerType: mapping.layerType
       }))
     }
   });
