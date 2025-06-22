@@ -537,6 +537,20 @@ function autoPopulateMapping(layerName, dataTypeId, layerType) {
             if (typeSelect) {
                 typeSelect.value = dataTypeId;
                 handleTypeChange(layerName, dataTypeId);
+                
+                // Show integer controls if this is an integer type
+                if (dataTypeId === 'integer') {
+                    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+                    var integerControls = document.getElementById('integer-controls-' + cleanLayerName);
+                    if (integerControls) {
+                        integerControls.style.display = 'block';
+                        
+                        // Populate controls with saved settings if available
+                        setTimeout(function() {
+                            populateIntegerControlsFromSettings();
+                        }, 100);
+                    }
+                }
             }
         }, 50); // Small delay to ensure category change has processed
     }
@@ -614,6 +628,52 @@ function renderMappings(mappings, savedConfigurations) {
         html += '</select>';
         
         html += '</div>';
+        
+        // Integer-specific controls (initially hidden)
+        html += '<div class="integer-controls" id="integer-controls-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" style="display: none; margin-top: 12px; padding: 12px; background: #f0f4f8; border-radius: 6px; border: 1px solid #e1e8ed;">';
+        html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🔢 Number Generation Settings</div>';
+        
+        // Checkboxes row
+        html += '<div style="display: flex; gap: 16px; margin-bottom: 12px;">';
+        html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
+        html += '<input type="checkbox" id="decimals-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
+        html += '<span style="font-size: 12px;">Include 2 decimals</span>';
+        html += '</label>';
+        html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
+        html += '<input type="checkbox" id="format-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
+        html += '<span style="font-size: 12px;">Format with commas</span>';
+        html += '</label>';
+        html += '</div>';
+        
+        // Range inputs row
+        html += '<div style="display: flex; gap: 12px; margin-bottom: 12px;">';
+        html += '<div style="flex: 1;">';
+        html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Min Value</label>';
+        html += '<input type="number" id="min-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" value="1" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
+        html += '</div>';
+        html += '<div style="flex: 1;">';
+        html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Max Value</label>';
+        html += '<input type="number" id="max-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" value="1000" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
+        html += '</div>';
+        html += '</div>';
+        
+        // Prefix and Sort row
+        html += '<div style="display: flex; gap: 12px; margin-bottom: 12px;">';
+        html += '<div style="flex: 1;">';
+        html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Prefix (optional)</label>';
+        html += '<input type="text" id="prefix-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" placeholder="e.g., $, #, etc." style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
+        html += '</div>';
+        html += '<div style="flex: 1;">';
+        html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+        html += '<select id="sort-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
+        html += '<option value="none">None (Random)</option>';
+        html += '<option value="ascending">Ascending ↗️</option>';
+        html += '<option value="descending">Descending ↘️</option>';
+        html += '</select>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '</div>';
         html += '</div>';
     }
     
@@ -628,6 +688,9 @@ function renderMappings(mappings, savedConfigurations) {
     }
     
     applyButton.disabled = false;
+    
+    // Load integer settings after rendering
+    loadIntegerSettings();
 }
 
 function handleRemoveMapping(layerName) {
@@ -691,22 +754,283 @@ function handleTypeChange(layerName, dataTypeId) {
             break;
         }
     }
+    
+    // Show/hide integer controls based on selection
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    var integerControls = document.getElementById('integer-controls-' + cleanLayerName);
+    
+    if (integerControls) {
+        if (dataTypeId === 'integer') {
+            integerControls.style.display = 'block';
+        } else {
+            integerControls.style.display = 'none';
+        }
+    }
+}
+
+// Store integer settings for each mapping
+var integerSettings = {};
+
+// Configuration storage key for integer settings
+var INTEGER_SETTINGS_STORAGE_KEY = 'integerSettings';
+
+// Store integer generation context
+var currentIntegerGenerationContext = {
+    layerName: null,
+    count: 0,
+    generatedNumbers: []
+};
+
+function generateCustomIntegerArray(count, layerName) {
+    // Get settings for the layer
+    var settings = integerSettings[layerName] || {
+        includeDecimals: false,
+        formatWithCommas: false,
+        minValue: 1,
+        maxValue: 1000,
+        prefix: '',
+        sortOrder: 'none'
+    };
+    
+    var minVal = settings.minValue;
+    var maxVal = settings.maxValue;
+    
+    // Ensure min is less than max
+    if (minVal >= maxVal) {
+        maxVal = minVal + 1000;
+    }
+    
+    var numbers = [];
+    var generatedSet = new Set();
+    var maxAttempts = Math.min(1000, (maxVal - minVal + 1) * 2); // Reasonable limit for unique attempts
+    
+    // Generate the required number of values
+    for (var i = 0; i < count; i++) {
+        var number;
+        var attempts = 0;
+        
+        // Try to generate a unique number
+        do {
+            if (settings.includeDecimals) {
+                // Generate with 2 decimal places
+                var baseNumber = Math.random() * (maxVal - minVal) + minVal;
+                number = Math.round(baseNumber * 100) / 100;
+            } else {
+                // Generate integer
+                number = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
+            }
+            attempts++;
+        } while (generatedSet.has(number) && attempts < maxAttempts);
+        
+        // Add to set to track uniqueness
+        generatedSet.add(number);
+        numbers.push(number);
+    }
+    
+    // Apply sorting if specified
+    if (settings.sortOrder === 'ascending') {
+        numbers.sort(function(a, b) { return a - b; });
+    } else if (settings.sortOrder === 'descending') {
+        numbers.sort(function(a, b) { return b - a; });
+    }
+    // 'none' means no sorting - keep random order
+    
+    // Format all numbers
+    var formattedNumbers = numbers.map(function(number) {
+        var formattedNumber = number.toString();
+        
+        if (settings.formatWithCommas && !settings.includeDecimals) {
+            // Add comma formatting for integers
+            formattedNumber = number.toLocaleString();
+        } else if (settings.formatWithCommas && settings.includeDecimals) {
+            // Add comma formatting for decimals (ensure 2 decimal places)
+            formattedNumber = number.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        } else if (settings.includeDecimals) {
+            // Ensure 2 decimal places without comma formatting
+            formattedNumber = number.toFixed(2);
+        }
+        
+        // Add prefix if specified
+        if (settings.prefix) {
+            formattedNumber = settings.prefix + formattedNumber;
+        }
+        
+        return formattedNumber;
+    });
+    
+    return formattedNumbers;
+}
+
+// Legacy function for single number generation (fallback)
+function generateCustomInteger() {
+    // This function is kept for backwards compatibility but shouldn't be used
+    // in the new array-based generation approach
+    console.warn('⚠️ Using legacy single integer generation - should use array generation instead');
+    var settings = integerSettings[currentIntegerGenerationContext.layerName] || {
+        includeDecimals: false,
+        formatWithCommas: false,
+        minValue: 1,
+        maxValue: 1000,
+        prefix: '',
+        sortOrder: 'none'
+    };
+    
+    var minVal = settings.minValue;
+    var maxVal = settings.maxValue;
+    
+    if (minVal >= maxVal) {
+        maxVal = minVal + 1000;
+    }
+    
+    var number;
+    if (settings.includeDecimals) {
+        var baseNumber = Math.random() * (maxVal - minVal) + minVal;
+        number = Math.round(baseNumber * 100) / 100;
+    } else {
+        number = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
+    }
+    
+    var formattedNumber = number.toString();
+    
+    if (settings.formatWithCommas && !settings.includeDecimals) {
+        formattedNumber = number.toLocaleString();
+    } else if (settings.formatWithCommas && settings.includeDecimals) {
+        formattedNumber = number.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    } else if (settings.includeDecimals) {
+        formattedNumber = number.toFixed(2);
+    }
+    
+    if (settings.prefix) {
+        formattedNumber = settings.prefix + formattedNumber;
+    }
+    
+    return formattedNumber;
+}
+
+function updateIntegerSettings(layerName) {
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    
+    var decimalsCheckbox = document.getElementById('decimals-' + cleanLayerName);
+    var formatCheckbox = document.getElementById('format-' + cleanLayerName);
+    var minInput = document.getElementById('min-' + cleanLayerName);
+    var maxInput = document.getElementById('max-' + cleanLayerName);
+    var prefixInput = document.getElementById('prefix-' + cleanLayerName);
+    var sortSelect = document.getElementById('sort-' + cleanLayerName);
+    
+    if (!integerSettings[layerName]) {
+        integerSettings[layerName] = {};
+    }
+    
+    integerSettings[layerName] = {
+        includeDecimals: decimalsCheckbox ? decimalsCheckbox.checked : false,
+        formatWithCommas: formatCheckbox ? formatCheckbox.checked : false,
+        minValue: minInput ? parseInt(minInput.value) || 1 : 1,
+        maxValue: maxInput ? parseInt(maxInput.value) || 1000 : 1000,
+        prefix: prefixInput ? prefixInput.value || '' : '',
+        sortOrder: sortSelect ? sortSelect.value || 'none' : 'none'
+    };
+    
+    console.log('Updated integer settings for', layerName, ':', integerSettings[layerName]);
+    
+    // Auto-save integer settings
+    saveIntegerSettings();
+}
+
+// Save integer settings to storage
+function saveIntegerSettings() {
+    try {
+        parent.postMessage({
+            pluginMessage: {
+                type: 'store-integer-settings',
+                data: integerSettings
+            }
+        }, '*');
+        console.log('💾 Integer settings saved');
+    } catch (error) {
+        console.error('Error saving integer settings:', error);
+    }
+}
+
+// Load integer settings from storage  
+function loadIntegerSettings() {
+    try {
+        parent.postMessage({
+            pluginMessage: {
+                type: 'load-integer-settings'
+            }
+        }, '*');
+    } catch (error) {
+        console.error('Error loading integer settings:', error);
+    }
+}
+
+// Populate integer controls with loaded settings
+function populateIntegerControlsFromSettings() {
+    // Go through all current mappings and populate integer controls
+    for (var layerName in integerSettings) {
+        var settings = integerSettings[layerName];
+        var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+        
+        // Check if controls exist for this layer
+        var decimalsCheckbox = document.getElementById('decimals-' + cleanLayerName);
+        if (decimalsCheckbox) {
+            decimalsCheckbox.checked = settings.includeDecimals || false;
+        }
+        
+        var formatCheckbox = document.getElementById('format-' + cleanLayerName);
+        if (formatCheckbox) {
+            formatCheckbox.checked = settings.formatWithCommas || false;
+        }
+        
+        var minInput = document.getElementById('min-' + cleanLayerName);
+        if (minInput) {
+            minInput.value = settings.minValue || 1;
+        }
+        
+        var maxInput = document.getElementById('max-' + cleanLayerName);
+        if (maxInput) {
+            maxInput.value = settings.maxValue || 1000;
+        }
+        
+        var prefixInput = document.getElementById('prefix-' + cleanLayerName);
+        if (prefixInput) {
+            prefixInput.value = settings.prefix || '';
+        }
+        
+        var sortSelect = document.getElementById('sort-' + cleanLayerName);
+        if (sortSelect) {
+            sortSelect.value = settings.sortOrder || 'none';
+        }
+        
+        console.log('🔧 Populated integer controls for', layerName, 'with settings:', settings);
+    }
 }
 
 // Data generation using faker.js and external APIs
-function generateData(dataTypeId, count) {
+function generateData(dataTypeId, count, layerName) {
     // Check if bundled Faker.js is available
     if (window.fakerLoaded && window.faker) {
         console.log('✅ Using bundled real Faker.js for data generation');
-        return Promise.resolve(generateDataWithFaker(dataTypeId, count, window.faker));
+        return Promise.resolve(generateDataWithFaker(dataTypeId, count, window.faker, layerName));
     } else {
         console.warn('⚠️ Bundled Faker.js not available, using fallback generators');
-        return Promise.resolve(generateDataFallback(dataTypeId, count));
+        return Promise.resolve(generateDataFallback(dataTypeId, count, layerName));
     }
 }
 
 // Generate data with Faker.js
-function generateDataWithFaker(dataTypeId, count, fakerLib) {
+function generateDataWithFaker(dataTypeId, count, fakerLib, layerName) {
+    // Use custom array generation for integers
+    if (dataTypeId === 'integer') {
+        console.log('🔢 Using custom integer array generation for:', layerName, 'count:', count);
+        return generateCustomIntegerArray(count, layerName);
+    }
     
     // External API generators
     if (dataTypeId === 'user_api') {
@@ -969,7 +1293,10 @@ function generateDataWithFaker(dataTypeId, count, fakerLib) {
         post_title: function() { return window.faker.lorem.sentence(); },
         description: function() { return window.faker.lorem.paragraph(); },
         lorem: function() { return window.faker.lorem.words(); },
-        integer: function() { return window.faker.number.int({ min: 1, max: 1000 }); },
+        integer: function() { 
+            // Custom integer generation - replaced faker.js
+            return generateCustomInteger();
+        },
         decimal: function() { return window.faker.number.float({ min: 0, max: 100, fractionDigits: 2 }); },
         currency: function() { return '$' + window.faker.finance.amount(); },
         date: function() { return window.faker.date.anytime().toLocaleDateString(); },
@@ -993,7 +1320,12 @@ function generateDataWithFaker(dataTypeId, count, fakerLib) {
 }
 
 // Fallback data generation without Faker.js
-function generateDataFallback(dataTypeId, count) {
+function generateDataFallback(dataTypeId, count, layerName) {
+    // Use custom array generation for integers
+    if (dataTypeId === 'integer') {
+        console.log('🔢 Using custom integer array generation (fallback) for:', layerName, 'count:', count);
+        return generateCustomIntegerArray(count, layerName);
+    }
     var results = [];
     
     // Simple hardcoded data generators (fallback when Faker.js isn't available)
@@ -1036,7 +1368,10 @@ function generateDataFallback(dataTypeId, count) {
             var words = ['lorem ipsum', 'dolor sit amet', 'consectetur adipiscing', 'elit sed do', 'eiusmod tempor'];
             return words[Math.floor(Math.random() * words.length)];
         },
-        integer: function() { return Math.floor(Math.random() * 1000) + 1; },
+        integer: function() { 
+            // Custom integer generation - replaced faker.js
+            return generateCustomInteger();
+        },
         decimal: function() { return (Math.random() * 100).toFixed(2); },
         currency: function() { return '$' + (Math.random() * 999 + 1).toFixed(2); },
         date: function() { return new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toLocaleDateString(); },
@@ -1172,6 +1507,14 @@ window.addEventListener('message', function(event) {
         } else {
             showStatusMessage('No layers with % prefixes found in selection', 'error');
         }
+    } else if (msg.type === 'integer-settings-loaded') {
+        // Restore integer settings from storage
+        if (msg.data && Object.keys(msg.data).length > 0) {
+            integerSettings = msg.data;
+            console.log('📥 Integer settings restored:', integerSettings);
+            // Populate the UI controls with loaded settings
+            populateIntegerControlsFromSettings();
+        }
     } else if (msg.type === 'mapping-removed') {
         currentMappings = currentMappings.filter(function(m) { return m.layerName !== msg.data.layerName; });
         renderMappings(currentMappings);
@@ -1185,7 +1528,7 @@ window.addEventListener('message', function(event) {
         showStatusMessage(msg.message, 'error');
     } else if (msg.type === 'generate-data') {
         // Generate data and send back to main code
-        Promise.resolve(generateData(msg.dataTypeId, msg.count))
+        Promise.resolve(generateData(msg.dataTypeId, msg.count, msg.layerName))
             .then(function(data) {
                 parent.postMessage({
                     pluginMessage: {

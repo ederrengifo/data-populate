@@ -18,6 +18,7 @@ let layerMappings: LayerMapping[] = [];
 
 // Configuration storage key for this file
 const CONFIG_STORAGE_KEY = 'layerConfigurations';
+const INTEGER_SETTINGS_KEY = 'integerSettings';
 
 // Initialize plugin
 figma.showUI(__html__, { width: 400, height: 600 });
@@ -40,6 +41,14 @@ figma.ui.onmessage = async (msg: any) => {
       
       case 'get-data-types':
         sendDataTypesToUI();
+        break;
+      
+      case 'store-integer-settings':
+        await storeIntegerSettings(msg.data);
+        break;
+      
+      case 'load-integer-settings':
+        await loadIntegerSettings();
         break;
     }
   } catch (error) {
@@ -191,7 +200,7 @@ async function applyDataToLayers(mappings: Array<{ layerName: string; dataTypeId
     
     for (const layerMapping of layerMappings) {
       if (layerMapping.dataTypeId) {
-        const data = await generateDataForType(layerMapping.dataTypeId, layerMapping.count);
+        const data = await generateDataForType(layerMapping.dataTypeId, layerMapping.count, layerMapping.layerName);
         dataResults[layerMapping.layerName] = data;
       }
     }
@@ -214,6 +223,16 @@ async function applyDataToLayers(mappings: Array<{ layerName: string; dataTypeId
     for (const mapping of mappings) {
       await saveConfiguration(mapping.layerName, mapping.dataTypeId);
     }
+    
+    // Also save integer settings if any mappings use integers
+    for (const mapping of mappings) {
+      if (mapping.dataTypeId === 'integer') {
+        figma.ui.postMessage({
+          type: 'save-integer-settings',
+          layerName: mapping.layerName
+        });
+      }
+    }
 
     figma.ui.postMessage({
       type: 'data-applied',
@@ -229,7 +248,7 @@ async function applyDataToLayers(mappings: Array<{ layerName: string; dataTypeId
 }
 
 // Generate data for a specific type
-async function generateDataForType(dataTypeId: string, count: number): Promise<string[]> {
+async function generateDataForType(dataTypeId: string, count: number, layerName?: string): Promise<string[]> {
   // Send request to UI to generate data (UI has access to faker and fetch)
   return new Promise((resolve) => {
     const requestId = Math.random().toString(36).substring(7);
@@ -248,7 +267,8 @@ async function generateDataForType(dataTypeId: string, count: number): Promise<s
       type: 'generate-data',
       requestId,
       dataTypeId,
-      count
+      count,
+      layerName
     });
   });
 }
@@ -396,4 +416,32 @@ function sendDataTypesToUI() {
       // This will be populated by the UI which has access to the faker config
     }
   });
+}
+
+// Store integer settings
+async function storeIntegerSettings(settings: Record<string, any>) {
+  try {
+    await figma.clientStorage.setAsync(INTEGER_SETTINGS_KEY, settings);
+    console.log('💾 Integer settings stored successfully');
+  } catch (error) {
+    console.error('Error storing integer settings:', error);
+  }
+}
+
+// Load integer settings and send to UI
+async function loadIntegerSettings() {
+  try {
+    const settings = await figma.clientStorage.getAsync(INTEGER_SETTINGS_KEY);
+    figma.ui.postMessage({
+      type: 'integer-settings-loaded',
+      data: settings || {}
+    });
+    console.log('📥 Integer settings loaded and sent to UI');
+  } catch (error) {
+    console.error('Error loading integer settings:', error);
+    figma.ui.postMessage({
+      type: 'integer-settings-loaded',
+      data: {}
+    });
+  }
 } 
