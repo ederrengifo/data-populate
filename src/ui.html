@@ -492,8 +492,59 @@ function getAvailableCategoriesForLayerType(layerType) {
     }
 }
 
-function renderMappings(mappings) {
+// Auto-populate a mapping with saved configuration
+function autoPopulateMapping(layerName, dataTypeId, layerType) {
+    // Find the mapping item in DOM
+    var mappingItems = document.querySelectorAll('.mapping-item');
+    var targetItem = null;
+    
+    for (var i = 0; i < mappingItems.length; i++) {
+        var item = mappingItems[i];
+        var nameElement = item.querySelector('.layer-name');
+        if (nameElement && nameElement.textContent === layerName) {
+            targetItem = item;
+            break;
+        }
+    }
+    
+    if (!targetItem) return;
+    
+    // Determine which category this dataTypeId belongs to
+    var category = null;
+    for (var cat in dataTypes) {
+        for (var j = 0; j < dataTypes[cat].length; j++) {
+            if (dataTypes[cat][j].id === dataTypeId) {
+                category = cat;
+                break;
+            }
+        }
+        if (category) break;
+    }
+    
+    if (!category) return;
+    
+    // Set the category dropdown
+    var categorySelect = targetItem.querySelector('.category-select');
+    if (categorySelect) {
+        categorySelect.value = category;
+        
+        // Trigger the category change to populate type dropdown
+        handleCategoryChange(layerName, category);
+        
+        // Set the type dropdown
+        setTimeout(function() {
+            var typeSelect = targetItem.querySelector('.type-select');
+            if (typeSelect) {
+                typeSelect.value = dataTypeId;
+                handleTypeChange(layerName, dataTypeId);
+            }
+        }, 50); // Small delay to ensure category change has processed
+    }
+}
+
+function renderMappings(mappings, savedConfigurations) {
     currentMappings = mappings;
+    savedConfigurations = savedConfigurations || {};
     
     if (mappings.length === 0) {
         mappingsContainer.innerHTML = '<div class="empty-state">No layers with % prefixes found</div>';
@@ -534,6 +585,12 @@ function renderMappings(mappings) {
                 break;
         }
         
+        // Add saved configuration indicator
+        var savedConfigIndicator = '';
+        if (mapping.isPreConfigured) {
+            savedConfigIndicator = '<div style="color: #00aa00; font-size: 11px; margin-bottom: 6px;">💾 Previously configured</div>';
+        }
+        
         html += '<div class="mapping-item">';
         html += '<div class="mapping-header">';
         html += '<div>';
@@ -543,6 +600,7 @@ function renderMappings(mappings) {
         html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName + '\')">Remove</button>';
         html += '</div>';
         html += layerTypeIndicator;
+        html += savedConfigIndicator;
         html += '<div class="data-type-selector">';
         
         // Category selector with filtered options
@@ -560,6 +618,15 @@ function renderMappings(mappings) {
     }
     
     mappingsContainer.innerHTML = html;
+    
+    // Auto-populate saved configurations
+    for (var i = 0; i < mappings.length; i++) {
+        var mapping = mappings[i];
+        if (mapping.dataTypeId) {
+            autoPopulateMapping(mapping.layerName, mapping.dataTypeId, mapping.layerType);
+        }
+    }
+    
     applyButton.disabled = false;
 }
 
@@ -1092,9 +1159,16 @@ window.addEventListener('message', function(event) {
     
     if (msg.type === 'layers-scanned') {
         setLoadingState(scanButton, scanText, scanLoading, false);
-        renderMappings(msg.data.mappings);
+        renderMappings(msg.data.mappings, msg.data.savedConfigurations);
+        
+        var preconfiguredCount = msg.data.mappings.filter(function(m) { return m.isPreConfigured; }).length;
+        var statusMsg = 'Found ' + msg.data.mappings.length + ' layer mapping' + (msg.data.mappings.length > 1 ? 's' : '');
+        if (preconfiguredCount > 0) {
+            statusMsg += ' (' + preconfiguredCount + ' pre-configured)';
+        }
+        
         if (msg.data.mappings.length > 0) {
-            showStatusMessage('Found ' + msg.data.mappings.length + ' layer mapping' + (msg.data.mappings.length > 1 ? 's' : ''));
+            showStatusMessage(statusMsg);
         } else {
             showStatusMessage('No layers with % prefixes found in selection', 'error');
         }

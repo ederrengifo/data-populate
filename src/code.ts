@@ -16,6 +16,9 @@ interface PluginMessage {
 // Store the current mappings
 let layerMappings: LayerMapping[] = [];
 
+// Configuration storage key for this file
+const CONFIG_STORAGE_KEY = 'layerConfigurations';
+
 // Initialize plugin
 figma.showUI(__html__, { width: 400, height: 600 });
 
@@ -135,6 +138,17 @@ async function scanSelectedLayers() {
     });
   }
   
+  // Load saved configurations and apply them
+  const savedConfigs = await loadSavedConfigurations();
+  
+  // Apply saved configurations to mappings
+  for (const layerMapping of layerMappings) {
+    if (savedConfigs[layerMapping.layerName]) {
+      layerMapping.dataTypeId = savedConfigs[layerMapping.layerName];
+      console.log(`🔄 Applied saved config: ${layerMapping.layerName} → ${layerMapping.dataTypeId}`);
+    }
+  }
+
   // Send results to UI
   figma.ui.postMessage({
     type: 'layers-scanned',
@@ -143,8 +157,10 @@ async function scanSelectedLayers() {
         layerName: mapping.layerName,
         dataTypeId: mapping.dataTypeId,
         count: mapping.count,
-        layerType: mapping.layerType
-      }))
+        layerType: mapping.layerType,
+        isPreConfigured: !!savedConfigs[mapping.layerName]
+      })),
+      savedConfigurations: savedConfigs
     }
   });
 }
@@ -194,6 +210,11 @@ async function applyDataToLayers(mappings: Array<{ layerName: string; dataTypeId
       }
     }
     
+    // Save configurations for future use
+    for (const mapping of mappings) {
+      await saveConfiguration(mapping.layerName, mapping.dataTypeId);
+    }
+
     figma.ui.postMessage({
       type: 'data-applied',
       message: 'Data successfully applied to layers!'
@@ -342,6 +363,29 @@ async function loadImageFromURL(url: string): Promise<Uint8Array | null> {
       url
     });
   });
+}
+
+// Load saved configurations for this file
+async function loadSavedConfigurations(): Promise<Record<string, string>> {
+  try {
+    const savedConfigs = await figma.clientStorage.getAsync(CONFIG_STORAGE_KEY);
+    return savedConfigs || {};
+  } catch (error) {
+    console.log('No saved configurations found or error loading:', error);
+    return {};
+  }
+}
+
+// Save configuration for a layer name
+async function saveConfiguration(layerName: string, dataTypeId: string) {
+  try {
+    const currentConfigs = await loadSavedConfigurations();
+    currentConfigs[layerName] = dataTypeId;
+    await figma.clientStorage.setAsync(CONFIG_STORAGE_KEY, currentConfigs);
+    console.log(`💾 Saved configuration: ${layerName} → ${dataTypeId}`);
+  } catch (error) {
+    console.error('Error saving configuration:', error);
+  }
 }
 
 // Send available data types to UI
