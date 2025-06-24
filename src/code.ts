@@ -283,8 +283,68 @@ async function applyValueToLayer(layer: SceneNode, value: string, dataTypeId: st
       return;
     }
     
+    // Handle color data types - apply colors as fills
+    if (dataTypeId === 'color') {
+      // Check for layers that can have fills - be more inclusive
+      const canHaveFills = 'fills' in layer && layer.fills !== figma.mixed;
+      
+      if (canHaveFills) {
+        console.log(`🎨 Applying color to layer: ${value}`);
+        
+        if (value.includes('linear-gradient')) {
+          // Handle gradient fills
+          const gradientMatch = value.match(/linear-gradient\(45deg,\s*rgb\((\d+),\s*(\d+),\s*(\d+)\),\s*rgb\((\d+),\s*(\d+),\s*(\d+)\)\)/);
+          if (gradientMatch) {
+            const [, r1, g1, b1, r2, g2, b2] = gradientMatch;
+            
+            const gradientFill: GradientPaint = {
+              type: 'GRADIENT_LINEAR',
+              gradientTransform: [
+                [1, 0, 0],
+                [0, 1, 0]
+              ],
+              gradientStops: [
+                {
+                  position: 0,
+                  color: { r: parseInt(r1) / 255, g: parseInt(g1) / 255, b: parseInt(b1) / 255, a: 1 }
+                },
+                {
+                  position: 1,
+                  color: { r: parseInt(r2) / 255, g: parseInt(g2) / 255, b: parseInt(b2) / 255, a: 1 }
+                }
+              ]
+            };
+            
+            (layer as any).fills = [gradientFill];
+            console.log(`✅ Gradient applied successfully to layer`);
+          }
+        } else if (value.includes('rgb(')) {
+          // Handle solid color fills
+          const colorMatch = value.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+          if (colorMatch) {
+            const [, r, g, b] = colorMatch;
+            
+            const solidFill: SolidPaint = {
+              type: 'SOLID',
+              color: { r: parseInt(r) / 255, g: parseInt(g) / 255, b: parseInt(b) / 255 }
+            };
+            
+            (layer as any).fills = [solidFill];
+            console.log(`✅ Solid color applied successfully to layer`);
+          }
+        }
+        
+        // Don't change layer name for colors - just apply the fill
+        return;
+      } else {
+        // For layers that can't have fills, don't change anything
+        console.log(`⚠️ Layer ${layer.name} cannot have fills, skipping color application`);
+        return;
+      }
+    }
+    
     // Handle image layers - check for layers that can have fills
-    const canHaveFills = layer.type === 'RECTANGLE' || layer.type === 'ELLIPSE' || layer.type === 'POLYGON' || layer.type === 'STAR' || layer.type === 'VECTOR';
+    const canHaveFills = 'fills' in layer && layer.fills !== figma.mixed;
     
     // Improved image type detection - include more specific avatar types
     const isImageType = dataTypeId.includes('image') || 
@@ -320,7 +380,7 @@ async function applyValueToLayer(layer: SceneNode, value: string, dataTypeId: st
     }
     
     // For text data types on non-text layers, or as fallback
-    if (!isImageType) {
+    if (!isImageType && dataTypeId !== 'color') {
       // Try to find child text layers
       if ('children' in layer) {
         for (const child of (layer as any).children) {

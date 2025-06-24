@@ -368,48 +368,30 @@ var applyLoading = document.getElementById('apply-loading');
 var mappingsContainer = document.getElementById('mappings-container');
 var statusContainer = document.getElementById('status-container');
 
-// Data type configurations with external APIs
+// Enhanced data type configurations with options
 var dataTypes = {
+    // For TEXT/MIXED layers
+    numbers: [
+        { id: 'custom', label: '🔢 Custom', description: 'Custom numbers with range and formatting', hasOptions: true },
+        { id: 'percentage', label: '📊 Percentage', description: 'Random percentages (0-100%)', hasOptions: true },
+        { id: 'phone', label: '📞 Phone', description: 'Phone numbers with format options', hasOptions: true },
+        { id: 'date', label: '📅 Date', description: 'Dates with multiple format options', hasOptions: true },
+        { id: 'finances', label: '💰 Finances', description: 'Financial data (cards, accounts, etc.)', hasOptions: true }
+    ],
     text: [
-        { id: 'name', label: '👤 Full Name', description: 'Random person names (faker.js)' },
-        { id: 'username', label: '🔤 Username', description: 'Random usernames (faker.js)' },
-        { id: 'city', label: '🏙️ City', description: 'Random city names (faker.js)' },
-        { id: 'country', label: '🌍 Country', description: 'Random country names (faker.js)' },
-        { id: 'company', label: '🏢 Company', description: 'Random company names (faker.js)' },
-        { id: 'email', label: '📧 Email', description: 'Random email addresses (faker.js)' },
-        { id: 'product_name', label: '📦 Product Name', description: 'Random product names (faker.js)' },
-        { id: 'post_title', label: '📰 Post Title', description: 'Random article titles (faker.js)' },
-        { id: 'description', label: '📝 Description', description: 'Random paragraphs (faker.js)' },
-        { id: 'lorem', label: '📖 Lorem Ipsum', description: 'Random words (faker.js)' },
-        { id: 'product_api', label: '🛒 Products', description: 'Real products (DummyJSON API)' },
-        { id: 'user_api', label: '👥 User Names', description: 'Real people (RandomUser API)' }
+        { id: 'person', label: '👤 Person', description: 'Names, usernames, job titles, etc.', hasOptions: true },
+        { id: 'email', label: '📧 Email', description: 'Email addresses with provider options', hasOptions: true },
+        { id: 'website', label: '🌐 Website', description: 'Website URLs with domain options', hasOptions: true },
+        { id: 'location', label: '🗺️ Location', description: 'Cities, addresses, coordinates, etc.', hasOptions: true },
+        { id: 'title', label: '📰 Title', description: 'Post titles, company names, products, etc.', hasOptions: true },
+        { id: 'long_text', label: '📖 Long text', description: 'Paragraphs by category', hasOptions: true }
     ],
-    number: [
-        { id: 'integer', label: '🔢 Random Numbers', description: 'Random integers (faker.js)' },
-        { id: 'decimal', label: '💯 Decimal Numbers', description: 'Random decimals (faker.js)' },
-        { id: 'currency', label: '💰 Currency', description: 'Random prices (faker.js)' },
-        { id: 'date', label: '📅 Random Dates', description: 'Random dates (faker.js)' },
-        { id: 'phone', label: '📞 Phone Numbers', description: 'Random phone numbers (faker.js)' },
-        { id: 'percentage', label: '📊 Percentages', description: 'Random percentages (faker.js)' }
-    ],
-    image: [
-        { id: 'avatar_dicebear', label: '👤 Avatar (DiceBear)', description: 'Cartoon avatars - reliable ✅' },
-        { id: 'avatar_randomuser', label: '👥 Real People Photos', description: 'Actual photos with CORS proxy 🔧' },
-        { id: 'avatar_randomuser_male', label: '👨 Male Photos', description: 'Real male photos (RandomUser + CORS proxy)' },
-        { id: 'avatar_randomuser_female', label: '👩 Female Photos', description: 'Real female photos (RandomUser + CORS proxy)' },
-        { id: 'avatar_pravatar', label: '👤 Profile Avatars', description: 'Real profile photos (Pravatar + CORS proxy)' },
-        { id: 'avatar_multiavatar', label: '🎨 Multiavatar', description: 'Unique generated avatars (CORS proxy)' },
-        { id: 'avatar_robohash', label: '🤖 Robot Avatars', description: 'Fun robot/monster avatars (CORS proxy)' },
-        { id: 'image_picsum', label: '🎲 Random Images', description: 'Random photos (Picsum) - reliable ✅' },
-        { id: 'product_image', label: '🛍️ Product Images', description: 'Product photos (DummyJSON API)' },
-        // Enhanced Unsplash categories using Picsum
-        { id: 'unsplash_nature', label: '🌿 Nature Photos', description: 'Random nature photos' },
-        { id: 'unsplash_people', label: '👥 People Photos', description: 'Random portrait photos' },
-        { id: 'unsplash_business', label: '💼 Business Photos', description: 'Random business photos' },
-        { id: 'unsplash_food', label: '🍽️ Food Photos', description: 'Random food photos' },
-        { id: 'unsplash_travel', label: '✈️ Travel Photos', description: 'Random travel photos' },
-        { id: 'unsplash_tech', label: '💻 Tech Photos', description: 'Random tech photos' }
-    ]
+         // For OTHER layers
+     media: [
+         { id: 'avatar', label: '👤 Avatar', description: 'Profile pictures and avatars', hasOptions: true },
+         { id: 'image', label: '🖼️ Image', description: 'Images by category', hasOptions: true },
+         { id: 'color', label: '🎨 Color', description: 'Solid colors or gradients', hasOptions: true }
+     ]
 };
 
 // Event listeners
@@ -482,13 +464,13 @@ function showStatusMessage(message, type) {
 function getAvailableCategoriesForLayerType(layerType) {
     switch (layerType) {
         case 'TEXT':
-            return ['text', 'number']; // Text layers get text and number options
+            return ['numbers', 'text']; // Text layers get numbers and text options
         case 'OTHER':
-            return ['image']; // Non-text layers get image options
+            return ['media']; // Non-text layers get media options
         case 'MIXED':
-            return ['text', 'number', 'image']; // Mixed layers get all options
+            return ['numbers', 'text', 'media']; // Mixed layers get all options
         default:
-            return ['text', 'number', 'image']; // Default fallback
+            return ['numbers', 'text']; // Default fallback for text layers
     }
 }
 
@@ -573,16 +555,21 @@ function renderMappings(mappings, savedConfigurations) {
         // Get available categories for this layer type
         var availableCategories = getAvailableCategoriesForLayerType(mapping.layerType);
         
-        // Create category options HTML
+        // Build category options HTML based on layer type
         var categoryOptionsHTML = '<option value="">Select Category</option>';
-        if (availableCategories.indexOf('text') !== -1) {
-            categoryOptionsHTML += '<option value="text">📝 Text</option>';
-        }
-        if (availableCategories.indexOf('number') !== -1) {
-            categoryOptionsHTML += '<option value="number">🔢 Numbers</option>';
-        }
-        if (availableCategories.indexOf('image') !== -1) {
-            categoryOptionsHTML += '<option value="image">🖼️ Images</option>';
+        for (var j = 0; j < availableCategories.length; j++) {
+            var cat = availableCategories[j];
+            switch (cat) {
+                case 'numbers':
+                    categoryOptionsHTML += '<option value="numbers">🔢 Numbers</option>';
+                    break;
+                case 'text':
+                    categoryOptionsHTML += '<option value="text">📝 Text</option>';
+                    break;
+                case 'media':
+                    categoryOptionsHTML += '<option value="media">🖼️ Media</option>';
+                    break;
+            }
         }
         
         // Add layer type indicator
@@ -629,50 +616,10 @@ function renderMappings(mappings, savedConfigurations) {
         
         html += '</div>';
         
-        // Integer-specific controls (initially hidden)
-        html += '<div class="integer-controls" id="integer-controls-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" style="display: none; margin-top: 12px; padding: 12px; background: #f0f4f8; border-radius: 6px; border: 1px solid #e1e8ed;">';
-        html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🔢 Number Generation Settings</div>';
-        
-        // Checkboxes row
-        html += '<div style="display: flex; gap: 16px; margin-bottom: 12px;">';
-        html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
-        html += '<input type="checkbox" id="decimals-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
-        html += '<span style="font-size: 12px;">Include 2 decimals</span>';
-        html += '</label>';
-        html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
-        html += '<input type="checkbox" id="format-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
-        html += '<span style="font-size: 12px;">Format with commas</span>';
-        html += '</label>';
-        html += '</div>';
-        
-        // Range inputs row
-        html += '<div style="display: flex; gap: 12px; margin-bottom: 12px;">';
-        html += '<div style="flex: 1;">';
-        html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Min Value</label>';
-        html += '<input type="number" id="min-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" value="1" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
-        html += '</div>';
-        html += '<div style="flex: 1;">';
-        html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Max Value</label>';
-        html += '<input type="number" id="max-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" value="1000" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
-        html += '</div>';
-        html += '</div>';
-        
-        // Prefix and Sort row
-        html += '<div style="display: flex; gap: 12px; margin-bottom: 12px;">';
-        html += '<div style="flex: 1;">';
-        html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Prefix (optional)</label>';
-        html += '<input type="text" id="prefix-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" placeholder="e.g., $, #, etc." style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
-        html += '</div>';
-        html += '<div style="flex: 1;">';
-        html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
-        html += '<select id="sort-' + mapping.layerName.replace(/[^a-zA-Z0-9]/g, '') + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;" onchange="updateIntegerSettings(\'' + mapping.layerName + '\')">';
-        html += '<option value="none">None (Random)</option>';
-        html += '<option value="ascending">Ascending ↗️</option>';
-        html += '<option value="descending">Descending ↘️</option>';
-        html += '</select>';
-        html += '</div>';
-        html += '</div>';
-        
+        // Configuration panel (initially hidden, will be shown when a data type with options is selected)
+        var cleanLayerName = mapping.layerName.replace(/[^a-zA-Z0-9]/g, '');
+        html += '<div class="config-panel" id="config-panel-' + cleanLayerName + '" style="display: none; margin-top: 12px; padding: 12px; background: #f0f4f8; border-radius: 6px; border: 1px solid #e1e8ed;">';
+        html += '<div class="config-content" id="config-content-' + cleanLayerName + '"></div>';
         html += '</div>';
         html += '</div>';
     }
@@ -755,21 +702,346 @@ function handleTypeChange(layerName, dataTypeId) {
         }
     }
     
-    // Show/hide integer controls based on selection
+    // Show/hide configuration panel based on selection
     var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
-    var integerControls = document.getElementById('integer-controls-' + cleanLayerName);
+    var configPanel = document.getElementById('config-panel-' + cleanLayerName);
+    var configContent = document.getElementById('config-content-' + cleanLayerName);
     
-    if (integerControls) {
-        if (dataTypeId === 'integer') {
-            integerControls.style.display = 'block';
-        } else {
-            integerControls.style.display = 'none';
+    if (!configPanel || !configContent) return;
+    
+    // Find the data type configuration
+    var dataType = null;
+    for (var category in dataTypes) {
+        for (var j = 0; j < dataTypes[category].length; j++) {
+            if (dataTypes[category][j].id === dataTypeId) {
+                dataType = dataTypes[category][j];
+                break;
+            }
         }
+        if (dataType) break;
+    }
+    
+    if (dataType && dataType.hasOptions) {
+        configPanel.style.display = 'block';
+        configContent.innerHTML = generateConfigHTML(dataTypeId, layerName);
+        
+        // Set up preview for custom numbers
+        if (dataTypeId === 'custom') {
+            setupCustomNumberPreview(layerName);
+        }
+    } else {
+        configPanel.style.display = 'none';
+        configContent.innerHTML = '';
     }
 }
 
-// Store integer settings for each mapping
-var integerSettings = {};
+// Generate configuration HTML for data types with options
+function generateConfigHTML(dataTypeId, layerName) {
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    var html = '';
+    
+    switch (dataTypeId) {
+        case 'custom':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🔢 Custom Number Settings</div>';
+            
+            // Range inputs
+            html += '<div style="display: flex; gap: 12px; margin-bottom: 12px;">';
+            html += '<div style="flex: 1;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Min Value</label>';
+            html += '<input type="number" id="min-' + cleanLayerName + '" value="1" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '</div>';
+            html += '<div style="flex: 1;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Max Value</label>';
+            html += '<input type="number" id="max-' + cleanLayerName + '" value="1000" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '</div>';
+            html += '</div>';
+            
+            // Checkboxes
+            html += '<div style="display: flex; gap: 16px; margin-bottom: 12px;">';
+            html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
+            html += '<input type="checkbox" id="decimals-' + cleanLayerName + '">';
+            html += '<span style="font-size: 12px;">Include 2 decimals</span>';
+            html += '</label>';
+            html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
+            html += '<input type="checkbox" id="format-' + cleanLayerName + '">';
+            html += '<span style="font-size: 12px;">Format with commas</span>';
+            html += '</label>';
+            html += '</div>';
+            
+            // Prefix and sorting
+            html += '<div style="display: flex; gap: 12px; margin-bottom: 12px;">';
+            html += '<div style="flex: 1;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Prefix</label>';
+            html += '<input type="text" id="prefix-' + cleanLayerName + '" placeholder="e.g., $, #" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '</div>';
+            html += '<div style="flex: 1;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<select id="sort-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="random">Random</option>';
+            html += '<option value="ascending">Ascending</option>';
+            html += '<option value="descending">Descending</option>';
+            html += '</select>';
+            html += '</div>';
+            html += '</div>';
+            
+            // Preview
+            html += '<div style="padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; color: #666;">';
+            html += '<span style="font-weight: 500;">Preview:</span> <span id="preview-' + cleanLayerName + '">1,234</span>';
+            html += '</div>';
+            
+            // Store the layer name for later event listener setup
+            if (!window.customNumberLayers) {
+                window.customNumberLayers = [];
+            }
+            window.customNumberLayers.push(cleanLayerName);
+            break;
+            
+        case 'percentage':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📊 Percentage Settings</div>';
+            html += '<div style="display: flex; gap: 16px; margin-bottom: 12px;">';
+            html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
+            html += '<input type="checkbox" id="decimals-' + cleanLayerName + '">';
+            html += '<span style="font-size: 12px;">Include 2 decimals</span>';
+            html += '</label>';
+            html += '</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<select id="sort-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="random">Random</option>';
+            html += '<option value="ascending">Ascending</option>';
+            html += '<option value="descending">Descending</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'phone':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📞 Phone Settings</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Format</label>';
+            html += '<select id="phoneFormat-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="human">Human Readable</option>';
+            html += '<option value="national">National Format</option>';
+            html += '<option value="international">International Format</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'date':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📅 Date Settings</div>';
+            html += '<div style="margin-bottom: 12px;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Format</label>';
+            html += '<select id="dateFormat-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="MM/DD/YYYY">MM/DD/YYYY</option>';
+            html += '<option value="DD/MM/YYYY">DD/MM/YYYY</option>';
+            html += '<option value="YYYY/MM/DD">YYYY/MM/DD</option>';
+            html += '<option value="year">Year only</option>';
+            html += '<option value="month">Month only</option>';
+            html += '<option value="weekday">Weekday only</option>';
+            html += '</select>';
+            html += '</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<select id="sort-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="random">Random</option>';
+            html += '<option value="recent">Most Recent</option>';
+            html += '<option value="oldest">Oldest</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'finances':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">💰 Finance Settings</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
+            html += '<select id="financeType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="credit-card">Credit Card Number</option>';
+            html += '<option value="account-number">Account Number</option>';
+            html += '<option value="bitcoin">Bitcoin Address</option>';
+            html += '<option value="iban">IBAN</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'person':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">👤 Person Settings</div>';
+            html += '<div style="margin-bottom: 12px;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
+            html += '<select id="personType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="full-name">Full Name</option>';
+            html += '<option value="first-name">First Name</option>';
+            html += '<option value="last-name">Last Name</option>';
+            html += '<option value="username">Username</option>';
+            html += '<option value="gender">Gender</option>';
+            html += '<option value="job-title">Job Title</option>';
+            html += '<option value="password">Password</option>';
+            html += '</select>';
+            html += '</div>';
+            html += '<div style="display: flex; gap: 12px; margin-bottom: 12px;">';
+            html += '<div style="flex: 1;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Prefix</label>';
+            html += '<input type="text" id="customPrefix-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '</div>';
+            html += '<div style="flex: 1;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Suffix</label>';
+            html += '<input type="text" id="customSuffix-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '</div>';
+            html += '</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<select id="sort-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="random">Random</option>';
+            html += '<option value="a-z">A-Z</option>';
+            html += '<option value="z-a">Z-A</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'email':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📧 Email Settings</div>';
+            html += '<div style="margin-bottom: 12px;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Provider (optional)</label>';
+            html += '<input type="text" id="provider-' + cleanLayerName + '" placeholder="e.g., gmail.com" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<select id="sort-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="random">Random</option>';
+            html += '<option value="a-z">A-Z</option>';
+            html += '<option value="z-a">Z-A</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'website':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🌐 Website Settings</div>';
+            html += '<div style="margin-bottom: 12px;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Domain Suffix (optional)</label>';
+            html += '<input type="text" id="domain-' + cleanLayerName + '" placeholder="e.g., .com, .org" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '</div>';
+            html += '<div style="margin-bottom: 12px;">';
+            html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
+            html += '<input type="checkbox" id="includeProtocol-' + cleanLayerName + '" checked>';
+            html += '<span style="font-size: 12px;">Include https://</span>';
+            html += '</label>';
+            html += '</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<select id="sort-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="random">Random</option>';
+            html += '<option value="a-z">A-Z</option>';
+            html += '<option value="z-a">Z-A</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'location':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🗺️ Location Settings</div>';
+            html += '<div style="margin-bottom: 12px;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
+            html += '<select id="locationType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="city">City</option>';
+            html += '<option value="country">Country</option>';
+            html += '<option value="full-address">Full Address</option>';
+            html += '<option value="street-address">Street Address</option>';
+            html += '<option value="zip-code">ZIP Code</option>';
+            html += '<option value="country-code">Country Code</option>';
+            html += '<option value="coordinates">Coordinates</option>';
+            html += '</select>';
+            html += '</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<select id="sort-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="random">Random</option>';
+            html += '<option value="a-z">A-Z</option>';
+            html += '<option value="z-a">Z-A</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'title':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📰 Title Settings</div>';
+            html += '<div style="margin-bottom: 12px;">';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
+            html += '<select id="titleType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="post-title">Post Title</option>';
+            html += '<option value="company-name">Company Name</option>';
+            html += '<option value="product-name">Product Name</option>';
+            html += '<option value="food">Food</option>';
+            html += '<option value="animal">Animal</option>';
+            html += '<option value="song-title">Song Title</option>';
+            html += '<option value="music-artist">Music Artist</option>';
+            html += '<option value="random-word">Random Word</option>';
+            html += '</select>';
+            html += '</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<select id="sort-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="random">Random</option>';
+            html += '<option value="a-z">A-Z</option>';
+            html += '<option value="z-a">Z-A</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'long_text':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📖 Long Text Settings</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Category</label>';
+            html += '<select id="textCategory-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="any">Any Category</option>';
+            html += '<option value="technology">Technology</option>';
+            html += '<option value="biography">Biography</option>';
+            html += '<option value="history">History</option>';
+            html += '<option value="nature">Nature</option>';
+            html += '<option value="medicine">Medicine</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'avatar':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">👤 Avatar Settings</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
+            html += '<select id="avatarType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="any">Any Avatar</option>';
+            html += '<option value="real-people">Real People</option>';
+            html += '<option value="male">Only Male</option>';
+            html += '<option value="female">Only Female</option>';
+            html += '<option value="robots">Robots</option>';
+            html += '<option value="cartoon">Cartoon</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'image':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🖼️ Image Settings</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Category</label>';
+            html += '<select id="imageCategory-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="any">Any Category</option>';
+            html += '<option value="products">Products</option>';
+            html += '<option value="landscapes">Landscapes</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+            
+        case 'color':
+            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🎨 Color Settings</div>';
+            html += '<div>';
+            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
+            html += '<select id="colorType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
+            html += '<option value="solid">Solid Color</option>';
+            html += '<option value="gradient">Gradient</option>';
+            html += '</select>';
+            html += '</div>';
+            break;
+    }
+    
+    return html;
+}
+
+// Store configuration settings for each mapping
+var configSettings = {};
 
 // Configuration storage key for integer settings
 var INTEGER_SETTINGS_STORAGE_KEY = 'integerSettings';
@@ -1012,27 +1284,35 @@ function populateIntegerControlsFromSettings() {
     }
 }
 
-// Data generation using faker.js and external APIs
+// Enhanced data generation function
 function generateData(dataTypeId, count, layerName) {
-    // Check if bundled Faker.js is available
-    if (window.fakerLoaded && window.faker) {
-        console.log('✅ Using bundled real Faker.js for data generation');
-        return Promise.resolve(generateDataWithFaker(dataTypeId, count, window.faker, layerName));
-    } else {
-        console.warn('⚠️ Bundled Faker.js not available, using fallback generators');
-        return Promise.resolve(generateDataFallback(dataTypeId, count, layerName));
-    }
-}
-
-// Generate data with Faker.js
-function generateDataWithFaker(dataTypeId, count, fakerLib, layerName) {
-    // Use custom array generation for integers
-    if (dataTypeId === 'integer') {
-        console.log('🔢 Using custom integer array generation for:', layerName, 'count:', count);
-        return generateCustomIntegerArray(count, layerName);
+    console.log('🔄 Generating data for:', dataTypeId, 'count:', count, 'layer:', layerName);
+    
+    // Handle special external API types first
+    if (dataTypeId === 'avatar_randomuser') {
+        return fetchRandomUserPhotos(count);
     }
     
-    // External API generators
+    if (dataTypeId === 'avatar_randomuser_male') {
+        return fetchRandomUserPhotos(count, 'male');
+    }
+    
+    if (dataTypeId === 'avatar_randomuser_female') {
+        return fetchRandomUserPhotos(count, 'female');
+    }
+    
+    if (dataTypeId === 'avatar_pravatar') {
+        return fetchPravatarPhotos(count);
+    }
+    
+    if (dataTypeId === 'avatar_multiavatar') {
+        return fetchMultiavatarPhotos(count);
+    }
+    
+    if (dataTypeId === 'avatar_robohash') {
+        return fetchRobohashPhotos(count);
+    }
+    
     if (dataTypeId === 'user_api') {
         return fetch('https://randomuser.me/api/?results=' + count)
             .then(function(response) { return response.json(); })
@@ -1043,12 +1323,7 @@ function generateDataWithFaker(dataTypeId, count, fakerLib, layerName) {
             })
             .catch(function(error) {
                 console.error('RandomUser API failed:', error);
-                // Fallback to faker
-                var fallback = [];
-                for (var i = 0; i < count; i++) {
-                    fallback.push(window.faker ? window.faker.person.fullName() : 'API Error');
-                }
-                return fallback;
+                return Array(count).fill('API Error');
             });
     }
     
@@ -1056,159 +1331,17 @@ function generateDataWithFaker(dataTypeId, count, fakerLib, layerName) {
         return fetch('https://dummyjson.com/products?limit=' + Math.min(count, 100))
             .then(function(response) { return response.json(); })
             .then(function(data) {
-                var products = data.products.map(function(product) {
-                    return product.title;
-                });
-                // Repeat if we need more than available
-                var result = [];
+                var results = [];
                 for (var i = 0; i < count; i++) {
-                    result.push(products[i % products.length]);
+                    results.push(data.products[i % data.products.length].title);
                 }
-                return result;
+                return results;
             })
             .catch(function(error) {
                 console.error('DummyJSON API failed:', error);
-                // Fallback to faker
-                var fallback = [];
-                for (var i = 0; i < count; i++) {
-                    fallback.push(window.faker ? window.faker.commerce.productName() : 'API Error');
-                }
-                return fallback;
+                return Array(count).fill('API Error');
             });
     }
-    
-    if (dataTypeId === 'avatar_randomuser') {
-        // Mixed gender real people photos
-        console.log('👥 Fetching mixed gender real people photos');
-        return fetchRandomUserPhotos(count);
-    }
-    
-    if (dataTypeId === 'avatar_randomuser_male') {
-        // Male-only real people photos
-        console.log('👨 Fetching male real people photos');
-        return fetchRandomUserPhotos(count, 'male');
-    }
-    
-    if (dataTypeId === 'avatar_randomuser_female') {
-        // Female-only real people photos
-        console.log('👩 Fetching female real people photos');
-        return fetchRandomUserPhotos(count, 'female');
-    }
-    
-    if (dataTypeId === 'avatar_pravatar') {
-        // Pravatar real profile photos
-        console.log('👤 Fetching Pravatar profile photos');
-        return fetchPravatarPhotos(count);
-    }
-    
-    if (dataTypeId === 'avatar_multiavatar') {
-        // Multiavatar unique generated avatars
-        console.log('🎨 Generating Multiavatar unique avatars');
-        return fetchMultiavatarPhotos(count);
-    }
-    
-    if (dataTypeId === 'avatar_robohash') {
-        // RoboHash robot/monster avatars
-        console.log('🤖 Generating RoboHash robot avatars');
-        return fetchRobohashPhotos(count);
-    }
-    
-         // Helper function to generate DiceBear avatars
-     function generateDiceBearAvatars(count) {
-         var results = [];
-         var styles = ['avataaars', 'big-smile', 'fun-emoji', 'personas'];
-         for (var i = 0; i < count; i++) {
-             var style = styles[Math.floor(Math.random() * styles.length)];
-             var seed = Math.random().toString(36).substring(7);
-             results.push('https://api.dicebear.com/7.x/' + style + '/png?seed=' + seed + '&backgroundColor=transparent&size=200');
-         }
-         console.log('✅ Generated', results.length, 'DiceBear avatars as fallback');
-         return results;
-     }
-     
-     // RandomUser.me photos with gender selection and CORS proxy
-     function fetchRandomUserPhotos(count, gender) {
-         return new Promise(function(resolve) {
-             var genderParam = gender ? '&gender=' + gender : '';
-             var apiUrl = 'https://randomuser.me/api/?results=' + count + '&inc=picture' + genderParam;
-             
-             console.log('🔄 Trying RandomUser.me directly...');
-             fetch(apiUrl)
-                 .then(function(response) {
-                     if (!response.ok) throw new Error('RandomUser direct failed');
-                     return response.json();
-                 })
-                 .then(function(data) {
-                     var results = data.results.map(function(user) {
-                         return user.picture.large;
-                     });
-                     console.log('✅ RandomUser.me direct SUCCESS!');
-                     resolve(results);
-                 })
-                 .catch(function(error) {
-                     console.log('❌ Direct failed, trying CORS proxy...');
-                     fetch('https://corsproxy.io/?' + encodeURIComponent(apiUrl))
-                         .then(function(response) {
-                             if (!response.ok) throw new Error('CORS proxy failed');
-                             return response.json();
-                         })
-                         .then(function(data) {
-                             var results = data.results.map(function(user) {
-                                 return user.picture.large;
-                             });
-                             console.log('✅ RandomUser.me CORS proxy SUCCESS!');
-                             resolve(results);
-                         })
-                         .catch(function(proxyError) {
-                             console.log('❌ All RandomUser methods failed, using DiceBear fallback');
-                             resolve(generateDiceBearAvatars(count));
-                         });
-                 });
-         });
-     }
-     
-     // Pravatar real profile photos with CORS proxy
-     function fetchPravatarPhotos(count) {
-         return new Promise(function(resolve) {
-             var results = [];
-             for (var i = 0; i < count; i++) {
-                 var userId = Math.floor(Math.random() * 70) + 1; // They have about 70 users
-                 results.push('https://i.pravatar.cc/200?img=' + userId);
-             }
-             console.log('✅ Generated', results.length, 'Pravatar URLs (will use CORS proxy if needed)');
-             resolve(results);
-         });
-     }
-     
-     // Multiavatar unique generated avatars with CORS proxy
-     function fetchMultiavatarPhotos(count) {
-         return new Promise(function(resolve) {
-             var results = [];
-             for (var i = 0; i < count; i++) {
-                 var seed = Math.random().toString(36).substring(7);
-                 results.push('https://api.multiavatar.com/' + seed + '.png');
-             }
-             console.log('✅ Generated', results.length, 'Multiavatar URLs (will use CORS proxy if needed)');
-             resolve(results);
-         });
-     }
-     
-     // RoboHash robot/monster avatars with CORS proxy
-     function fetchRobohashPhotos(count) {
-         return new Promise(function(resolve) {
-             var results = [];
-             for (var i = 0; i < count; i++) {
-                 var seed = Math.random().toString(36).substring(7);
-                 var sets = ['set1', 'set2', 'set3', 'set4']; // robots, monsters, heads, cats
-                 var randomSet = sets[Math.floor(Math.random() * sets.length)];
-                 results.push('https://robohash.org/' + seed + '.png?size=200x200&set=' + randomSet);
-             }
-             console.log('✅ Generated', results.length, 'RoboHash URLs (will use CORS proxy if needed)');
-             resolve(results);
-         });
-     }
-    
-
     
     if (dataTypeId === 'product_image') {
         return fetch('https://dummyjson.com/products?limit=' + Math.min(count, 100))
@@ -1217,7 +1350,6 @@ function generateDataWithFaker(dataTypeId, count, fakerLib, layerName) {
                 var images = data.products.map(function(product) {
                     return product.thumbnail;
                 });
-                // Repeat if we need more than available
                 var result = [];
                 for (var i = 0; i < count; i++) {
                     result.push(images[i % images.length]);
@@ -1226,7 +1358,6 @@ function generateDataWithFaker(dataTypeId, count, fakerLib, layerName) {
             })
             .catch(function(error) {
                 console.error('DummyJSON API failed:', error);
-                // Fallback to Picsum
                 var fallback = [];
                 for (var i = 0; i < count; i++) {
                     fallback.push('https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000));
@@ -1235,166 +1366,828 @@ function generateDataWithFaker(dataTypeId, count, fakerLib, layerName) {
             });
     }
     
-
-    
-    // Static URL generators (no API calls needed)
-    var staticGenerators = {
-        avatar_dicebear: function() {
-            // Use PNG format instead of SVG because Figma doesn't support SVG in createImage()
-            return 'https://api.dicebear.com/7.x/avataaars/png?seed=' + Math.random().toString(36).substring(7) + '&size=200&backgroundColor=transparent';
-        },
-        image_picsum: function() {
-            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000);
-        },
-        image_unsplash: function() {
-            // Using Lorem Picsum as fallback since Unsplash Source API was shut down in June 2024
-            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
-        },
-        // Enhanced Unsplash categories using Lorem Picsum
-        unsplash_nature: function() {
-            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
-        },
-        unsplash_people: function() {
-            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
-        },
-        unsplash_business: function() {
-            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
-        },
-        unsplash_food: function() {
-            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
-        },
-        unsplash_travel: function() {
-            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
-        },
-        unsplash_tech: function() {
-            return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 10000);
-        }
-    };
-    
-    if (staticGenerators[dataTypeId]) {
-        console.log('🖼️ Using static image generator for:', dataTypeId);
+    // Handle new enhanced data types
+    if (window.fakerLoaded && window.faker) {
+        console.log('🎲 Using enhanced Faker.js generation for:', dataTypeId);
+        
         var results = [];
         for (var i = 0; i < count; i++) {
-            results.push(staticGenerators[dataTypeId]());
+            var value = generateSingleValue(dataTypeId, layerName);
+            results.push(String(value));
         }
-        console.log('✅ Generated', results.length, 'image URLs:', results.slice(0, 3));
+        
+        // Apply sorting if configured
+        var config = getConfigForLayer(dataTypeId, layerName);
+        if (config && config.sorting && config.sorting !== 'random') {
+            results = applySorting(results, config.sorting, dataTypeId);
+        }
+        
+        console.log('✅ Generated', results.length, 'items for:', dataTypeId);
+        console.log('Sample data:', results.slice(0, 3));
         return Promise.resolve(results);
     }
     
-    // Faker.js generators
-    var generators = {
-        name: function() { return window.faker.person.fullName(); },
-        username: function() { return window.faker.internet.userName(); },
-        city: function() { return window.faker.location.city(); },
-        country: function() { return window.faker.location.country(); },
-        company: function() { return window.faker.company.name(); },
-        email: function() { return window.faker.internet.email(); },
-        product_name: function() { return window.faker.commerce.productName(); },
-        post_title: function() { return window.faker.lorem.sentence(); },
-        description: function() { return window.faker.lorem.paragraph(); },
-        lorem: function() { return window.faker.lorem.words(); },
-        integer: function() { 
-            // Custom integer generation - replaced faker.js
-            return generateCustomInteger();
-        },
-        decimal: function() { return window.faker.number.float({ min: 0, max: 100, fractionDigits: 2 }); },
-        currency: function() { return '$' + window.faker.finance.amount(); },
-        date: function() { return window.faker.date.anytime().toLocaleDateString(); },
-        phone: function() { return window.faker.phone.number(); },
-        percentage: function() { return window.faker.number.int({ min: 0, max: 100 }) + '%'; }
-    };
-    
-    var generator = generators[dataTypeId];
-    if (generator) {
-        var results = [];
-        for (var i = 0; i < count; i++) {
-            results.push(String(generator()));
-        }
-        console.log('✅ Successfully generated', results.length, 'items using REAL Faker.js data for:', dataTypeId);
-        console.log('Sample data:', results.slice(0, 3));
-        return results;
-    }
-    
-    // If data type not supported with Faker.js, use fallback
-    return generateDataFallback(dataTypeId, count);
+    // Fallback if Faker.js is not loaded
+    return Promise.resolve(generateDataFallback(dataTypeId, count, layerName));
 }
 
-// Fallback data generation without Faker.js
-function generateDataFallback(dataTypeId, count, layerName) {
-    // Use custom array generation for integers
-    if (dataTypeId === 'integer') {
-        console.log('🔢 Using custom integer array generation (fallback) for:', layerName, 'count:', count);
-        return generateCustomIntegerArray(count, layerName);
-    }
-    var results = [];
+// Generate a single value based on data type ID and layer configuration
+function generateSingleValue(dataTypeId, layerName) {
+    // Get configuration for this layer if available
+    var config = getConfigForLayer(dataTypeId, layerName);
     
-    // Simple hardcoded data generators (fallback when Faker.js isn't available)
-    var fallbackGenerators = {
-        name: function() { 
-            var firstNames = ['John', 'Jane', 'Alex', 'Sarah', 'Mike', 'Emma', 'David', 'Lisa'];
-            var lastNames = ['Smith', 'Johnson', 'Brown', 'Wilson', 'Davis', 'Miller', 'Moore', 'Taylor'];
-            return firstNames[Math.floor(Math.random() * firstNames.length)] + ' ' + 
-                   lastNames[Math.floor(Math.random() * lastNames.length)];
-        },
-        username: function() { return 'user' + Math.floor(Math.random() * 10000); },
-        city: function() { 
-            var cities = ['New York', 'London', 'Paris', 'Tokyo', 'Sydney', 'Berlin', 'Toronto', 'San Francisco'];
-            return cities[Math.floor(Math.random() * cities.length)];
-        },
-        country: function() { 
-            var countries = ['United States', 'United Kingdom', 'France', 'Japan', 'Australia', 'Germany', 'Canada'];
-            return countries[Math.floor(Math.random() * countries.length)];
-        },
-        company: function() { 
-            var companies = ['TechCorp', 'InnovateLabs', 'FutureSoft', 'DesignStudio', 'BuildCo'];
-            return companies[Math.floor(Math.random() * companies.length)];
-        },
-        email: function() { 
-            var names = ['john', 'jane', 'alex', 'sarah'];
-            var domains = ['example.com', 'test.org', 'demo.net'];
-            return names[Math.floor(Math.random() * names.length)] + '@' + 
-                   domains[Math.floor(Math.random() * domains.length)];
-        },
-        product_name: function() { 
-            var products = ['Awesome Widget', 'Super Tool', 'Magic Device', 'Smart Gadget', 'Pro Equipment'];
-            return products[Math.floor(Math.random() * products.length)];
-        },
-        post_title: function() { 
-            var titles = ['How to Build Amazing Products', 'The Future of Design', '10 Tips for Success', 'Getting Started with Code'];
-            return titles[Math.floor(Math.random() * titles.length)];
-        },
-        description: function() { return 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.'; },
-        lorem: function() { 
-            var words = ['lorem ipsum', 'dolor sit amet', 'consectetur adipiscing', 'elit sed do', 'eiusmod tempor'];
-            return words[Math.floor(Math.random() * words.length)];
-        },
-        integer: function() { 
-            // Custom integer generation - replaced faker.js
+    switch (dataTypeId) {
+        // NUMBERS
+        case 'custom':
+            var min = config.min || 1;
+            var max = config.max || 1000;
+            var decimals = config.decimals || false;
+            var format = config.format || false;
+            var prefix = config.prefix || '';
+            
+            var value = Math.random() * (max - min) + min;
+            
+            if (!decimals) {
+                value = Math.floor(value);
+            } else {
+                value = Math.round(value * 100) / 100;
+            }
+            
+            var result = value.toString();
+            
+            if (format && value >= 1000) {
+                result = value.toLocaleString();
+            }
+            
+            if (decimals && !result.includes('.')) {
+                result += '.00';
+            }
+            
+            return prefix + result;
+            
+        case 'percentage':
+            var decimals = config.decimals || false;
+            var value = Math.random() * 100;
+            
+            if (!decimals) {
+                value = Math.floor(value);
+            } else {
+                value = Math.round(value * 100) / 100;
+            }
+            
+            return value + '%';
+            
+        case 'phone':
+            var format = config.phoneFormat || 'human';
+            
+            switch (format) {
+                case 'national':
+                    return window.faker.phone.number('###-###-####');
+                case 'international':
+                    return window.faker.phone.number('+1-###-###-####');
+                default: // human
+                    return window.faker.phone.number();
+            }
+            
+        case 'date':
+            var format = config.dateFormat || 'MM/DD/YYYY';
+            var date = window.faker.date.anytime();
+            
+            switch (format) {
+                case 'DD/MM/YYYY':
+                    return date.toLocaleDateString('en-GB');
+                case 'YYYY/MM/DD':
+                    return date.toISOString().split('T')[0];
+                case 'year':
+                    return date.getFullYear().toString();
+                case 'month':
+                    return date.toLocaleDateString('en-US', { month: 'long' });
+                case 'weekday':
+                    return date.toLocaleDateString('en-US', { weekday: 'long' });
+                default: // MM/DD/YYYY
+                    return date.toLocaleDateString('en-US');
+            }
+            
+        case 'finances':
+            var type = config.financeType || 'credit-card';
+            
+            switch (type) {
+                case 'account-number':
+                    // Use fallback if function doesn't exist
+                    if (window.faker.finance.accountNumber) {
+                        return window.faker.finance.accountNumber();
+                    } else {
+                        // Generate simple account number fallback
+                        return Math.floor(Math.random() * 900000000) + 100000000;
+                    }
+                case 'bitcoin':
+                    // Use fallback if function doesn't exist
+                    if (window.faker.finance.bitcoinAddress) {
+                        return window.faker.finance.bitcoinAddress();
+                    } else {
+                        // Generate simple Bitcoin address fallback
+                        var chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+                        var result = '1';
+                        for (var i = 0; i < 33; i++) {
+                            result += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+                        return result;
+                    }
+                case 'iban':
+                    // Use fallback if function doesn't exist
+                    if (window.faker.finance.iban) {
+                        return window.faker.finance.iban();
+                    } else {
+                        // Generate simple IBAN fallback
+                        var countryCode = ['DE', 'FR', 'ES', 'IT', 'GB'][Math.floor(Math.random() * 5)];
+                        var checkDigits = Math.floor(Math.random() * 90) + 10;
+                        var bankCode = Math.floor(Math.random() * 90000000) + 10000000;
+                        return countryCode + checkDigits + bankCode;
+                    }
+                default: // credit-card
+                    // Use fallback if function doesn't exist
+                    var cardNumber;
+                    if (window.faker.finance.creditCardNumber) {
+                        cardNumber = window.faker.finance.creditCardNumber();
+                    } else {
+                        // Generate simple credit card number fallback
+                        var prefixes = ['4', '5', '37', '6'];
+                        var prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+                        cardNumber = prefix;
+                        while (cardNumber.length < 16) {
+                            cardNumber += Math.floor(Math.random() * 10);
+                        }
+                        cardNumber = cardNumber.substring(0, 16);
+                    }
+                    
+                    // Format credit card number with spaces every 4 digits
+                    return cardNumber.replace(/(.{4})/g, '$1 ').trim();
+            }
+            
+        // TEXT
+        case 'person':
+            var type = config.personType || 'full-name';
+            var prefix = config.customPrefix || '';
+            var suffix = config.customSuffix || '';
+            
+            var result = '';
+            
+            switch (type) {
+                case 'first-name':
+                    result = window.faker.person.firstName();
+                    break;
+                case 'last-name':
+                    result = window.faker.person.lastName();
+                    break;
+                case 'username':
+                    result = window.faker.internet.userName();
+                    break;
+                case 'gender':
+                    result = window.faker.person.gender();
+                    break;
+                case 'job-title':
+                    result = window.faker.person.jobTitle();
+                    break;
+                case 'password':
+                    result = window.faker.internet.password();
+                    break;
+                default: // full-name
+                    result = window.faker.person.fullName();
+            }
+            
+            return prefix + result + suffix;
+            
+        case 'email':
+            var provider = config.provider;
+            
+            if (provider) {
+                return window.faker.internet.email({ provider });
+            }
+            
+            return window.faker.internet.email();
+            
+        case 'website':
+            var domain = config.domain;
+            var includeProtocol = config.includeProtocol !== false; // Default to true if not specified
+            
+            try {
+                var generatedUrl;
+                
+                if (domain) {
+                    // Get a base URL and replace the domain
+                    var baseUrl = window.faker.internet.url();
+                    // Replace the existing domain with the custom one
+                    var urlParts = baseUrl.split('://');
+                    var protocol = urlParts[0];
+                    var domainPart = urlParts[1].split('/')[0];
+                    var path = urlParts[1].substring(domainPart.length);
+                    
+                    if (includeProtocol) {
+                        generatedUrl = protocol + '://' + window.faker.internet.domainWord() + domain + path;
+                    } else {
+                        generatedUrl = window.faker.internet.domainWord() + domain + path;
+                    }
+                } else {
+                    var baseUrl = window.faker.internet.url();
+                    if (includeProtocol) {
+                        generatedUrl = baseUrl;
+                    } else {
+                        // Remove protocol from URL
+                        generatedUrl = baseUrl.replace(/^https?:\/\//, '');
+                    }
+                }
+                
+                return generatedUrl;
+            } catch (error) {
+                // Fallback website generation
+                var domains = ['.com', '.org', '.net', '.io', '.co'];
+                var subdomains = ['www', 'app', 'blog', 'shop', 'store', 'news'];
+                var words = ['tech', 'digital', 'creative', 'smart', 'future', 'global', 'rapid', 'blue', 'green', 'nova'];
+                
+                var subdomain = subdomains[Math.floor(Math.random() * subdomains.length)];
+                var word = words[Math.floor(Math.random() * words.length)];
+                var domainExt = domain || domains[Math.floor(Math.random() * domains.length)];
+                
+                var websiteUrl = subdomain + '.' + word + domainExt;
+                
+                if (includeProtocol) {
+                    return 'https://' + websiteUrl;
+                } else {
+                    return websiteUrl;
+                }
+            }
+            
+        case 'location':
+            var type = config.locationType || 'city';
+            
+            switch (type) {
+                case 'country':
+                    return window.faker.location.country();
+                case 'full-address':
+                    // Create full address with fallbacks
+                    try {
+                        return window.faker.location.streetAddress() + ', ' + window.faker.location.city() + ', ' + window.faker.location.state();
+                    } catch (error) {
+                        var streetNumbers = [123, 456, 789, 1001, 2345];
+                        var streetNames = ['Main St', 'Oak Ave', 'First St', 'Park Dr', 'Elm St', 'Maple Ave', 'Cedar Ln', 'Pine St'];
+                        var cities = ['Springfield', 'Franklin', 'Georgetown', 'Madison', 'Riverside'];
+                        var states = ['CA', 'NY', 'TX', 'FL', 'IL'];
+                        
+                        var streetNum = streetNumbers[Math.floor(Math.random() * streetNumbers.length)];
+                        var streetName = streetNames[Math.floor(Math.random() * streetNames.length)];
+                        var city = cities[Math.floor(Math.random() * cities.length)];
+                        var state = states[Math.floor(Math.random() * states.length)];
+                        
+                        return streetNum + ' ' + streetName + ', ' + city + ', ' + state;
+                    }
+                case 'street-address':
+                    // Create street address with fallback
+                    try {
+                        return window.faker.location.streetAddress();
+                    } catch (error) {
+                        var streetNumbers = [123, 456, 789, 1001, 2345, 567, 890, 1234];
+                        var streetNames = ['Main St', 'Oak Ave', 'First St', 'Park Dr', 'Elm St', 'Maple Ave', 'Cedar Ln', 'Pine St', 'Broad St', 'Church St'];
+                        
+                        var streetNum = streetNumbers[Math.floor(Math.random() * streetNumbers.length)];
+                        var streetName = streetNames[Math.floor(Math.random() * streetNames.length)];
+                        
+                        return streetNum + ' ' + streetName;
+                    }
+                case 'zip-code':
+                    // Create ZIP code with fallback
+                    try {
+                        return window.faker.location.zipCode();
+                    } catch (error) {
+                        var zip1 = Math.floor(Math.random() * 90000) + 10000; // 5-digit ZIP
+                        return zip1.toString();
+                    }
+                case 'country-code':
+                    // Create country code with fallback
+                    try {
+                        return window.faker.location.countryCode();
+                    } catch (error) {
+                        var countryCodes = ['US', 'CA', 'UK', 'DE', 'FR', 'IT', 'ES', 'JP', 'AU', 'BR', 'IN', 'CN', 'MX', 'AR', 'NL'];
+                        return countryCodes[Math.floor(Math.random() * countryCodes.length)];
+                    }
+                case 'coordinates':
+                    // Create coordinates with fallback
+                    try {
+                        return window.faker.location.latitude() + ', ' + window.faker.location.longitude();
+                    } catch (error) {
+                        var lat = (Math.random() * 180 - 90).toFixed(6); // -90 to 90
+                        var lon = (Math.random() * 360 - 180).toFixed(6); // -180 to 180
+                        return lat + ', ' + lon;
+                    }
+                default: // city
+                    return window.faker.location.city();
+            }
+            
+        case 'title':
+            var type = config.titleType || 'post-title';
+            
+            switch (type) {
+                case 'company-name':
+                    return window.faker.company.name();
+                case 'product-name':
+                    return window.faker.commerce.productName();
+                case 'food':
+                    // Generate food names
+                    var foods = ['Pizza Margherita', 'Chicken Caesar Salad', 'Beef Tacos', 'Salmon Teriyaki', 'Mushroom Risotto', 'Thai Green Curry', 'BBQ Pulled Pork', 'Vegetable Stir Fry', 'Chocolate Brownies', 'Apple Pie', 'Greek Gyros', 'Spaghetti Carbonara', 'Fish and Chips', 'Chicken Tikka Masala', 'French Onion Soup'];
+                    return foods[Math.floor(Math.random() * foods.length)];
+                case 'animal':
+                    // Generate animal names with fallback
+                    if (window.faker.animal && window.faker.animal.type) {
+                        return window.faker.animal.type();
+                    } else {
+                        var animals = ['Lion', 'Tiger', 'Elephant', 'Giraffe', 'Zebra', 'Panda', 'Kangaroo', 'Dolphin', 'Eagle', 'Wolf', 'Bear', 'Fox', 'Rabbit', 'Deer', 'Monkey'];
+                        return animals[Math.floor(Math.random() * animals.length)];
+                    }
+                case 'song-title':
+                    // Generate song titles with a better format
+                    var songTitles = ['Dancing in the Moonlight', 'Electric Dreams', 'Sunset Boulevard', 'City of Stars', 'Wild Horses', 'Purple Rain', 'Golden Hour', 'Sweet Caroline', 'Bohemian Rhapsody', 'Imagine Dragons', 'Perfect Storm', 'Counting Stars', 'Rolling in the Deep', 'Someone Like You', 'Shape of You'];
+                    return songTitles[Math.floor(Math.random() * songTitles.length)];
+                case 'music-artist':
+                    // Generate music artist names
+                    var artists = ['The Midnight Stars', 'Luna Echo', 'Electric Pulse', 'Neon Dreams', 'Acoustic Soul', 'Digital Symphony', 'Velvet Storm', 'Crystal Waters', 'Iron Mountain', 'Silver Moon', 'Golden Wave', 'Red Horizon', 'Blue Thunder', 'Green Valley', 'Purple Sky'];
+                    return artists[Math.floor(Math.random() * artists.length)];
+                case 'random-word':
+                    // Generate random words
+                    if (window.faker.lorem && window.faker.lorem.word) {
+                        return window.faker.lorem.word();
+                    } else {
+                        var words = ['Innovation', 'Discovery', 'Adventure', 'Journey', 'Harmony', 'Serenity', 'Courage', 'Wisdom', 'Freedom', 'Balance', 'Energy', 'Passion', 'Growth', 'Success', 'Wonder'];
+                        return words[Math.floor(Math.random() * words.length)];
+                    }
+                default: // post-title
+                    // Use post titles from JSON data
+                    var postTitles = [
+                        "10 Life-Changing Habits You Should Start Today",
+                        "The Ultimate Guide to Remote Work Productivity",
+                        "Why Sustainable Living Is Easier Than You Think",
+                        "Breaking Down the Latest Tech Trends for 2024",
+                        "How to Master the Art of Digital Minimalism",
+                        "The Science Behind Building Better Relationships",
+                        "Exploring Hidden Gems in Your Own City",
+                        "Simple Strategies for Effective Time Management",
+                        "The Psychology of Success: What Really Matters",
+                        "Creating a Morning Routine That Actually Works",
+                        "Debunking Common Myths About Healthy Eating",
+                        "The Future of Work: Adapting to Change",
+                        "Mindfulness in the Digital Age: Finding Balance",
+                        "Travel Tips That Will Transform Your Adventures",
+                        "Building Confidence Through Small Daily Actions"
+                    ];
+                    return postTitles[Math.floor(Math.random() * postTitles.length)];
+            }
+            
+        case 'long_text':
+            var category = config.textCategory || 'any';
+            
+            // Simple long text samples (could be expanded with external dictionary)
+            var longTexts = {
+                technology: [
+                    "Artificial intelligence has transformed the way we interact with technology, enabling machines to learn from data and make intelligent decisions.",
+                    "Cloud computing has fundamentally changed how businesses operate, providing scalable, on-demand access to computing resources.",
+                    "Cybersecurity remains one of the most critical challenges in our digital age, as cyber threats continue to evolve in sophistication."
+                ],
+                biography: [
+                    "Born in a small coastal town, Maria discovered her passion for marine biology at the age of eight when she found her first sea turtle nest.",
+                    "Growing up in the bustling streets of Mumbai, Raj learned the value of hard work and perseverance from his grandmother.",
+                    "Sarah's journey from a shy, introverted child to a renowned public speaker began with a single act of courage."
+                ],
+                history: [
+                    "The fall of the Berlin Wall in 1989 marked not just the end of a physical barrier, but the symbolic collapse of the ideological divide.",
+                    "The Industrial Revolution of the 18th and 19th centuries fundamentally transformed human society.",
+                    "The ancient Silk Road was more than just a trade route; it was a cultural highway that connected civilizations."
+                ],
+                nature: [
+                    "Deep within the Amazon rainforest, an intricate ecosystem thrives in a delicate balance that has remained largely unchanged for millions of years.",
+                    "The migration of monarch butterflies represents one of nature's most remarkable journeys.",
+                    "Coral reefs, often called the rainforests of the sea, support approximately 25% of all marine species."
+                ],
+                medicine: [
+                    "The development of vaccines represents one of medicine's greatest triumphs, saving millions of lives.",
+                    "Gene therapy holds tremendous promise for treating previously incurable genetic disorders.",
+                    "The discovery of antibiotics fundamentally changed the practice of medicine."
+                ]
+            };
+            
+            if (category === 'any') {
+                var allTexts = Object.values(longTexts).flat();
+                return allTexts[Math.floor(Math.random() * allTexts.length)];
+            }
+            
+            var categoryTexts = longTexts[category];
+            if (categoryTexts) {
+                return categoryTexts[Math.floor(Math.random() * categoryTexts.length)];
+            }
+            
+            return window.faker.lorem.paragraphs(2);
+            
+        // MEDIA
+        case 'avatar':
+            var type = config.avatarType || 'any';
+            
+            switch (type) {
+                case 'real-people':
+                    // Use existing RandomUser function logic
+                    var gender = Math.random() > 0.5 ? 'men' : 'women';
+                    var id = Math.floor(Math.random() * 99) + 1;
+                    return 'https://randomuser.me/api/portraits/' + gender + '/' + id + '.jpg';
+                case 'male':
+                    var id = Math.floor(Math.random() * 99) + 1;
+                    return 'https://randomuser.me/api/portraits/men/' + id + '.jpg';
+                case 'female':
+                    var id = Math.floor(Math.random() * 99) + 1;
+                    return 'https://randomuser.me/api/portraits/women/' + id + '.jpg';
+                case 'robots':
+                    var seed = Math.random().toString(36).substring(7);
+                    return 'https://robohash.org/' + seed + '.png?size=200x200&set=set1';
+                case 'cartoon':
+                    var seed = Math.random().toString(36).substring(7);
+                    return 'https://api.dicebear.com/7.x/avataaars/png?seed=' + seed + '&size=200&backgroundColor=transparent';
+                default: // any
+                    var types = ['real-people', 'robots', 'cartoon'];
+                    var randomType = types[Math.floor(Math.random() * types.length)];
+                    // Directly generate based on type to avoid recursion
+                    switch (randomType) {
+                        case 'real-people':
+                            var gender = Math.random() > 0.5 ? 'men' : 'women';
+                            var id = Math.floor(Math.random() * 99) + 1;
+                            return 'https://randomuser.me/api/portraits/' + gender + '/' + id + '.jpg';
+                        case 'robots':
+                            var seed = Math.random().toString(36).substring(7);
+                            return 'https://robohash.org/' + seed + '.png?size=200x200&set=set1';
+                        case 'cartoon':
+                            var seed = Math.random().toString(36).substring(7);
+                            return 'https://api.dicebear.com/7.x/avataaars/png?seed=' + seed + '&size=200&backgroundColor=transparent';
+                    }
+            }
+            
+        case 'image':
+            var category = config.imageCategory || 'any';
+            
+            switch (category) {
+                case 'products':
+                    return 'https://picsum.photos/400/300?random=' + window.faker.number.int({ min: 1, max: 1000 });
+                case 'landscapes':
+                    return 'https://picsum.photos/400/300?random=' + window.faker.number.int({ min: 1, max: 1000 });
+                default: // any
+                    return 'https://picsum.photos/400/300?random=' + window.faker.number.int({ min: 1, max: 1000 });
+            }
+            
+        case 'color':
+            var type = config.colorType || 'solid';
+            
+            // Generate random RGB color manually since faker.color.rgb() might not be available
+            function generateRandomColor() {
+                var r = Math.floor(Math.random() * 256);
+                var g = Math.floor(Math.random() * 256);
+                var b = Math.floor(Math.random() * 256);
+                return 'rgb(' + r + ', ' + g + ', ' + b + ')';
+            }
+            
+            if (type === 'gradient') {
+                var color1 = generateRandomColor();
+                var color2 = generateRandomColor();
+                return 'linear-gradient(45deg, ' + color1 + ', ' + color2 + ')';
+            }
+            
+            return generateRandomColor();
+            
+        // Legacy data types for backward compatibility
+        case 'name':
+            return window.faker.person.fullName();
+        case 'username':
+            return window.faker.internet.userName();
+        case 'city':
+            return window.faker.location.city();
+        case 'country':
+            return window.faker.location.country();
+        case 'company':
+            return window.faker.company.name();
+        case 'email':
+            return window.faker.internet.email();
+        case 'product_name':
+            return window.faker.commerce.productName();
+        case 'post_title':
+            return window.faker.lorem.sentence();
+        case 'description':
+            return window.faker.lorem.paragraph();
+        case 'lorem':
+            return window.faker.lorem.words();
+        case 'integer':
             return generateCustomInteger();
-        },
-        decimal: function() { return (Math.random() * 100).toFixed(2); },
-        currency: function() { return '$' + (Math.random() * 999 + 1).toFixed(2); },
-        date: function() { return new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toLocaleDateString(); },
-        phone: function() { return '+1-' + Math.floor(Math.random() * 900 + 100) + '-' + Math.floor(Math.random() * 900 + 100) + '-' + Math.floor(Math.random() * 9000 + 1000); },
-        percentage: function() { return Math.floor(Math.random() * 100) + '%'; }
-    };
-    
-    var generator = fallbackGenerators[dataTypeId];
-    if (generator) {
-        for (var i = 0; i < count; i++) {
-            results.push(String(generator()));
-        }
-        console.log('⚠️ Generated', results.length, 'items using FALLBACK generators (not Faker.js) for:', dataTypeId);
-        console.log('Sample data:', results.slice(0, 3));
-        return results;
+        case 'decimal':
+            return window.faker.number.float({ min: 0, max: 100, fractionDigits: 2 });
+        case 'currency':
+            return '$' + window.faker.finance.amount();
+        case 'date':
+            return window.faker.date.anytime().toLocaleDateString();
+        case 'phone':
+            return window.faker.phone.number();
+        case 'percentage':
+            return window.faker.number.int({ min: 0, max: 100 }) + '%';
+        case 'avatar_dicebear':
+            return 'https://api.dicebear.com/7.x/avataaars/png?seed=' + window.faker.string.uuid() + '&size=200&backgroundColor=transparent';
+        case 'image_picsum':
+            return 'https://picsum.photos/400/300?random=' + window.faker.number.int({ min: 1, max: 1000 });
+            
+        default:
+            return 'Data type not supported: ' + dataTypeId;
     }
-    
-    // If no generator found, return placeholder
-    for (var i = 0; i < count; i++) {
-        results.push('Data type not supported: ' + dataTypeId);
-    }
-    return results;
 }
+
+// Apply sorting to data array based on sorting type and data type
+function applySorting(data, sortingType, dataTypeId) {
+    if (sortingType === 'random' || !sortingType) {
+        return data; // Already random
+    }
+    
+    var sortedData = data.slice(); // Create a copy
+    
+    switch (sortingType) {
+        case 'ascending':
+            sortedData.sort(function(a, b) {
+                // Check if values are numbers
+                var numA = parseFloat(a.replace(/[^0-9.-]/g, ''));
+                var numB = parseFloat(b.replace(/[^0-9.-]/g, ''));
+                
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return numA - numB;
+                }
+                
+                // Text comparison
+                return a.localeCompare(b);
+            });
+            break;
+            
+        case 'descending':
+            sortedData.sort(function(a, b) {
+                // Check if values are numbers
+                var numA = parseFloat(a.replace(/[^0-9.-]/g, ''));
+                var numB = parseFloat(b.replace(/[^0-9.-]/g, ''));
+                
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return numB - numA;
+                }
+                
+                // Text comparison
+                return b.localeCompare(a);
+            });
+            break;
+            
+        case 'a-z':
+            sortedData.sort(function(a, b) {
+                return a.localeCompare(b);
+            });
+            break;
+            
+        case 'z-a':
+            sortedData.sort(function(a, b) {
+                return b.localeCompare(a);
+            });
+            break;
+            
+        case 'recent':
+            // For dates, sort by most recent
+            if (dataTypeId === 'date') {
+                sortedData.sort(function(a, b) {
+                    // Check if it's a month name
+                    var months = ['january', 'february', 'march', 'april', 'may', 'june', 
+                                  'july', 'august', 'september', 'october', 'november', 'december'];
+                    var monthsShort = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+                                      'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                    
+                    var aLower = a.toLowerCase();
+                    var bLower = b.toLowerCase();
+                    
+                    // Check for month names (December to January order for "recent")
+                    var aMonthIndex = months.indexOf(aLower);
+                    var bMonthIndex = months.indexOf(bLower);
+                    if (aMonthIndex === -1) aMonthIndex = monthsShort.indexOf(aLower);
+                    if (bMonthIndex === -1) bMonthIndex = monthsShort.indexOf(bLower);
+                    
+                    if (aMonthIndex !== -1 && bMonthIndex !== -1) {
+                        // For months, recent = December to January (reverse month order)
+                        return (11 - bMonthIndex) - (11 - aMonthIndex);
+                    }
+                    
+                    // Check for weekday names
+                    var weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                    var weekdaysShort = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                    
+                    var aWeekIndex = weekdays.indexOf(aLower);
+                    var bWeekIndex = weekdays.indexOf(bLower);
+                    if (aWeekIndex === -1) aWeekIndex = weekdaysShort.indexOf(aLower);
+                    if (bWeekIndex === -1) bWeekIndex = weekdaysShort.indexOf(bLower);
+                    
+                    if (aWeekIndex !== -1 && bWeekIndex !== -1) {
+                        // For weekdays, recent = Sunday to Monday (normal order)
+                        return aWeekIndex - bWeekIndex;
+                    }
+                    
+                    // For full dates, parse and sort newest to oldest
+                    var dateA = new Date(a);
+                    var dateB = new Date(b);
+                    if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                        return dateB - dateA; // Newest first
+                    }
+                    
+                    // For year strings, sort highest to lowest
+                    var yearA = parseInt(a);
+                    var yearB = parseInt(b);
+                    if (!isNaN(yearA) && !isNaN(yearB)) {
+                        return yearB - yearA;
+                    }
+                    
+                    return 0;
+                });
+            }
+            break;
+            
+        case 'oldest':
+            // For dates, sort by oldest
+            if (dataTypeId === 'date') {
+                sortedData.sort(function(a, b) {
+                    // Check if it's a month name
+                    var months = ['january', 'february', 'march', 'april', 'may', 'june', 
+                                  'july', 'august', 'september', 'october', 'november', 'december'];
+                    var monthsShort = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+                                      'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                    
+                    var aLower = a.toLowerCase();
+                    var bLower = b.toLowerCase();
+                    
+                    // Check for month names (January to December order for "oldest")
+                    var aMonthIndex = months.indexOf(aLower);
+                    var bMonthIndex = months.indexOf(bLower);
+                    if (aMonthIndex === -1) aMonthIndex = monthsShort.indexOf(aLower);
+                    if (bMonthIndex === -1) bMonthIndex = monthsShort.indexOf(bLower);
+                    
+                    if (aMonthIndex !== -1 && bMonthIndex !== -1) {
+                        // For months, oldest = January to December (normal month order)
+                        return aMonthIndex - bMonthIndex;
+                    }
+                    
+                    // Check for weekday names
+                    var weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                    var weekdaysShort = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                    
+                    var aWeekIndex = weekdays.indexOf(aLower);
+                    var bWeekIndex = weekdays.indexOf(bLower);
+                    if (aWeekIndex === -1) aWeekIndex = weekdaysShort.indexOf(aLower);
+                    if (bWeekIndex === -1) bWeekIndex = weekdaysShort.indexOf(bLower);
+                    
+                    if (aWeekIndex !== -1 && bWeekIndex !== -1) {
+                        // For weekdays, oldest = Monday to Sunday (reverse order)
+                        return bWeekIndex - aWeekIndex;
+                    }
+                    
+                    // For full dates, parse and sort oldest to newest
+                    var dateA = new Date(a);
+                    var dateB = new Date(b);
+                    if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                        return dateA - dateB; // Oldest first
+                    }
+                    
+                    // For year strings, sort lowest to highest
+                    var yearA = parseInt(a);
+                    var yearB = parseInt(b);
+                    if (!isNaN(yearA) && !isNaN(yearB)) {
+                        return yearA - yearB;
+                    }
+                    
+                    return 0;
+                });
+            }
+            break;
+    }
+    
+    return sortedData;
+}
+
+// Set up preview functionality for custom numbers
+function setupCustomNumberPreview(layerName) {
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    
+    function updatePreview() {
+        try {
+            var minInput = document.getElementById('min-' + cleanLayerName);
+            var maxInput = document.getElementById('max-' + cleanLayerName);
+            var decimalsInput = document.getElementById('decimals-' + cleanLayerName);
+            var formatInput = document.getElementById('format-' + cleanLayerName);
+            var prefixInput = document.getElementById('prefix-' + cleanLayerName);
+            var previewElement = document.getElementById('preview-' + cleanLayerName);
+            
+            if (!minInput || !maxInput || !decimalsInput || !formatInput || !prefixInput || !previewElement) {
+                return;
+            }
+            
+            var min = parseInt(minInput.value) || 1;
+            var max = parseInt(maxInput.value) || 1000;
+            var decimals = decimalsInput.checked;
+            var format = formatInput.checked;
+            var prefix = prefixInput.value || '';
+            
+            // Generate sample value
+            var value = Math.random() * (max - min) + min;
+            
+            if (!decimals) {
+                value = Math.floor(value);
+            } else {
+                value = Math.round(value * 100) / 100;
+            }
+            
+            var result = value.toString();
+            
+            if (format && value >= 1000) {
+                result = value.toLocaleString();
+            }
+            
+            if (decimals && !result.includes('.')) {
+                result += '.00';
+            }
+            
+            previewElement.textContent = prefix + result;
+        } catch (error) {
+            console.log('Preview update error:', error);
+        }
+    }
+    
+    // Set up event listeners with small delay to ensure elements exist
+    setTimeout(function() {
+        var minInput = document.getElementById('min-' + cleanLayerName);
+        var maxInput = document.getElementById('max-' + cleanLayerName);
+        var decimalsInput = document.getElementById('decimals-' + cleanLayerName);
+        var formatInput = document.getElementById('format-' + cleanLayerName);
+        var prefixInput = document.getElementById('prefix-' + cleanLayerName);
+        
+        if (minInput) minInput.addEventListener('input', updatePreview);
+        if (maxInput) maxInput.addEventListener('input', updatePreview);
+        if (decimalsInput) decimalsInput.addEventListener('change', updatePreview);
+        if (formatInput) formatInput.addEventListener('change', updatePreview);
+        if (prefixInput) prefixInput.addEventListener('input', updatePreview);
+        
+        // Initial preview update
+        updatePreview();
+    }, 100);
+}
+
+// Get configuration for a layer based on UI inputs
+function getConfigForLayer(dataTypeId, layerName) {
+    var config = {};
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    
+    // Get values from UI elements if they exist
+    var minInput = document.getElementById('min-' + cleanLayerName);
+    var maxInput = document.getElementById('max-' + cleanLayerName);
+    var decimalsInput = document.getElementById('decimals-' + cleanLayerName);
+    var formatInput = document.getElementById('format-' + cleanLayerName);
+    var prefixInput = document.getElementById('prefix-' + cleanLayerName);
+    var sortInput = document.getElementById('sort-' + cleanLayerName);
+    var phoneFormatInput = document.getElementById('phoneFormat-' + cleanLayerName);
+    var dateFormatInput = document.getElementById('dateFormat-' + cleanLayerName);
+    var financeTypeInput = document.getElementById('financeType-' + cleanLayerName);
+    var personTypeInput = document.getElementById('personType-' + cleanLayerName);
+    var customPrefixInput = document.getElementById('customPrefix-' + cleanLayerName);
+    var customSuffixInput = document.getElementById('customSuffix-' + cleanLayerName);
+    var providerInput = document.getElementById('provider-' + cleanLayerName);
+    var domainInput = document.getElementById('domain-' + cleanLayerName);
+    var includeProtocolInput = document.getElementById('includeProtocol-' + cleanLayerName);
+    var locationTypeInput = document.getElementById('locationType-' + cleanLayerName);
+    var titleTypeInput = document.getElementById('titleType-' + cleanLayerName);
+    var textCategoryInput = document.getElementById('textCategory-' + cleanLayerName);
+    var avatarTypeInput = document.getElementById('avatarType-' + cleanLayerName);
+    var imageCategoryInput = document.getElementById('imageCategory-' + cleanLayerName);
+    var colorTypeInput = document.getElementById('colorType-' + cleanLayerName);
+    
+    if (minInput) config.min = parseInt(minInput.value) || 1;
+    if (maxInput) config.max = parseInt(maxInput.value) || 1000;
+    if (decimalsInput) config.decimals = decimalsInput.checked;
+    if (formatInput) config.format = formatInput.checked;
+    if (prefixInput) config.prefix = prefixInput.value || '';
+    if (sortInput) config.sorting = sortInput.value || 'random';
+    if (phoneFormatInput) config.phoneFormat = phoneFormatInput.value || 'human';
+    if (dateFormatInput) config.dateFormat = dateFormatInput.value || 'MM/DD/YYYY';
+    if (financeTypeInput) config.financeType = financeTypeInput.value || 'credit-card';
+    if (personTypeInput) config.personType = personTypeInput.value || 'full-name';
+    if (customPrefixInput) config.customPrefix = customPrefixInput.value || '';
+    if (customSuffixInput) config.customSuffix = customSuffixInput.value || '';
+    if (providerInput) config.provider = providerInput.value || '';
+    if (domainInput) config.domain = domainInput.value || '';
+    if (includeProtocolInput) config.includeProtocol = includeProtocolInput.checked;
+    if (locationTypeInput) config.locationType = locationTypeInput.value || 'city';
+    if (titleTypeInput) config.titleType = titleTypeInput.value || 'post-title';
+    if (textCategoryInput) config.textCategory = textCategoryInput.value || 'any';
+    if (avatarTypeInput) config.avatarType = avatarTypeInput.value || 'any';
+    if (imageCategoryInput) config.imageCategory = imageCategoryInput.value || 'any';
+    if (colorTypeInput) config.colorType = colorTypeInput.value || 'solid';
+    
+    return config;
+}
+
+// ... existing code ...
 
 // Load image data using fetch with CORS workarounds
 function loadImageData(imageUrl) {
