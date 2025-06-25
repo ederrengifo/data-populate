@@ -12,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed';
   data?: any;
 }
 
@@ -25,6 +25,15 @@ const INTEGER_SETTINGS_KEY = 'integerSettings';
 
 // Initialize plugin
 figma.showUI(__html__, { width: 400, height: 600 });
+
+// Listen for selection changes
+figma.on('selectionchange', () => {
+  const hasSelection = figma.currentPage.selection.length > 0;
+  figma.ui.postMessage({
+    type: 'selection-changed',
+    hasSelection: hasSelection
+  });
+});
 
 // Handle messages from UI
 figma.ui.onmessage = async (msg: any) => {

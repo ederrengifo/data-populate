@@ -239,6 +239,85 @@
             transition: width 0.3s ease;
             width: 0%;
         }
+
+        /* Selection Onboarding Screen Styles */
+        .selection-screen {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            min-height: 600px;
+            flex-direction: column;
+            gap: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .selection-screen.active {
+            display: flex;
+        }
+
+        .selection-content {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-width: 360px;
+            width: 90%;
+        }
+
+        .selection-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .selection-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+
+        .selection-message {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .selection-scan-button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            background: #0066ff;
+            color: white;
+        }
+
+        .selection-scan-button:hover {
+            background: #0052cc;
+        }
+
+        .selection-scan-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .selection-notice {
+            font-size: 12px;
+            color: #ff6600;
+            background: #fff3e0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ffcc80;
+            margin-top: 12px;
+        }
     </style>
 </head>
 <body>
@@ -274,6 +353,23 @@
             </button>
         </div>
 
+    </div>
+
+    <!-- Selection Onboarding Screen -->
+    <div id="selection-screen" class="selection-screen">
+        <div class="selection-content">
+            <div class="selection-icon">🎯</div>
+            <div class="selection-title">Ready to Populate Data</div>
+            <div class="selection-message">
+                Add the prefix "%" to all the layers you want to populate with data.
+            </div>
+            <button id="selection-scan-button" class="selection-scan-button">
+                <span>Scan for % layers</span>
+            </button>
+            <div id="selection-notice" class="selection-notice" style="display: none;">
+                Select a layer
+            </div>
+        </div>
     </div>
 
     <!-- Progress Screen -->
@@ -456,6 +552,9 @@ var applyLoading = document.getElementById('apply-loading');
 var mappingsContainer = document.getElementById('mappings-container');
 var statusContainer = document.getElementById('status-container');
 var progressScreen = document.getElementById('progress-screen');
+var selectionScreen = document.getElementById('selection-screen');
+var selectionScanButton = document.getElementById('selection-scan-button');
+var selectionNotice = document.getElementById('selection-notice');
 var mainContainer = document.querySelector('.container');
 var progressStatus = document.getElementById('progress-status');
 var progressBar = document.getElementById('progress-bar');
@@ -487,9 +586,20 @@ var dataTypes = {
 };
 
 // Event listeners
+// Shared scan functionality
+function performScan() {
+    parent.postMessage({ pluginMessage: { type: 'scan-layers' } }, '*');
+}
+
 scanButton.addEventListener('click', function() {
     setLoadingState(scanButton, scanText, scanLoading, true);
-    parent.postMessage({ pluginMessage: { type: 'scan-layers' } }, '*');
+    performScan();
+});
+
+selectionScanButton.addEventListener('click', function() {
+    hideSelectionScreen();
+    setLoadingState(scanButton, scanText, scanLoading, true);
+    performScan();
 });
 
 applyButton.addEventListener('click', function() {
@@ -589,6 +699,28 @@ function updateProgress(completed, total) {
 function resetProgress() {
     progressBar.style.width = '0%';
     progressStatus.textContent = 'Preparing...';
+}
+
+// Selection screen functions
+function showSelectionScreen(hasSelection) {
+    mainContainer.style.display = 'none';
+    selectionScreen.classList.add('active');
+    updateSelectionButtonState(hasSelection);
+}
+
+function hideSelectionScreen() {
+    selectionScreen.classList.remove('active');
+    mainContainer.style.display = 'block';
+}
+
+function updateSelectionButtonState(hasSelection) {
+    if (hasSelection) {
+        selectionScanButton.disabled = false;
+        selectionNotice.style.display = 'none';
+    } else {
+        selectionScanButton.disabled = true;
+        selectionNotice.style.display = 'block';
+    }
 }
 
 // Get available categories based on layer type
@@ -2432,6 +2564,7 @@ window.addEventListener('message', function(event) {
     
     if (msg.type === 'layers-scanned') {
         setLoadingState(scanButton, scanText, scanLoading, false);
+        hideSelectionScreen(); // Ensure selection screen is hidden after scan
         renderMappings(msg.data.mappings, msg.data.savedConfigurations);
         
         var preconfiguredCount = msg.data.mappings.filter(function(m) { return m.isPreConfigured; }).length;
@@ -2445,6 +2578,9 @@ window.addEventListener('message', function(event) {
         } else {
             showStatusMessage('No layers with % prefixes found in selection', 'error');
         }
+    } else if (msg.type === 'selection-changed') {
+        // Show selection screen when layers are selected
+        showSelectionScreen(msg.hasSelection);
     } else if (msg.type === 'integer-settings-loaded') {
         // Restore integer settings from storage
         if (msg.data && Object.keys(msg.data).length > 0) {
@@ -2519,6 +2655,11 @@ window.addEventListener('message', function(event) {
                 }, '*');
             });
     }
+});
+
+// Show selection screen on plugin load
+window.addEventListener('load', function() {
+    showSelectionScreen(false); // Initially no selection
 });
     </script>
 </body>
