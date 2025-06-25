@@ -23,8 +23,12 @@ let layerMappings: LayerMapping[] = [];
 const CONFIG_STORAGE_KEY = 'layerConfigurations';
 const INTEGER_SETTINGS_KEY = 'integerSettings';
 
-// Initialize plugin
-figma.showUI(__html__, { width: 400, height: 600 });
+// Initialize plugin with theme colors support
+figma.showUI(__html__, { 
+  width: 320, 
+  height: 600,
+  themeColors: true 
+});
 
 // Send initial selection state
 const initialHasSelection = figma.currentPage.selection.length > 0;

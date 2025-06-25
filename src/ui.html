@@ -3,11 +3,15 @@
 <head>
     <meta charset="utf-8">
     <style>
+        /* Figma automatically injects CSS variables when themeColors: true is set */
+        /* Variables available: --figma-color-bg, --figma-color-text, etc. */
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f8f9fa;
+            background-color: var(--figma-color-bg);
+            color: var(--figma-color-text);
             font-size: 13px;
         }
 
@@ -18,17 +22,18 @@
         }
 
         .section {
-            background: white;
+            background: var(--figma-color-bg);
             border-radius: 8px;
             padding: 16px;
             margin-bottom: 16px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--figma-color-border);
         }
 
         .section-title {
             font-weight: 600;
             margin-bottom: 12px;
-            color: #1a1a1a;
+            color: var(--figma-color-text);
         }
 
         .scan-button, .apply-button {
@@ -46,12 +51,12 @@
         }
 
         .scan-button {
-            background: #0066ff;
-            color: white;
+            background: var(--figma-color-bg-brand);
+            color: var(--figma-color-text-onbrand);
         }
 
         .scan-button:hover {
-            background: #0052cc;
+            background: var(--figma-color-bg-brand-hover);
         }
 
         .apply-button {
@@ -256,15 +261,15 @@
         }
 
         .status-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: var(--figma-color-bg-success-tertiary);
+            color: var(--figma-color-text-success);
+            border: 1px solid var(--figma-color-border-success);
         }
 
         .status-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: var(--figma-color-bg-danger-tertiary);
+            color: var(--figma-color-text-danger);
+            border: 1px solid var(--figma-color-border-danger);
         }
 
         .mappings-container {
@@ -369,8 +374,8 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            gap: 20px;
-            background-color: #f8f9fa;
+            gap: 24px;
+            background-color: var(--figma-color-bg);
             z-index: 50;
         }
 
@@ -381,11 +386,9 @@
         .selection-content {
             text-align: center;
             background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
             max-width: 360px;
-            width: 90%;
+            height: 200px;
         }
 
         .selection-icon {
@@ -401,15 +404,17 @@
         }
 
         .selection-message {
-            font-size: 14px;
-            color: #666;
+            font-size: 11px;
+            line-height: 16px;
+            color: var(--figma-color-text);
             line-height: 1.5;
             margin-bottom: 24px;
+            opacity: 0.5;
         }
 
         .selection-scan-button {
             width: 100%;
-            padding: 12px;
+            padding: 4px 8px;
             border: none;
             border-radius: 6px;
             font-weight: 500;
@@ -419,27 +424,33 @@
             justify-content: center;
             gap: 8px;
             transition: all 0.2s;
-            background: #0066ff;
-            color: white;
+            color: var(--figma-color-text);
+            border: 1px solid var(--figma-color-border);
+            background: var(--figma-color-bg);
+            font-size: 11px;
+            line-height: 20px;
+            opacity: 1;
         }
 
         .selection-scan-button:hover {
-            background: #0052cc;
+            background: var(--figma-color-bg-inverse);
+            border: 1px solid var(--figma-color-bg-inverse);
+            color: var(--figma-color-text-onbrand);
+            opacity: 1;
         }
 
         .selection-scan-button:disabled {
-            background: #ccc;
             cursor: not-allowed;
+            opacity: 0.25;
         }
 
         .selection-notice {
-            font-size: 12px;
-            color: #ff6600;
-            background: #fff3e0;
-            padding: 8px 12px;
+            font-size: 11px;
+            line-height: 16px;
+            color: var(--figma-color-text-brand);
+            padding: 0px;
             border-radius: 6px;
-            border: 1px solid #ffcc80;
-            margin-top: 12px;
+            margin-top: 16px;
         }
 
         /* Tab System Styles */
@@ -455,32 +466,35 @@
             top: 0;
             z-index: 100;
             display: flex;
-            border-bottom: 1px solid #e1e5e9;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: transparent;
+            gap: 4px;
+            padding: 8px;
         }
 
         .tab-button {
             flex: 1;
-            padding: 12px 16px;
+            padding: 2px 8px;
             border: none;
-            background: none;
-            color: #666;
-            font-weight: 500;
+            background: transparent;
+            color: var(--figma-color-text);
+            font-weight: 510;
             cursor: pointer;
             transition: all 0.2s;
-            border-bottom: 2px solid transparent;
+            font-size: 11px;
+            line-height: 20px;
+            opacity: 0.5;
+            border-radius: 6px;
         }
 
         .tab-button:hover {
-            background: #f8f9fa;
-            color: #1a1a1a;
+            background: var(--figma-color-bg-hover);
+            opacity: 1;
         }
 
         .tab-button.active {
-            color: #0066ff;
-            border-bottom-color: #0066ff;
-            background: white;
+            color: var(--figma-color-text);
+            background: var(--figma-color-bg-hover);
+            opacity: 1;
         }
 
         .tab-content {
@@ -558,16 +572,26 @@
                 <!-- Selection Onboarding Screen (Generate tab only) -->
                 <div id="selection-screen" class="selection-screen">
                     <div class="selection-content">
-                        <div class="selection-icon">🎯</div>
-                        <div class="selection-title">Ready to Populate Data</div>
+                        <div class="selection-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 21.667C4.55228 21.667 5 22.1147 5 22.667V25.334C5.00018 25.7757 5.17599 26.1993 5.48828 26.5117C5.80082 26.8242 6.22505 27 6.66699 27H9.33301C9.88518 27 10.3328 27.4479 10.333 28C10.3328 28.5521 9.88517 29 9.33301 29H6.66699C5.69477 29 4.7618 28.6141 4.07422 27.9268C3.38675 27.2393 3.00018 26.3062 3 25.334V22.667C3 22.1147 3.44772 21.667 4 21.667ZM28 21.667C28.5522 21.6671 29 22.1148 29 22.667V25.334C28.9998 26.3062 28.6142 27.2393 27.9268 27.9268C27.2393 28.6142 26.3062 28.9998 25.334 29H22.667C22.1148 29 21.6672 28.5521 21.667 28C21.6672 27.4479 22.1148 27 22.667 27H25.334C25.7758 26.9998 26.1993 26.8241 26.5117 26.5117C26.8241 26.1993 26.9998 25.7758 27 25.334V22.667C27 22.1148 27.4479 21.6672 28 21.667ZM17.333 20.333C17.8852 20.333 18.3328 20.7809 18.333 21.333C18.333 21.8853 17.8853 22.333 17.333 22.333H9.33301C8.78084 22.3329 8.33301 21.8852 8.33301 21.333C8.33321 20.781 8.78096 20.3331 9.33301 20.333H17.333ZM22.666 15C23.2183 15 23.666 15.4477 23.666 16C23.666 16.5523 23.2183 17 22.666 17H9.33301C8.78084 16.9999 8.33301 16.5522 8.33301 16C8.33301 15.4478 8.78084 15.0001 9.33301 15H22.666ZM20.1016 9.67188C20.606 9.72291 21 10.1491 21 10.667C20.9998 11.1847 20.6059 11.6111 20.1016 11.6621L20 11.667H9.33301C8.78096 11.6669 8.33321 11.219 8.33301 10.667C8.33301 10.1148 8.78084 9.66712 9.33301 9.66699H20L20.1016 9.67188ZM9.33301 3C9.88529 3 10.333 3.44772 10.333 4C10.333 4.55228 9.88529 5 9.33301 5H6.66699C6.22496 5 5.80084 5.17572 5.48828 5.48828C5.17572 5.80084 5 6.22496 5 6.66699V9.33301C5 9.88529 4.55228 10.333 4 10.333C3.44772 10.333 3 9.88529 3 9.33301V6.66699C3 5.69453 3.38659 4.76185 4.07422 4.07422C4.76185 3.38659 5.69453 3 6.66699 3H9.33301ZM25.334 3C26.3062 3.00015 27.2393 3.38672 27.9268 4.07422C28.6141 4.76181 29 5.69474 29 6.66699V9.33301C29 9.88521 28.5522 10.3329 28 10.333C27.4479 10.3328 27 9.88518 27 9.33301V6.66699C27 6.22502 26.8242 5.80083 26.5117 5.48828C26.1993 5.17596 25.7757 5.00015 25.334 5H22.667C22.1147 5 21.667 4.55228 21.667 4C21.667 3.44772 22.1147 3 22.667 3H25.334Z" fill="url(#paint0_linear_750_684)"/>
+                                <defs>
+                                <linearGradient id="paint0_linear_750_684" x1="16" y1="1.5" x2="16" y2="29" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#007BE5"/>
+                                <stop offset="0.519231" stop-color="#FFC5D0"/>
+                                <stop offset="1" stop-color="#FFBDA7"/>
+                                </linearGradient>
+                                </defs>
+                            </svg> 
+                        </div>
                         <div class="selection-message">
                             Add the prefix "%" to all the layers you want to populate with data.
                         </div>
                         <button id="selection-scan-button" class="selection-scan-button">
-                            <span>Scan for % layers</span>
+                            <span>Scan layers</span>
                         </button>
                         <div id="selection-notice" class="selection-notice" style="display: none;">
-                            Select a layer
+                            Select a layer to scan
                         </div>
                     </div>
                 </div>
@@ -2928,6 +2952,9 @@ function tryImageWithCorsWorkarounds(imageUrl) {
             });
     });
 }
+
+// Note: Theme colors are automatically handled by Figma when themeColors: true is set
+// Figma will inject CSS variables and add figma-light/figma-dark classes automatically
 
 // Listen for messages from the main plugin code
 window.addEventListener('message', function(event) {
