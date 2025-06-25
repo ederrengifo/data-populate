@@ -527,6 +527,61 @@
             color: #666;
             font-style: italic;
         }
+
+        /* Configuration Panel Toggle Styles */
+        .config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .config-title {
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        .config-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            transition: background-color 0.2s;
+        }
+
+        .config-toggle:hover {
+            background: #f0f4f8;
+        }
+
+        .config-toggle-icon {
+            font-size: 12px;
+            color: #666;
+            transition: transform 0.2s;
+        }
+
+        .config-toggle.collapsed .config-toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .config-body {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .config-body.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+        }
     </style>
 </head>
 <body>
@@ -1151,7 +1206,7 @@ function deselectDataType(layerName) {
     console.log('✅ Data type deselected for layer:', layerName);
 }
 
-// Hide remove button for a specific mapping
+// Hide remove button and show toggle button for a specific mapping
 function hideRemoveButton(layerName) {
     var mappingItems = document.querySelectorAll('.mapping-item');
     for (var i = 0; i < mappingItems.length; i++) {
@@ -1159,15 +1214,19 @@ function hideRemoveButton(layerName) {
         var nameElement = item.querySelector('.layer-name');
         if (nameElement && nameElement.textContent === layerName) {
             var removeBtn = item.querySelector('.remove-btn');
+            var toggleBtn = item.querySelector('.config-toggle');
             if (removeBtn) {
                 removeBtn.style.display = 'none';
+            }
+            if (toggleBtn) {
+                toggleBtn.style.display = 'flex';
             }
             break;
         }
     }
 }
 
-// Show remove button for a specific mapping
+// Show remove button and hide toggle button for a specific mapping
 function showRemoveButton(layerName) {
     var mappingItems = document.querySelectorAll('.mapping-item');
     for (var i = 0; i < mappingItems.length; i++) {
@@ -1175,11 +1234,63 @@ function showRemoveButton(layerName) {
         var nameElement = item.querySelector('.layer-name');
         if (nameElement && nameElement.textContent === layerName) {
             var removeBtn = item.querySelector('.remove-btn');
+            var toggleBtn = item.querySelector('.config-toggle');
             if (removeBtn) {
                 removeBtn.style.display = 'inline-block';
             }
+            if (toggleBtn) {
+                toggleBtn.style.display = 'none';
+            }
             break;
         }
+    }
+}
+
+// Toggle configuration panel visibility
+function toggleConfigPanel(layerName) {
+    console.log('🔄 Toggling config panel for layer:', layerName);
+    
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    var configBody = document.getElementById('config-body-' + cleanLayerName);
+    var configPanel = document.getElementById('config-panel-' + cleanLayerName);
+    
+    // Find the toggle button in the mapping header
+    var mappingItems = document.querySelectorAll('.mapping-item');
+    var toggleButton = null;
+    
+    for (var i = 0; i < mappingItems.length; i++) {
+        var item = mappingItems[i];
+        var nameElement = item.querySelector('.layer-name');
+        if (nameElement && nameElement.textContent === layerName) {
+            toggleButton = item.querySelector('.config-toggle');
+            break;
+        }
+    }
+    
+    if (!configBody || !configPanel || !toggleButton) {
+        console.error('❌ Config panel elements not found for layer:', layerName);
+        return;
+    }
+    
+    var toggleIcon = toggleButton.querySelector('.config-toggle-icon');
+    var isCollapsed = configBody.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+        // Expand the panel
+        configBody.classList.remove('collapsed');
+        toggleButton.classList.remove('collapsed');
+        if (toggleIcon) {
+            toggleIcon.textContent = '▼';
+        }
+        console.log('✅ Expanded config panel for layer:', layerName);
+    } else {
+        // Collapse the panel
+        configBody.classList.add('collapsed');
+        toggleButton.classList.add('collapsed');
+        if (toggleIcon) {
+            toggleIcon.textContent = '▼';
+        }
+        console.log('✅ Collapsed config panel for layer:', layerName);
     }
 }
 
@@ -1401,10 +1512,11 @@ function renderMappings(mappings, savedConfigurations) {
         html += '<div class="layer-name">' + mapping.layerName + '</div>';
         html += '<div class="layer-count">' + mapping.count + ' layer' + (mapping.count > 1 ? 's' : '') + '</div>';
         html += '</div>';
-        // Only show remove button if no data type is selected
-        if (!mapping.dataTypeId) {
-            html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')">Remove</button>';
-        }
+        // Always create both buttons, show/hide based on configuration state
+        html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')" style="display: ' + (!mapping.dataTypeId ? 'inline-block' : 'none') + ';">Remove</button>';
+        html += '<button class="config-toggle" onclick="toggleConfigPanel(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')" style="display: ' + (mapping.dataTypeId ? 'flex' : 'none') + ';">';
+        html += '<span class="config-toggle-icon">▼</span>';
+        html += '</button>';
         html += '</div>';
         html += layerTypeIndicator;
         html += savedConfigIndicator;
@@ -1507,9 +1619,21 @@ function generateConfigHTML(dataTypeId, layerName) {
     var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
     var html = '';
     
+    // Add configuration header (no toggle button since it's now in the mapping header)
+    function addConfigHeader(title) {
+        html += '<div class="config-header">';
+        html += '<div class="config-title">' + title + '</div>';
+        html += '</div>';
+        html += '<div class="config-body" id="config-body-' + cleanLayerName + '">';
+    }
+    
+    function closeConfigBody() {
+        html += '</div>'; // Close config-body
+    }
+    
     switch (dataTypeId) {
         case 'custom':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🔢 Custom Number Settings</div>';
+            addConfigHeader('🔢 Custom Number Settings');
             
             // Range inputs
             html += '<div style="display: flex; gap: 12px; margin-bottom: 12px;">';
@@ -1556,6 +1680,8 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<span style="font-weight: 500;">Preview:</span> <span id="preview-' + cleanLayerName + '">1,234</span>';
             html += '</div>';
             
+            closeConfigBody();
+            
             // Store the layer name for later event listener setup
             if (!window.customNumberLayers) {
                 window.customNumberLayers = [];
@@ -1564,7 +1690,7 @@ function generateConfigHTML(dataTypeId, layerName) {
             break;
             
         case 'percentage':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📊 Percentage Settings</div>';
+            addConfigHeader('📊 Percentage Settings');
             html += '<div style="display: flex; gap: 16px; margin-bottom: 12px;">';
             html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
             html += '<input type="checkbox" id="decimals-' + cleanLayerName + '">';
@@ -1579,10 +1705,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="descending">Descending</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'phone':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📞 Phone Settings</div>';
+            addConfigHeader('📞 Phone Settings');
             html += '<div>';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Format</label>';
             html += '<select id="phoneFormat-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1591,10 +1718,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="international">International Format</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'date':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📅 Date Settings</div>';
+            addConfigHeader('📅 Date Settings');
             html += '<div style="margin-bottom: 12px;">';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Format</label>';
             html += '<select id="dateFormat-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1614,10 +1742,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="oldest">Oldest</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'finances':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">💰 Finance Settings</div>';
+            addConfigHeader('💰 Finance Settings');
             html += '<div>';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
             html += '<select id="financeType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1627,10 +1756,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="iban">IBAN</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'person':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">👤 Person Settings</div>';
+            addConfigHeader('👤 Person Settings');
             html += '<div style="margin-bottom: 12px;">';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
             html += '<select id="personType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1661,10 +1791,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'email':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📧 Email Settings</div>';
+            addConfigHeader('📧 Email Settings');
             html += '<div style="margin-bottom: 12px;">';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Provider (optional)</label>';
             html += '<input type="text" id="provider-' + cleanLayerName + '" placeholder="e.g., gmail.com" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1677,10 +1808,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'website':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🌐 Website Settings</div>';
+            addConfigHeader('🌐 Website Settings');
             html += '<div style="margin-bottom: 12px;">';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Domain Suffix (optional)</label>';
             html += '<input type="text" id="domain-' + cleanLayerName + '" placeholder="e.g., .com, .org" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1699,10 +1831,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'location':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🗺️ Location Settings</div>';
+            addConfigHeader('🗺️ Location Settings');
             html += '<div style="margin-bottom: 12px;">';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
             html += '<select id="locationType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1723,10 +1856,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'title':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📰 Title Settings</div>';
+            addConfigHeader('📰 Title Settings');
             html += '<div style="margin-bottom: 12px;">';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
             html += '<select id="titleType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1748,10 +1882,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'long_text':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">📖 Long Text Settings</div>';
+            addConfigHeader('📖 Long Text Settings');
             html += '<div>';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Category</label>';
             html += '<select id="textCategory-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1763,10 +1898,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="medicine">Medicine</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'avatar':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">👤 Avatar Settings</div>';
+            addConfigHeader('👤 Avatar Settings');
             html += '<div>';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
             html += '<select id="avatarType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1778,10 +1914,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="cartoon">Cartoon</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'image':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🖼️ Image Settings</div>';
+            addConfigHeader('🖼️ Image Settings');
             html += '<div>';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Category</label>';
             html += '<select id="imageCategory-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1790,10 +1927,11 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="landscapes">Landscapes</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
             
         case 'color':
-            html += '<div style="font-weight: 500; margin-bottom: 8px; color: #1a1a1a;">🎨 Color Settings</div>';
+            addConfigHeader('🎨 Color Settings');
             html += '<div>';
             html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
             html += '<select id="colorType-' + cleanLayerName + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">';
@@ -1801,6 +1939,7 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="gradient">Gradient</option>';
             html += '</select>';
             html += '</div>';
+            closeConfigBody();
             break;
     }
     
