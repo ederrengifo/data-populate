@@ -12,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update';
   data?: any;
 }
 
@@ -212,7 +212,12 @@ async function applyDataToLayers(mappings: Array<{ layerName: string; dataTypeId
       }
     }
     
-    // Apply data to layers
+    // Apply data to layers with progress tracking
+    let completedLayers = 0;
+    const totalLayers = layerMappings
+      .filter(lm => lm.dataTypeId && dataResults[lm.layerName])
+      .reduce((sum, lm) => sum + lm.layers.length, 0);
+    
     for (const layerMapping of layerMappings) {
       if (layerMapping.dataTypeId && dataResults[layerMapping.layerName]) {
         const data = dataResults[layerMapping.layerName];
@@ -222,6 +227,14 @@ async function applyDataToLayers(mappings: Array<{ layerName: string; dataTypeId
           const value = data[i] || data[0]; // Fallback to first value if not enough data
           
           await applyValueToLayer(layer, value, layerMapping.dataTypeId);
+          
+          // Send progress update after each individual layer
+          completedLayers++;
+          figma.ui.postMessage({
+            type: 'progress-update',
+            completed: completedLayers,
+            total: totalLayers
+          });
         }
       }
     }

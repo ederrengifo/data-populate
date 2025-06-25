@@ -165,6 +165,80 @@
             font-style: italic;
             padding: 20px;
         }
+
+        /* Progress Screen Styles */
+        .progress-screen {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            min-height: 600px;
+            flex-direction: column;
+            gap: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .progress-screen.active {
+            display: flex;
+        }
+
+        .progress-content {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-width: 320px;
+            width: 90%;
+        }
+
+        .progress-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e1e5e9;
+            border-top: 4px solid #0066ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+
+        .progress-status {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .progress-warning {
+            font-size: 12px;
+            color: #ff6600;
+            background: #fff3e0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ffcc80;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #e1e5e9;
+            border-radius: 4px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #0066ff, #00aa00);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
     </style>
 </head>
 <body>
@@ -198,6 +272,20 @@
                 <span id="apply-text">Apply Data to Layers</span>
                 <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
             </button>
+        </div>
+
+    </div>
+
+    <!-- Progress Screen -->
+    <div id="progress-screen" class="progress-screen">
+        <div class="progress-content">
+            <div class="progress-spinner"></div>
+            <div class="progress-title">Applying Data to Layers</div>
+            <div id="progress-status" class="progress-status">Preparing...</div>
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div class="progress-warning">⚠️ Do not close the plugin</div>
         </div>
     </div>
 
@@ -367,6 +455,10 @@ var applyText = document.getElementById('apply-text');
 var applyLoading = document.getElementById('apply-loading');
 var mappingsContainer = document.getElementById('mappings-container');
 var statusContainer = document.getElementById('status-container');
+var progressScreen = document.getElementById('progress-screen');
+var mainContainer = document.querySelector('.container');
+var progressStatus = document.getElementById('progress-status');
+var progressBar = document.getElementById('progress-bar');
 
 // Enhanced data type configurations with options
 var dataTypes = {
@@ -426,6 +518,18 @@ applyButton.addEventListener('click', function() {
         return;
     }
     
+    // Calculate total individual layers for progress tracking
+    var totalLayers = 0;
+    for (var i = 0; i < currentMappings.length; i++) {
+        var mapping = currentMappings[i];
+        if (mapping.dataTypeId) {
+            totalLayers += mapping.count; // mapping.count is the number of individual layers
+        }
+    }
+    
+    // Show progress screen immediately
+    showProgressScreen(totalLayers);
+    
     setLoadingState(applyButton, applyText, applyLoading, true);
     parent.postMessage({ 
         pluginMessage: { 
@@ -461,6 +565,30 @@ function showStatusMessage(message, type) {
             statusContainer.removeChild(messageDiv);
         }
     }, 5000);
+}
+
+// Progress screen functions
+function showProgressScreen(totalLayers) {
+    mainContainer.style.display = 'none';
+    progressScreen.classList.add('active');
+    updateProgress(0, totalLayers);
+}
+
+function hideProgressScreen() {
+    progressScreen.classList.remove('active');
+    mainContainer.style.display = 'block';
+    resetProgress();
+}
+
+function updateProgress(completed, total) {
+    var percentage = Math.round((completed / total) * 100);
+    progressBar.style.width = percentage + '%';
+    progressStatus.textContent = 'Applying data to ' + completed + '/' + total + ' layers';
+}
+
+function resetProgress() {
+    progressBar.style.width = '0%';
+    progressStatus.textContent = 'Preparing...';
 }
 
 // Get available categories based on layer type
@@ -2331,10 +2459,14 @@ window.addEventListener('message', function(event) {
         showStatusMessage('Mapping removed');
     } else if (msg.type === 'data-applied') {
         setLoadingState(applyButton, applyText, applyLoading, false);
+        hideProgressScreen();
         showStatusMessage(msg.message);
+    } else if (msg.type === 'progress-update') {
+        updateProgress(msg.completed, msg.total);
     } else if (msg.type === 'error') {
         setLoadingState(scanButton, scanText, scanLoading, false);
         setLoadingState(applyButton, applyText, applyLoading, false);
+        hideProgressScreen();
         showStatusMessage(msg.message, 'error');
     } else if (msg.type === 'long-texts-loaded') {
         // Store longTexts data globally for use in content generation
