@@ -2178,32 +2178,33 @@ function generateConfigHTML(dataTypeId, layerName) {
             
         case 'website':
             addConfigHeader('🌐 Website Settings');
-            html += '<div style="margin-bottom: 12px;">';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Domain Suffix (optional)</label>';
-            html += '<input type="text" id="domain-' + cleanLayerName + '" placeholder="e.g., .com, .org" class="config-select">';
-            html += '</div>';
-            html += '<div style="margin-bottom: 12px;">';
-            html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;" class="config-checkbox">';
             html += '<input type="checkbox" id="includeProtocol-' + cleanLayerName + '" checked>';
             html += '<span style="font-size: 12px;">Include https://</span>';
-            html += '</label>';
             html += '</div>';
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '</div>';
+
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<input type="text" id="domain-' + cleanLayerName + '" placeholder="e.g., .com, .org" class="config-input">';
+            html += '</div>';
+            html += '<div style="flex: 1;">';            
             html += '<select id="sort-' + cleanLayerName + '" class="config-select">';
             html += '<option value="random">Random</option>';
             html += '<option value="a-z">A-Z</option>';
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
             html += '</div>';
+            html += '</div>';
             closeConfigBody();
             break;
             
         case 'location':
             addConfigHeader('🗺️ Location Settings');
-            html += '<div style="margin-bottom: 12px;">';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
-            html += '<select id="locationType-' + cleanLayerName + '" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<select id="locationType-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="city">City</option>';
             html += '<option value="country">Country</option>';
             html += '<option value="full-address">Full Address</option>';
@@ -2213,22 +2214,22 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="coordinates">Coordinates</option>';
             html += '</select>';
             html += '</div>';
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<div style="flex: 1;">';
             html += '<select id="sort-' + cleanLayerName + '" class="config-select">';
             html += '<option value="random">Random</option>';
             html += '<option value="a-z">A-Z</option>';
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
             html += '</div>';
+            html += '</div>';
             closeConfigBody();
             break;
             
         case 'title':
             addConfigHeader('📰 Title Settings');
-            html += '<div style="margin-bottom: 12px;">';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
-            html += '<select id="titleType-' + cleanLayerName + '" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<select id="titleType-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="post-title">Post Title</option>';
             html += '<option value="company-name">Company Name</option>';
             html += '<option value="product-name">Product Name</option>';
@@ -2239,22 +2240,22 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="random-word">Random Word</option>';
             html += '</select>';
             html += '</div>';
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<div style="flex: 1;">';
             html += '<select id="sort-' + cleanLayerName + '" class="config-select">';
             html += '<option value="random">Random</option>';
             html += '<option value="a-z">A-Z</option>';
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
             html += '</div>';
+            html += '</div>';
             closeConfigBody();
             break;
             
         case 'long_text':
             addConfigHeader('📖 Long Text Settings');
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Category</label>';
-            html += '<select id="textCategory-' + cleanLayerName + '" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<select id="textCategory-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="any">Any Category</option>';
             html += '<option value="technology">Technology</option>';
             html += '<option value="biography">Biography</option>';
@@ -2262,6 +2263,7 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="nature">Nature</option>';
             html += '<option value="medicine">Medicine</option>';
             html += '</select>';
+            html += '</div>';
             html += '</div>';
             closeConfigBody();
             break;
