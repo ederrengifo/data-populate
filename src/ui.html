@@ -10,24 +10,21 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: var(--figma-color-bg);
+            background: var(--figma-color-bg);
             color: var(--figma-color-text);
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .container {
             max-width: 400px;
             margin: 0 auto;
-            padding: 16px;
+            padding: 8px 16px 16px 16px;
         }
 
         .section {
             background: var(--figma-color-bg);
             border-radius: 8px;
-            padding: 16px;
             margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid var(--figma-color-border);
         }
 
         .section-title {
@@ -273,7 +270,6 @@
         }
 
         .mappings-container {
-            max-height: 300px;
             overflow-y: auto;
         }
 
@@ -432,11 +428,21 @@
             opacity: 1;
         }
 
+        .selection-scan-button svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--figma-color-text);
+        }
+
         .selection-scan-button:hover {
             background: var(--figma-color-bg-inverse);
             border: 1px solid var(--figma-color-bg-inverse);
             color: var(--figma-color-text-onbrand);
             opacity: 1;
+        }
+
+        .selection-scan-button:hover svg {
+            fill: var(--figma-color-bg);
         }
 
         .selection-scan-button:disabled {
@@ -509,7 +515,6 @@
         }
 
         .tab-panel {
-            background: #f8f9fa;
             flex: 1;
             overflow-y: auto;
         }
@@ -539,19 +544,17 @@
                 <div class="container">
                     <!-- Scan Section -->
                     <div class="section">
-                        <div class="section-title">🔍 Scan Layers</div>
-                        <button id="scan-button" class="scan-button">
-                            <span id="scan-text">Scan for % layers</span>
+                        <button id="scan-button" class="selection-scan-button">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2 10.833C2.27603 10.833 2.49982 11.057 2.5 11.333V12.666C2.5 12.887 2.58796 13.0996 2.74414 13.2559C2.90033 13.412 3.11219 13.4999 3.33301 13.5H4.66699L4.76758 13.5098C4.99525 13.5564 5.16684 13.7586 5.16699 14C5.16684 14.2414 4.99519 14.4426 4.76758 14.4893L4.66699 14.5H3.33301C2.84697 14.4999 2.38083 14.3065 2.03711 13.9629C1.6934 13.6191 1.5 13.1522 1.5 12.666V11.333C1.50018 11.057 1.72397 10.833 2 10.833ZM14 10.833C14.2759 10.8332 14.4998 11.0571 14.5 11.333V12.666C14.5 13.1522 14.3067 13.6191 13.9629 13.9629C13.6191 14.3067 13.1522 14.5 12.666 14.5H11.333C11.0571 14.4999 10.8332 14.2759 10.833 14C10.8332 13.7241 11.0571 13.5001 11.333 13.5H12.666C12.887 13.5 13.0996 13.4121 13.2559 13.2559C13.4121 13.0996 13.5 12.887 13.5 12.666V11.333C13.5002 11.0571 13.7241 10.8331 14 10.833ZM8.66699 10.167C8.94302 10.1671 9.16699 10.3909 9.16699 10.667C9.16682 10.9429 8.94291 11.1669 8.66699 11.167H4.66699C4.39096 11.167 4.16717 10.943 4.16699 10.667C4.16699 10.3908 4.39085 10.167 4.66699 10.167H8.66699ZM11.4346 7.50977C11.6623 7.5565 11.834 7.75848 11.834 8C11.834 8.24152 11.6623 8.4435 11.4346 8.49023L11.334 8.5H4.66699C4.39085 8.5 4.16699 8.27614 4.16699 8C4.16699 7.72386 4.39085 7.5 4.66699 7.5H11.334L11.4346 7.50977ZM10 4.83301C10.2759 4.83314 10.4998 5.0571 10.5 5.33301C10.5 5.60907 10.276 5.83288 10 5.83301H4.66699C4.39085 5.83301 4.16699 5.60915 4.16699 5.33301C4.16717 5.05702 4.39096 4.83301 4.66699 4.83301H10ZM4.76758 1.50977C4.99539 1.55641 5.16699 1.7584 5.16699 2C5.16699 2.2416 4.99539 2.44359 4.76758 2.49023L4.66699 2.5H3.33301C3.11211 2.50009 2.90034 2.58794 2.74414 2.74414C2.58794 2.90034 2.50009 3.11211 2.5 3.33301V4.66699C2.49982 4.94298 2.27603 5.16699 2 5.16699C1.72397 5.16699 1.50018 4.94298 1.5 4.66699V3.33301C1.50009 2.8469 1.69337 2.38085 2.03711 2.03711C2.38085 1.69337 2.8469 1.50009 3.33301 1.5H4.66699L4.76758 1.50977ZM12.666 1.5C13.1522 1.5 13.6191 1.69337 13.9629 2.03711C14.3065 2.38083 14.4999 2.84697 14.5 3.33301V4.66699C14.4998 4.94288 14.2759 5.16682 14 5.16699C13.7241 5.16686 13.5002 4.9429 13.5 4.66699V3.33301C13.4999 3.11219 13.412 2.90033 13.2559 2.74414C13.0996 2.58794 12.887 2.5 12.666 2.5H11.333C11.057 2.49987 10.833 2.27606 10.833 2C10.833 1.72394 11.057 1.50013 11.333 1.5H12.666Z" />
+                            </svg>
+                            <span id="scan-text">Re-scan layers</span>
                             <div id="scan-loading" class="loading-spinner" style="display: none;"></div>
                         </button>
                     </div>
 
-                    <!-- Status Messages -->
-                    <div id="status-container"></div>
-
                     <!-- Mappings Section -->
                     <div class="section">
-                        <div class="section-title">📝 Layer Mappings</div>
                         <div id="mappings-container" class="mappings-container">
                             <div class="empty-state">
                                 Click "Scan for % layers" to find layers that need data
@@ -561,7 +564,6 @@
 
                     <!-- Apply Section -->
                     <div class="section">
-                        <div class="section-title">✨ Apply Data</div>
                         <button id="apply-button" class="apply-button" disabled>
                             <span id="apply-text">Apply Data to Layers</span>
                             <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
@@ -1100,6 +1102,87 @@ function toggleDropdown(layerName) {
     button.classList.toggle('open');
 }
 
+// Deselect a data type (reset to unselected state)
+function deselectDataType(layerName) {
+    console.log('🗑️ Deselecting data type for layer:', layerName);
+    
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    var dropdown = document.getElementById('dropdown-' + cleanLayerName);
+    var panel = document.getElementById('panel-' + cleanLayerName);
+    var configPanel = document.getElementById('config-panel-' + cleanLayerName);
+    
+    if (!dropdown || !panel) {
+        console.error('❌ Dropdown elements not found for deselection:', layerName);
+        return;
+    }
+    
+    var button = dropdown.querySelector('.dropdown-button');
+    var dropdownText = button.querySelector('.dropdown-text');
+    
+    // Reset button text
+    dropdownText.textContent = 'Select Data Type';
+    
+    // Remove selected state from all dropdown options
+    var options = panel.querySelectorAll('.dropdown-option');
+    for (var i = 0; i < options.length; i++) {
+        options[i].classList.remove('selected');
+    }
+    
+    // Close dropdown
+    panel.classList.remove('open');
+    button.classList.remove('open');
+    
+    // Hide configuration panel
+    if (configPanel) {
+        configPanel.style.display = 'none';
+    }
+    
+    // Clear data type from mapping
+    for (var i = 0; i < currentMappings.length; i++) {
+        if (currentMappings[i].layerName === layerName) {
+            delete currentMappings[i].dataTypeId;
+            break;
+        }
+    }
+    
+    // Show remove button since no data type is selected
+    showRemoveButton(layerName);
+    
+    console.log('✅ Data type deselected for layer:', layerName);
+}
+
+// Hide remove button for a specific mapping
+function hideRemoveButton(layerName) {
+    var mappingItems = document.querySelectorAll('.mapping-item');
+    for (var i = 0; i < mappingItems.length; i++) {
+        var item = mappingItems[i];
+        var nameElement = item.querySelector('.layer-name');
+        if (nameElement && nameElement.textContent === layerName) {
+            var removeBtn = item.querySelector('.remove-btn');
+            if (removeBtn) {
+                removeBtn.style.display = 'none';
+            }
+            break;
+        }
+    }
+}
+
+// Show remove button for a specific mapping
+function showRemoveButton(layerName) {
+    var mappingItems = document.querySelectorAll('.mapping-item');
+    for (var i = 0; i < mappingItems.length; i++) {
+        var item = mappingItems[i];
+        var nameElement = item.querySelector('.layer-name');
+        if (nameElement && nameElement.textContent === layerName) {
+            var removeBtn = item.querySelector('.remove-btn');
+            if (removeBtn) {
+                removeBtn.style.display = 'inline-block';
+            }
+            break;
+        }
+    }
+}
+
 // Select a data type from dropdown
 function selectDataType(layerName, dataTypeId) {
     console.log('🎯 Select data type:', dataTypeId, 'for layer:', layerName);
@@ -1115,6 +1198,22 @@ function selectDataType(layerName, dataTypeId) {
     
     var button = dropdown.querySelector('.dropdown-button');
     var dropdownText = button.querySelector('.dropdown-text');
+    
+    // Check if this data type is already selected (for deselection)
+    var currentMapping = null;
+    for (var i = 0; i < currentMappings.length; i++) {
+        if (currentMappings[i].layerName === layerName) {
+            currentMapping = currentMappings[i];
+            break;
+        }
+    }
+    
+    if (currentMapping && currentMapping.dataTypeId === dataTypeId) {
+        // Deselect the data type
+        console.log('🔄 Deselecting data type:', dataTypeId, 'for layer:', layerName);
+        deselectDataType(layerName);
+        return;
+    }
     
     // Find the selected data type info
     var selectedType = null;
@@ -1149,6 +1248,9 @@ function selectDataType(layerName, dataTypeId) {
     
     // Update mapping and show config panel (use existing logic)
     handleTypeChange(layerName, dataTypeId);
+    
+    // Hide remove button since a data type is now selected
+    hideRemoveButton(layerName);
 }
 
 // Event delegation for dropdown functionality
@@ -1249,6 +1351,9 @@ function autoPopulateMapping(layerName, dataTypeId, layerType) {
         
         // Update the mapping data and show config panel
         handleTypeChange(layerName, dataTypeId);
+        
+        // Hide remove button since a data type is now selected
+        hideRemoveButton(layerName);
     }
 }
 
@@ -1296,7 +1401,10 @@ function renderMappings(mappings, savedConfigurations) {
         html += '<div class="layer-name">' + mapping.layerName + '</div>';
         html += '<div class="layer-count">' + mapping.count + ' layer' + (mapping.count > 1 ? 's' : '') + '</div>';
         html += '</div>';
-        html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')">Remove</button>';
+        // Only show remove button if no data type is selected
+        if (!mapping.dataTypeId) {
+            html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')">Remove</button>';
+        }
         html += '</div>';
         html += layerTypeIndicator;
         html += savedConfigIndicator;
