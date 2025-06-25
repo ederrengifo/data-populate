@@ -12,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config';
   data?: any;
 }
 
@@ -21,6 +21,7 @@ let layerMappings: LayerMapping[] = [];
 
 // Configuration storage key for this file
 const CONFIG_STORAGE_KEY = 'layerConfigurations';
+const DETAILED_CONFIG_STORAGE_KEY = 'detailedLayerConfigurations';
 const INTEGER_SETTINGS_KEY = 'integerSettings';
 
 // Initialize plugin with theme colors support
@@ -76,6 +77,11 @@ figma.ui.onmessage = async (msg: any) => {
       
       case 'long-texts-loaded':
         // Handle long texts loaded message
+        break;
+      
+      case 'save-detailed-config':
+        console.log(`📨 Received save-detailed-config:`, msg.layerName, msg.dataTypeId, msg.config);
+        await saveDetailedConfiguration(msg.layerName, msg.dataTypeId, msg.config);
         break;
     }
   } catch (error) {
@@ -176,6 +182,9 @@ async function scanSelectedLayers() {
   
   // Load saved configurations and apply them
   const savedConfigs = await loadSavedConfigurations();
+  const detailedConfigs = await loadDetailedConfigurations();
+  
+  console.log(`📥 Loaded detailed configurations:`, detailedConfigs);
   
   // Apply saved configurations to mappings
   for (const layerMapping of layerMappings) {
@@ -196,7 +205,8 @@ async function scanSelectedLayers() {
         layerType: mapping.layerType,
         isPreConfigured: !!savedConfigs[mapping.layerName]
       })),
-      savedConfigurations: savedConfigs
+      savedConfigurations: savedConfigs,
+      detailedConfigurations: detailedConfigs
     }
   });
 }
@@ -496,6 +506,17 @@ async function loadSavedConfigurations(): Promise<Record<string, string>> {
   }
 }
 
+// Load detailed configurations (including sub-settings) for this file
+async function loadDetailedConfigurations(): Promise<Record<string, any>> {
+  try {
+    const savedConfigs = await figma.clientStorage.getAsync(DETAILED_CONFIG_STORAGE_KEY);
+    return savedConfigs || {};
+  } catch (error) {
+    console.log('No detailed configurations found or error loading:', error);
+    return {};
+  }
+}
+
 // Save configuration for a layer name
 async function saveConfiguration(layerName: string, dataTypeId: string) {
   try {
@@ -505,6 +526,26 @@ async function saveConfiguration(layerName: string, dataTypeId: string) {
     console.log(`💾 Saved configuration: ${layerName} → ${dataTypeId}`);
   } catch (error) {
     console.error('Error saving configuration:', error);
+  }
+}
+
+// Save detailed configuration (including sub-settings) for a layer name
+async function saveDetailedConfiguration(layerName: string, dataTypeId: string, config: any) {
+  try {
+    const currentConfigs = await loadDetailedConfigurations();
+    currentConfigs[layerName] = {
+      dataTypeId: dataTypeId,
+      config: config
+    };
+    await figma.clientStorage.setAsync(DETAILED_CONFIG_STORAGE_KEY, currentConfigs);
+    console.log(`💾 Saved detailed configuration: ${layerName} → ${dataTypeId}`, config);
+    console.log(`💾 All detailed configs now:`, currentConfigs);
+    
+    // Debug: Immediately verify what was saved
+    const verifyConfigs = await figma.clientStorage.getAsync(DETAILED_CONFIG_STORAGE_KEY);
+    console.log(`🔍 VERIFY: Storage immediately after save:`, verifyConfigs);
+  } catch (error) {
+    console.error('Error saving detailed configuration:', error);
   }
 }
 

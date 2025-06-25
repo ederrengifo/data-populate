@@ -589,7 +589,7 @@
             align-items: center;
             flex-direction: column;
             gap: 20px;
-            background-color: #f8f9fa;
+            background-color: var(--figma-color-bg);
             z-index: 50;
         }
 
@@ -599,12 +599,10 @@
 
         .progress-content {
             text-align: center;
-            background: white;
             padding: 40px;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             max-width: 320px;
-            width: 90%;
+            width: 70%;
         }
 
         .progress-spinner {
@@ -625,9 +623,11 @@
         }
 
         .progress-status {
-            font-size: 14px;
-            color: #666;
+            font-size: 11px;
+            line-height: 16px;
+            color: var(--figma-color-text);
             margin-bottom: 16px;
+            opacity: 0.75;
         }
 
         .progress-warning {
@@ -641,8 +641,8 @@
 
         .progress-bar-container {
             width: 100%;
-            height: 8px;
-            background: #e1e5e9;
+            height: 4px;
+            background: var(--figma-color-bg-tertiary);
             border-radius: 4px;
             margin: 16px 0;
             overflow: hidden;
@@ -650,7 +650,7 @@
 
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #0066ff, #00aa00);
+            background: linear-gradient(90deg, #007BE5 0%, #FFC5D0 50%, #FFAE75 100%);
             border-radius: 4px;
             transition: width 0.3s ease;
             width: 0%;
@@ -956,13 +956,11 @@
                 <!-- Progress Screen (Generate tab only) -->
                 <div id="progress-screen" class="progress-screen">
                     <div class="progress-content">
-                        <div class="progress-spinner"></div>
-                        <div class="progress-title">Applying Data to Layers</div>
-                        <div id="progress-status" class="progress-status">Preparing...</div>
                         <div class="progress-bar-container">
                             <div id="progress-bar" class="progress-bar"></div>
                         </div>
-                        <div class="progress-warning">⚠️ Do not close the plugin</div>
+                        <div id="progress-status" class="progress-status">Applying data to...</div>
+                        <div class="progress-warning">Do not close the plugin</div>
                     </div>
                 </div>
             </div>
@@ -1149,6 +1147,7 @@
     <script>
 // Global variables
 var currentMappings = [];
+var detailedConfigurations = {};
 var scanButton = document.getElementById('scan-button');
 var scanText = document.getElementById('scan-text');
 var scanLoading = document.getElementById('scan-loading');
@@ -1238,7 +1237,42 @@ applyButton.addEventListener('click', function() {
     // Reset batch tracking for new operation
     resetBatchTracking();
     
-    // Collect mappings with selected data types
+    // Debug: Log current mappings before saving configurations
+    console.log('🔍 DEBUG: Current mappings before saving configs:', currentMappings);
+    
+        // First, save detailed configurations for all mappings SEQUENTIALLY to avoid race conditions
+    async function saveDetailedConfigsSequentially() {
+        for (var i = 0; i < currentMappings.length; i++) {
+            var mapping = currentMappings[i];
+            if (mapping.dataTypeId) {
+                var config = getConfigForLayer(mapping.dataTypeId, mapping.layerName);
+                console.log('💾 Saving detailed config for:', mapping.layerName, 'dataType:', mapping.dataTypeId, 'config:', config);
+                
+                // Debug: Check if this is an avatar and what config was captured
+                if (mapping.dataTypeId === 'avatar') {
+                    var cleanLayerName = mapping.layerName.replace(/[^a-zA-Z0-9]/g, '');
+                    var avatarTypeInput = document.getElementById('avatarType-' + cleanLayerName);
+                    console.log('🔍 AVATAR DEBUG - Element found:', !!avatarTypeInput, 'Value:', avatarTypeInput ? avatarTypeInput.value : 'N/A');
+                }
+                
+                console.log('📤 Sending save-detailed-config message to backend...');
+                parent.postMessage({
+                    pluginMessage: {
+                        type: 'save-detailed-config',
+                        layerName: mapping.layerName,
+                        dataTypeId: mapping.dataTypeId,
+                        config: config
+                    }
+                }, '*');
+                console.log('✅ save-detailed-config message sent');
+                
+                // Add delay between saves to prevent race conditions
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        }
+    }
+    
+    // Then collect mappings with selected data types for application
     var mappingsToApply = [];
     for (var i = 0; i < currentMappings.length; i++) {
         var mapping = currentMappings[i];
@@ -1249,12 +1283,12 @@ applyButton.addEventListener('click', function() {
             });
         }
     }
-    
+
     if (mappingsToApply.length === 0) {
         showStatusMessage('Please select data types for at least one mapping', 'error');
         return;
     }
-    
+
     // Calculate total individual layers for progress tracking
     var totalLayers = 0;
     for (var i = 0; i < currentMappings.length; i++) {
@@ -1263,17 +1297,21 @@ applyButton.addEventListener('click', function() {
             totalLayers += mapping.count; // mapping.count is the number of individual layers
         }
     }
-    
+
     // Show progress screen immediately
     showProgressScreen(totalLayers);
-    
     setLoadingState(applyButton, applyText, applyLoading, true);
-    parent.postMessage({ 
-        pluginMessage: { 
-            type: 'apply-data', 
-            mappings: mappingsToApply 
-        } 
-    }, '*');
+
+    // Execute sequential saving, then apply
+    saveDetailedConfigsSequentially().then(function() {
+        console.log('🏁 All detailed configs saved, proceeding with apply...');
+        parent.postMessage({ 
+            pluginMessage: { 
+                type: 'apply-data', 
+                mappings: mappingsToApply 
+            } 
+        }, '*');
+    });
 });
 
 // Utility functions
@@ -1290,6 +1328,11 @@ function setLoadingState(button, textElement, loadingElement, isLoading) {
 }
 
 function showStatusMessage(message, type) {
+    if (!statusContainer) {
+        console.log('📢 Status message:', message, '(type:', type + ')');
+        return;
+    }
+    
     var messageDiv = document.createElement('div');
     messageDiv.className = 'status-message status-' + (type || 'success');
     messageDiv.textContent = message;
@@ -1298,7 +1341,7 @@ function showStatusMessage(message, type) {
     statusContainer.appendChild(messageDiv);
     
     setTimeout(function() {
-        if (statusContainer.contains(messageDiv)) {
+        if (statusContainer && statusContainer.contains(messageDiv)) {
             statusContainer.removeChild(messageDiv);
         }
     }, 5000);
@@ -1746,6 +1789,8 @@ document.addEventListener('click', function(event) {
 
 // Auto-populate a mapping with saved configuration
 function autoPopulateMapping(layerName, dataTypeId, layerType) {
+    console.log('🔄 Auto-populating mapping for:', layerName, 'dataType:', dataTypeId);
+    
     // Find the mapping item in DOM
     var mappingItems = document.querySelectorAll('.mapping-item');
     var targetItem = null;
@@ -1798,14 +1843,132 @@ function autoPopulateMapping(layerName, dataTypeId, layerType) {
         // Update the mapping data and show config panel
         handleTypeChange(layerName, dataTypeId);
         
+        // Restore detailed configuration if available (with small delay to ensure DOM is ready)
+        if (detailedConfigurations[layerName]) {
+            var detailedConfig = detailedConfigurations[layerName];
+            if (detailedConfig.dataTypeId === dataTypeId && detailedConfig.config) {
+                setTimeout(function() {
+                    restoreDetailedConfig(layerName, detailedConfig.config);
+                }, 10);
+            }
+        }
+        
         // Hide remove button since a data type is now selected
         hideRemoveButton(layerName);
     }
 }
 
-function renderMappings(mappings, savedConfigurations) {
+// Restore detailed configuration values to UI elements
+function restoreDetailedConfig(layerName, config) {
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    
+    console.log('🔄 Restoring detailed config for:', layerName, config);
+    
+    // Restore all possible configuration values
+    if (config.min !== undefined) {
+        var minInput = document.getElementById('min-' + cleanLayerName);
+        if (minInput) minInput.value = config.min;
+    }
+    if (config.max !== undefined) {
+        var maxInput = document.getElementById('max-' + cleanLayerName);
+        if (maxInput) maxInput.value = config.max;
+    }
+    if (config.decimals !== undefined) {
+        var decimalsInput = document.getElementById('decimals-' + cleanLayerName);
+        if (decimalsInput) decimalsInput.checked = config.decimals;
+    }
+    if (config.format !== undefined) {
+        var formatInput = document.getElementById('format-' + cleanLayerName);
+        if (formatInput) formatInput.checked = config.format;
+    }
+    if (config.prefix !== undefined) {
+        var prefixInput = document.getElementById('prefix-' + cleanLayerName);
+        if (prefixInput) prefixInput.value = config.prefix;
+    }
+    if (config.sorting !== undefined) {
+        var sortInput = document.getElementById('sort-' + cleanLayerName);
+        if (sortInput) sortInput.value = config.sorting;
+    }
+    if (config.phoneFormat !== undefined) {
+        var phoneFormatInput = document.getElementById('phoneFormat-' + cleanLayerName);
+        if (phoneFormatInput) phoneFormatInput.value = config.phoneFormat;
+    }
+    if (config.dateFormat !== undefined) {
+        var dateFormatInput = document.getElementById('dateFormat-' + cleanLayerName);
+        if (dateFormatInput) dateFormatInput.value = config.dateFormat;
+    }
+    if (config.financeType !== undefined) {
+        var financeTypeInput = document.getElementById('financeType-' + cleanLayerName);
+        if (financeTypeInput) financeTypeInput.value = config.financeType;
+    }
+    if (config.personType !== undefined) {
+        var personTypeInput = document.getElementById('personType-' + cleanLayerName);
+        if (personTypeInput) personTypeInput.value = config.personType;
+    }
+    if (config.customPrefix !== undefined) {
+        var customPrefixInput = document.getElementById('customPrefix-' + cleanLayerName);
+        if (customPrefixInput) customPrefixInput.value = config.customPrefix;
+    }
+    if (config.customSuffix !== undefined) {
+        var customSuffixInput = document.getElementById('customSuffix-' + cleanLayerName);
+        if (customSuffixInput) customSuffixInput.value = config.customSuffix;
+    }
+    if (config.provider !== undefined) {
+        var providerInput = document.getElementById('provider-' + cleanLayerName);
+        if (providerInput) providerInput.value = config.provider;
+    }
+    if (config.domain !== undefined) {
+        var domainInput = document.getElementById('domain-' + cleanLayerName);
+        if (domainInput) domainInput.value = config.domain;
+    }
+    if (config.includeProtocol !== undefined) {
+        var includeProtocolInput = document.getElementById('includeProtocol-' + cleanLayerName);
+        if (includeProtocolInput) includeProtocolInput.checked = config.includeProtocol;
+    }
+    if (config.locationType !== undefined) {
+        var locationTypeInput = document.getElementById('locationType-' + cleanLayerName);
+        if (locationTypeInput) locationTypeInput.value = config.locationType;
+    }
+    if (config.titleType !== undefined) {
+        var titleTypeInput = document.getElementById('titleType-' + cleanLayerName);
+        if (titleTypeInput) titleTypeInput.value = config.titleType;
+    }
+    if (config.textCategory !== undefined) {
+        var textCategoryInput = document.getElementById('textCategory-' + cleanLayerName);
+        if (textCategoryInput) textCategoryInput.value = config.textCategory;
+    }
+    if (config.avatarType !== undefined) {
+        var avatarTypeInput = document.getElementById('avatarType-' + cleanLayerName);
+        if (avatarTypeInput) {
+            console.log('✅ Setting avatarType to:', config.avatarType, 'for element:', avatarTypeInput);
+            avatarTypeInput.value = config.avatarType;
+        } else {
+            console.log('❌ Avatar type input not found for:', cleanLayerName);
+        }
+    }
+    if (config.imageCategory !== undefined) {
+        var imageCategoryInput = document.getElementById('imageCategory-' + cleanLayerName);
+        if (imageCategoryInput) imageCategoryInput.value = config.imageCategory;
+    }
+    if (config.colorType !== undefined) {
+        var colorTypeInput = document.getElementById('colorType-' + cleanLayerName);
+        if (colorTypeInput) colorTypeInput.value = config.colorType;
+    }
+    
+    // Update preview if it's a custom number
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    var configContent = document.getElementById('config-content-' + cleanLayerName);
+    if (configContent && configContent.innerHTML.includes('preview-')) {
+        setupCustomNumberPreview(layerName);
+    }
+}
+
+function renderMappings(mappings, savedConfigurations, detailedConfigs) {
     currentMappings = mappings;
     savedConfigurations = savedConfigurations || {};
+    detailedConfigurations = detailedConfigs || {};
+    
+    console.log('📥 UI received detailed configurations:', detailedConfigurations);
     
     if (mappings.length === 0) {
         mappingsContainer.innerHTML = '<div class="empty-state">No layers with % prefixes found</div>';
@@ -3580,7 +3743,7 @@ window.addEventListener('message', function(event) {
     if (msg.type === 'layers-scanned') {
         setLoadingState(scanButton, scanText, scanLoading, false);
         hideSelectionScreen(); // Ensure selection screen is hidden after scan
-        renderMappings(msg.data.mappings, msg.data.savedConfigurations);
+        renderMappings(msg.data.mappings, msg.data.savedConfigurations, msg.data.detailedConfigurations);
         
         var preconfiguredCount = msg.data.mappings.filter(function(m) { return m.isPreConfigured; }).length;
         var statusMsg = 'Found ' + msg.data.mappings.length + ' layer mapping' + (msg.data.mappings.length > 1 ? 's' : '');
@@ -3606,7 +3769,7 @@ window.addEventListener('message', function(event) {
         }
     } else if (msg.type === 'mapping-removed') {
         currentMappings = currentMappings.filter(function(m) { return m.layerName !== msg.data.layerName; });
-        renderMappings(currentMappings);
+        renderMappings(currentMappings, {}, detailedConfigurations);
         showStatusMessage('Mapping removed');
     } else if (msg.type === 'data-applied') {
         setLoadingState(applyButton, applyText, applyLoading, false);
