@@ -67,7 +67,6 @@
             align-items: center;
             justify-content: center;
             gap: 4px;
-            transition: all 0.2s;
         }
 
         .scan-button {
@@ -2270,9 +2269,9 @@ function generateConfigHTML(dataTypeId, layerName) {
             
         case 'avatar':
             addConfigHeader('👤 Avatar Settings');
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
-            html += '<select id="avatarType-' + cleanLayerName + '" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<select id="avatarType-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="any">Any Avatar</option>';
             html += '<option value="real-people">Real People</option>';
             html += '<option value="male">Only Male</option>';
@@ -2281,30 +2280,33 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="cartoon">Cartoon</option>';
             html += '</select>';
             html += '</div>';
+            html += '</div>';
             closeConfigBody();
             break;
             
         case 'image':
             addConfigHeader('🖼️ Image Settings');
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Category</label>';
-            html += '<select id="imageCategory-' + cleanLayerName + '" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<select id="imageCategory-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="any">Any Category</option>';
             html += '<option value="products">Products</option>';
             html += '<option value="landscapes">Landscapes</option>';
             html += '</select>';
+            html += '</div>';
             html += '</div>';
             closeConfigBody();
             break;
             
         case 'color':
             addConfigHeader('🎨 Color Settings');
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
-            html += '<select id="colorType-' + cleanLayerName + '" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<select id="colorType-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="solid">Solid Color</option>';
             html += '<option value="gradient">Gradient</option>';
             html += '</select>';
+            html += '</div>';
             html += '</div>';
             closeConfigBody();
             break;
