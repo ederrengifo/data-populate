@@ -6,7 +6,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
-            padding: 16px;
+            padding: 0;
             background-color: #f8f9fa;
             font-size: 13px;
         }
@@ -14,6 +14,7 @@
         .container {
             max-width: 400px;
             margin: 0 auto;
+            padding: 16px;
         }
 
         .section {
@@ -168,13 +169,18 @@
 
         /* Progress Screen Styles */
         .progress-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: none;
             justify-content: center;
             align-items: center;
-            min-height: 600px;
             flex-direction: column;
             gap: 20px;
             background-color: #f8f9fa;
+            z-index: 50;
         }
 
         .progress-screen.active {
@@ -242,13 +248,18 @@
 
         /* Selection Onboarding Screen Styles */
         .selection-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: none;
             justify-content: center;
             align-items: center;
-            min-height: 600px;
             flex-direction: column;
             gap: 20px;
             background-color: #f8f9fa;
+            z-index: 50;
         }
 
         .selection-screen.active {
@@ -318,70 +329,168 @@
             border: 1px solid #ffcc80;
             margin-top: 12px;
         }
+
+        /* Tab System Styles */
+        .tab-container {
+            position: relative;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            border-bottom: 1px solid #e1e5e9;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            color: #666;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-button:hover {
+            background: #f8f9fa;
+            color: #1a1a1a;
+        }
+
+        .tab-button.active {
+            color: #0066ff;
+            border-bottom-color: #0066ff;
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-panel {
+            background: #f8f9fa;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .empty-tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #666;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Scan Section -->
-        <div class="section">
-            <div class="section-title">🔍 Scan Layers</div>
-            <button id="scan-button" class="scan-button">
-                <span id="scan-text">Scan for % layers</span>
-                <div id="scan-loading" class="loading-spinner" style="display: none;"></div>
-            </button>
-        </div>
+    <!-- Tab System -->
+    <div class="tab-container">
+        <nav class="tab-nav">
+            <button class="tab-button active" data-tab="generate">Generate</button>
+            <button class="tab-button" data-tab="sync">Sync</button>
+            <button class="tab-button" data-tab="license">License</button>
+        </nav>
+        
+        <!-- Generate Tab Content -->
+        <div id="generate-tab" class="tab-content active">
+            <div class="tab-panel" style="position: relative;">
+                <div class="container">
+                    <!-- Scan Section -->
+                    <div class="section">
+                        <div class="section-title">🔍 Scan Layers</div>
+                        <button id="scan-button" class="scan-button">
+                            <span id="scan-text">Scan for % layers</span>
+                            <div id="scan-loading" class="loading-spinner" style="display: none;"></div>
+                        </button>
+                    </div>
 
-        <!-- Status Messages -->
-        <div id="status-container"></div>
+                    <!-- Status Messages -->
+                    <div id="status-container"></div>
 
-        <!-- Mappings Section -->
-        <div class="section">
-            <div class="section-title">📝 Layer Mappings</div>
-            <div id="mappings-container" class="mappings-container">
-                <div class="empty-state">
-                    Click "Scan for % layers" to find layers that need data
+                    <!-- Mappings Section -->
+                    <div class="section">
+                        <div class="section-title">📝 Layer Mappings</div>
+                        <div id="mappings-container" class="mappings-container">
+                            <div class="empty-state">
+                                Click "Scan for % layers" to find layers that need data
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Apply Section -->
+                    <div class="section">
+                        <div class="section-title">✨ Apply Data</div>
+                        <button id="apply-button" class="apply-button" disabled>
+                            <span id="apply-text">Apply Data to Layers</span>
+                            <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selection Onboarding Screen (Generate tab only) -->
+                <div id="selection-screen" class="selection-screen">
+                    <div class="selection-content">
+                        <div class="selection-icon">🎯</div>
+                        <div class="selection-title">Ready to Populate Data</div>
+                        <div class="selection-message">
+                            Add the prefix "%" to all the layers you want to populate with data.
+                        </div>
+                        <button id="selection-scan-button" class="selection-scan-button">
+                            <span>Scan for % layers</span>
+                        </button>
+                        <div id="selection-notice" class="selection-notice" style="display: none;">
+                            Select a layer
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Screen (Generate tab only) -->
+                <div id="progress-screen" class="progress-screen">
+                    <div class="progress-content">
+                        <div class="progress-spinner"></div>
+                        <div class="progress-title">Applying Data to Layers</div>
+                        <div id="progress-status" class="progress-status">Preparing...</div>
+                        <div class="progress-bar-container">
+                            <div id="progress-bar" class="progress-bar"></div>
+                        </div>
+                        <div class="progress-warning">⚠️ Do not close the plugin</div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Apply Section -->
-        <div class="section">
-            <div class="section-title">✨ Apply Data</div>
-            <button id="apply-button" class="apply-button" disabled>
-                <span id="apply-text">Apply Data to Layers</span>
-                <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
-            </button>
-        </div>
-
-    </div>
-
-    <!-- Selection Onboarding Screen -->
-    <div id="selection-screen" class="selection-screen">
-        <div class="selection-content">
-            <div class="selection-icon">🎯</div>
-            <div class="selection-title">Ready to Populate Data</div>
-            <div class="selection-message">
-                Add the prefix "%" to all the layers you want to populate with data.
-            </div>
-            <button id="selection-scan-button" class="selection-scan-button">
-                <span>Scan for % layers</span>
-            </button>
-            <div id="selection-notice" class="selection-notice" style="display: none;">
-                Select a layer
+        
+        <!-- Sync Tab Content -->
+        <div id="sync-tab" class="tab-content">
+            <div class="tab-panel">
+                <div class="empty-tab">
+                    Sync functionality coming soon...
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- Progress Screen -->
-    <div id="progress-screen" class="progress-screen">
-        <div class="progress-content">
-            <div class="progress-spinner"></div>
-            <div class="progress-title">Applying Data to Layers</div>
-            <div id="progress-status" class="progress-status">Preparing...</div>
-            <div class="progress-bar-container">
-                <div id="progress-bar" class="progress-bar"></div>
+        
+        <!-- License Tab Content -->
+        <div id="license-tab" class="tab-content">
+            <div class="tab-panel">
+                <div class="empty-tab">
+                    License information coming soon...
+                </div>
             </div>
-            <div class="progress-warning">⚠️ Do not close the plugin</div>
         </div>
     </div>
 
@@ -558,6 +667,26 @@ var selectionNotice = document.getElementById('selection-notice');
 var mainContainer = document.querySelector('.container');
 var progressStatus = document.getElementById('progress-status');
 var progressBar = document.getElementById('progress-bar');
+
+// Tab system functionality
+function initializeTabs() {
+    var tabButtons = document.querySelectorAll('.tab-button');
+    var tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var targetTab = this.getAttribute('data-tab');
+            
+            // Remove active class from all buttons and contents
+            tabButtons.forEach(function(btn) { btn.classList.remove('active'); });
+            tabContents.forEach(function(content) { content.classList.remove('active'); });
+            
+            // Add active class to clicked button and corresponding content
+            this.classList.add('active');
+            document.getElementById(targetTab + '-tab').classList.add('active');
+        });
+    });
+}
 
 // Enhanced data type configurations with options
 var dataTypes = {
@@ -2657,9 +2786,10 @@ window.addEventListener('message', function(event) {
     }
 });
 
-// Show selection screen on plugin load
+// Initialize everything on plugin load
 window.addEventListener('load', function() {
-    showSelectionScreen(false); // Initially no selection
+    initializeTabs(); // Set up tab functionality
+    // Don't show selection screen immediately - wait for initial selection state from backend
 });
     </script>
 </body>

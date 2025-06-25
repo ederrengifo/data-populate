@@ -26,6 +26,13 @@ const INTEGER_SETTINGS_KEY = 'integerSettings';
 // Initialize plugin
 figma.showUI(__html__, { width: 400, height: 600 });
 
+// Send initial selection state
+const initialHasSelection = figma.currentPage.selection.length > 0;
+figma.ui.postMessage({
+  type: 'selection-changed',
+  hasSelection: initialHasSelection
+});
+
 // Listen for selection changes
 figma.on('selectionchange', () => {
   const hasSelection = figma.currentPage.selection.length > 0;
