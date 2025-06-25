@@ -406,6 +406,9 @@ applyButton.addEventListener('click', function() {
         return;
     }
     
+    // Reset batch tracking for new operation
+    resetBatchTracking();
+    
     // Collect mappings with selected data types
     var mappingsToApply = [];
     for (var i = 0; i < currentMappings.length; i++) {
@@ -1052,6 +1055,47 @@ var currentIntegerGenerationContext = {
     count: 0,
     generatedNumbers: []
 };
+
+// Batch-level anti-repetition system - prevents repetition within current operation
+var currentBatchUsedContent = {};
+
+// Function to get non-repeated content from an array within current batch
+function getUniqueFromBatch(contentArray, categoryKey) {
+    if (!contentArray || contentArray.length === 0) {
+        return null;
+    }
+    
+    // Initialize tracking for this category if not exists
+    if (!currentBatchUsedContent[categoryKey]) {
+        currentBatchUsedContent[categoryKey] = [];
+    }
+    
+    var usedInBatch = currentBatchUsedContent[categoryKey];
+    
+    // Find available (not used in this batch) items
+    var availableItems = contentArray.filter(function(item) {
+        return usedInBatch.indexOf(item) === -1;
+    });
+    
+    // If no available items, reset batch tracking for this category
+    if (availableItems.length === 0) {
+        currentBatchUsedContent[categoryKey] = [];
+        availableItems = contentArray;
+    }
+    
+    // Select from available items
+    var selectedItem = availableItems[Math.floor(Math.random() * availableItems.length)];
+    
+    // Track this selection in current batch
+    currentBatchUsedContent[categoryKey].push(selectedItem);
+    
+    return selectedItem;
+}
+
+// Reset batch tracking when starting a new operation
+function resetBatchTracking() {
+    currentBatchUsedContent = {};
+}
 
 function generateCustomIntegerArray(count, layerName) {
     // Get settings for the layer
@@ -1719,69 +1763,42 @@ function generateSingleValue(dataTypeId, layerName) {
                         return words[Math.floor(Math.random() * words.length)];
                     }
                 default: // post-title
-                    // Use post titles from JSON data
-                    var postTitles = [
-                        "10 Life-Changing Habits You Should Start Today",
-                        "The Ultimate Guide to Remote Work Productivity",
-                        "Why Sustainable Living Is Easier Than You Think",
-                        "Breaking Down the Latest Tech Trends for 2024",
-                        "How to Master the Art of Digital Minimalism",
-                        "The Science Behind Building Better Relationships",
-                        "Exploring Hidden Gems in Your Own City",
-                        "Simple Strategies for Effective Time Management",
-                        "The Psychology of Success: What Really Matters",
-                        "Creating a Morning Routine That Actually Works",
-                        "Debunking Common Myths About Healthy Eating",
-                        "The Future of Work: Adapting to Change",
-                        "Mindfulness in the Digital Age: Finding Balance",
-                        "Travel Tips That Will Transform Your Adventures",
-                        "Building Confidence Through Small Daily Actions"
-                    ];
-                    return postTitles[Math.floor(Math.random() * postTitles.length)];
+                    // Use post titles from cached longTexts data
+                    if (window.longTextsData && window.longTextsData.post_titles) {
+                        return getUniqueFromBatch(window.longTextsData.post_titles, 'post-title');
+                    }
+                    // Fallback to simple titles
+                    return window.faker.lorem.sentence();
             }
             
         case 'long_text':
             var category = config.textCategory || 'any';
             
-            // Simple long text samples (could be expanded with external dictionary)
-            var longTexts = {
-                technology: [
-                    "Artificial intelligence has transformed the way we interact with technology, enabling machines to learn from data and make intelligent decisions.",
-                    "Cloud computing has fundamentally changed how businesses operate, providing scalable, on-demand access to computing resources.",
-                    "Cybersecurity remains one of the most critical challenges in our digital age, as cyber threats continue to evolve in sophistication."
-                ],
-                biography: [
-                    "Born in a small coastal town, Maria discovered her passion for marine biology at the age of eight when she found her first sea turtle nest.",
-                    "Growing up in the bustling streets of Mumbai, Raj learned the value of hard work and perseverance from his grandmother.",
-                    "Sarah's journey from a shy, introverted child to a renowned public speaker began with a single act of courage."
-                ],
-                history: [
-                    "The fall of the Berlin Wall in 1989 marked not just the end of a physical barrier, but the symbolic collapse of the ideological divide.",
-                    "The Industrial Revolution of the 18th and 19th centuries fundamentally transformed human society.",
-                    "The ancient Silk Road was more than just a trade route; it was a cultural highway that connected civilizations."
-                ],
-                nature: [
-                    "Deep within the Amazon rainforest, an intricate ecosystem thrives in a delicate balance that has remained largely unchanged for millions of years.",
-                    "The migration of monarch butterflies represents one of nature's most remarkable journeys.",
-                    "Coral reefs, often called the rainforests of the sea, support approximately 25% of all marine species."
-                ],
-                medicine: [
-                    "The development of vaccines represents one of medicine's greatest triumphs, saving millions of lives.",
-                    "Gene therapy holds tremendous promise for treating previously incurable genetic disorders.",
-                    "The discovery of antibiotics fundamentally changed the practice of medicine."
-                ]
-            };
-            
-            if (category === 'any') {
-                var allTexts = Object.values(longTexts).flat();
-                return allTexts[Math.floor(Math.random() * allTexts.length)];
+            // Load data from longTexts.json via cached data
+            if (window.longTextsData) {
+                // Use cached data
+                var longTexts = window.longTextsData;
+                
+                if (category === 'any') {
+                    // Exclude post_titles from "any category" - they should only be used for Title > Post title
+                    var longTextCategories = ['technology', 'biography', 'history', 'nature', 'medicine'];
+                    var allTexts = [];
+                    for (var i = 0; i < longTextCategories.length; i++) {
+                        var cat = longTextCategories[i];
+                        if (longTexts[cat]) {
+                            allTexts = allTexts.concat(longTexts[cat]);
+                        }
+                    }
+                    return getUniqueFromBatch(allTexts, 'any');
+                }
+                
+                var categoryTexts = longTexts[category];
+                if (categoryTexts) {
+                    return getUniqueFromBatch(categoryTexts, category);
+                }
             }
             
-            var categoryTexts = longTexts[category];
-            if (categoryTexts) {
-                return categoryTexts[Math.floor(Math.random() * categoryTexts.length)];
-            }
-            
+            // Fallback if no data available
             return window.faker.lorem.paragraphs(2);
             
         // MEDIA
@@ -2319,6 +2336,10 @@ window.addEventListener('message', function(event) {
         setLoadingState(scanButton, scanText, scanLoading, false);
         setLoadingState(applyButton, applyText, applyLoading, false);
         showStatusMessage(msg.message, 'error');
+    } else if (msg.type === 'long-texts-loaded') {
+        // Store longTexts data globally for use in content generation
+        window.longTextsData = msg.data;
+        console.log('📥 LongTexts data loaded:', msg.data ? 'Successfully' : 'Failed');
     } else if (msg.type === 'generate-data') {
         // Generate data and send back to main code
         Promise.resolve(generateData(msg.dataTypeId, msg.count, msg.layerName))

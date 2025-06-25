@@ -386,7 +386,14 @@ export const textDataTypes: DataType[] = [
       };
       
       if (category === 'any') {
-        const allTexts = Object.values(longTexts).flat();
+        // Exclude post_titles from "any category" - they should only be used for Title > Post title
+        const longTextCategories = ['technology', 'biography', 'history', 'nature', 'medicine'];
+        const allTexts: string[] = [];
+        longTextCategories.forEach(cat => {
+          if (longTexts[cat as keyof typeof longTexts]) {
+            allTexts.push(...longTexts[cat as keyof typeof longTexts]);
+          }
+        });
         return allTexts[Math.floor(Math.random() * allTexts.length)];
       }
       

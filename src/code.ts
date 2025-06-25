@@ -1,5 +1,8 @@
 // Main plugin code for Figma Data Populator
 
+// Import the longTexts data from TypeScript file
+import { longTextsData } from './longTextsData';
+
 interface LayerMapping {
   layerName: string;
   dataTypeId: string | null;
@@ -9,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded';
   data?: any;
 }
 
@@ -49,6 +52,10 @@ figma.ui.onmessage = async (msg: any) => {
       
       case 'load-integer-settings':
         await loadIntegerSettings();
+        break;
+      
+      case 'long-texts-loaded':
+        // Handle long texts loaded message
         break;
     }
   } catch (error) {
@@ -504,4 +511,24 @@ async function loadIntegerSettings() {
       data: {}
     });
   }
-} 
+  }
+  
+  // Send longTexts data to UI when plugin starts
+  function sendLongTextsData() {
+  try {
+    figma.ui.postMessage({
+      type: 'long-texts-loaded',
+      data: longTextsData
+    });
+    console.log('📤 LongTexts data sent to UI');
+  } catch (error) {
+    console.error('Failed to send longTexts data:', error);
+    figma.ui.postMessage({
+      type: 'long-texts-loaded',
+      data: null
+    });
+  }
+}
+
+// Send data when plugin starts
+sendLongTextsData(); 
