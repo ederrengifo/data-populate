@@ -136,6 +136,118 @@
             color: #666;
         }
 
+        /* Custom Dropdown Styles */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-button {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            text-align: left;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.2s;
+        }
+
+        .dropdown-button:hover {
+            border-color: #0066ff;
+        }
+
+        .dropdown-button.open {
+            border-color: #0066ff;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .dropdown-arrow {
+            font-size: 10px;
+            color: #666;
+            transition: transform 0.2s;
+        }
+
+        .dropdown-button.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-panel {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #0066ff;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-panel.open {
+            display: block;
+        }
+
+        .dropdown-content {
+            padding: 8px;
+        }
+
+        .dropdown-columns {
+            display: flex;
+            gap: 16px;
+        }
+
+        .dropdown-column {
+            flex: 1;
+        }
+
+        .dropdown-column-title {
+            font-weight: 600;
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .dropdown-option {
+            padding: 6px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.15s;
+        }
+
+        .dropdown-option:hover {
+            background: #f0f4f8;
+        }
+
+        .dropdown-option.selected {
+            background: #e6f2ff;
+            color: #0066ff;
+        }
+
+        .option-checkmark {
+            font-size: 12px;
+            color: #0066ff;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .dropdown-option.selected .option-checkmark {
+            opacity: 1;
+        }
+
         .status-message {
             padding: 8px 12px;
             border-radius: 4px;
@@ -866,6 +978,200 @@ function getAvailableCategoriesForLayerType(layerType) {
     }
 }
 
+// Generate dropdown content based on available categories
+function generateDropdownContent(availableCategories, layerName) {
+    var html = '';
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    
+    // Check if we need two columns (TEXT layers) or one column (OTHER layers)
+    var needsTwoColumns = availableCategories.includes('numbers') && availableCategories.includes('text');
+    
+    if (needsTwoColumns) {
+        html += '<div class="dropdown-columns">';
+        
+        // Left column - NUMBERS
+        if (availableCategories.includes('numbers')) {
+            html += '<div class="dropdown-column">';
+            html += '<div class="dropdown-column-title">Numbers</div>';
+            var numbersTypes = dataTypes.numbers;
+            for (var i = 0; i < numbersTypes.length; i++) {
+                var type = numbersTypes[i];
+                html += '<div class="dropdown-option" data-layer-name="' + layerName + '" data-type="' + type.id + '">';
+                html += '<span>' + type.label + '</span>';
+                html += '<span class="option-checkmark">✓</span>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+        
+        // Right column - TEXT
+        if (availableCategories.includes('text')) {
+            html += '<div class="dropdown-column">';
+            html += '<div class="dropdown-column-title">Text</div>';
+            var textTypes = dataTypes.text;
+            for (var i = 0; i < textTypes.length; i++) {
+                var type = textTypes[i];
+                html += '<div class="dropdown-option" data-layer-name="' + layerName + '" data-type="' + type.id + '">';
+                html += '<span>' + type.label + '</span>';
+                html += '<span class="option-checkmark">✓</span>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+        
+        html += '</div>';
+    } else {
+        // Single column layout for OTHER layers
+        if (availableCategories.includes('media')) {
+            html += '<div class="dropdown-column-title">Media</div>';
+            var mediaTypes = dataTypes.media;
+            for (var i = 0; i < mediaTypes.length; i++) {
+                var type = mediaTypes[i];
+                html += '<div class="dropdown-option" data-layer-name="' + layerName + '" data-type="' + type.id + '">';
+                html += '<span>' + type.label + '</span>';
+                html += '<span class="option-checkmark">✓</span>';
+                html += '</div>';
+            }
+        }
+    }
+    
+    return html;
+}
+
+// Toggle dropdown open/closed
+function toggleDropdown(layerName) {
+    console.log('🔄 Toggle dropdown for layer:', layerName);
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    var dropdown = document.getElementById('dropdown-' + cleanLayerName);
+    var panel = document.getElementById('panel-' + cleanLayerName);
+    
+    if (!dropdown || !panel) {
+        console.error('❌ Dropdown elements not found for layer:', layerName);
+        return;
+    }
+    
+    var button = dropdown.querySelector('.dropdown-button');
+    
+    // Close all other dropdowns first
+    var allDropdowns = document.querySelectorAll('.dropdown-panel');
+    var allButtons = document.querySelectorAll('.dropdown-button');
+    
+    for (var i = 0; i < allDropdowns.length; i++) {
+        if (allDropdowns[i] !== panel) {
+            allDropdowns[i].classList.remove('open');
+        }
+    }
+    
+    for (var i = 0; i < allButtons.length; i++) {
+        if (allButtons[i] !== button) {
+            allButtons[i].classList.remove('open');
+        }
+    }
+    
+    // Toggle this dropdown
+    var isOpen = panel.classList.contains('open');
+    console.log('📍 Dropdown was open:', isOpen, '- toggling to:', !isOpen);
+    
+    panel.classList.toggle('open');
+    button.classList.toggle('open');
+}
+
+// Select a data type from dropdown
+function selectDataType(layerName, dataTypeId) {
+    console.log('🎯 Select data type:', dataTypeId, 'for layer:', layerName);
+    
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    var dropdown = document.getElementById('dropdown-' + cleanLayerName);
+    var panel = document.getElementById('panel-' + cleanLayerName);
+    
+    if (!dropdown || !panel) {
+        console.error('❌ Dropdown elements not found for selection:', layerName);
+        return;
+    }
+    
+    var button = dropdown.querySelector('.dropdown-button');
+    var dropdownText = button.querySelector('.dropdown-text');
+    
+    // Find the selected data type info
+    var selectedType = null;
+    for (var category in dataTypes) {
+        for (var i = 0; i < dataTypes[category].length; i++) {
+            if (dataTypes[category][i].id === dataTypeId) {
+                selectedType = dataTypes[category][i];
+                break;
+            }
+        }
+        if (selectedType) break;
+    }
+    
+    // Update button text
+    if (selectedType) {
+        dropdownText.textContent = selectedType.label;
+        console.log('✅ Updated button text to:', selectedType.label);
+    }
+    
+    // Update selected state in dropdown
+    var options = panel.querySelectorAll('.dropdown-option');
+    for (var i = 0; i < options.length; i++) {
+        options[i].classList.remove('selected');
+        if (options[i].getAttribute('data-type') === dataTypeId) {
+            options[i].classList.add('selected');
+        }
+    }
+    
+    // Close dropdown
+    panel.classList.remove('open');
+    button.classList.remove('open');
+    
+    // Update mapping and show config panel (use existing logic)
+    handleTypeChange(layerName, dataTypeId);
+}
+
+// Event delegation for dropdown functionality
+document.addEventListener('click', function(event) {
+    // Handle dropdown button clicks
+    var dropdownButton = event.target.closest('.dropdown-button');
+    if (dropdownButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        var layerName = dropdownButton.getAttribute('data-layer-name');
+        if (layerName) {
+            console.log('🖱️ Dropdown button clicked for:', layerName);
+            toggleDropdown(layerName);
+        }
+        return;
+    }
+    
+    // Handle dropdown option clicks
+    var dropdownOption = event.target.closest('.dropdown-option');
+    if (dropdownOption) {
+        event.preventDefault();
+        event.stopPropagation();
+        var layerName = dropdownOption.getAttribute('data-layer-name');
+        var dataType = dropdownOption.getAttribute('data-type');
+        if (layerName && dataType) {
+            console.log('🖱️ Dropdown option clicked:', dataType, 'for:', layerName);
+            selectDataType(layerName, dataType);
+        }
+        return;
+    }
+    
+    // Close dropdowns when clicking outside
+    var isDropdownClick = event.target.closest('.custom-dropdown');
+    if (!isDropdownClick) {
+        var allDropdowns = document.querySelectorAll('.dropdown-panel.open');
+        var allButtons = document.querySelectorAll('.dropdown-button.open');
+        
+        for (var i = 0; i < allDropdowns.length; i++) {
+            allDropdowns[i].classList.remove('open');
+        }
+        
+        for (var i = 0; i < allButtons.length; i++) {
+            allButtons[i].classList.remove('open');
+        }
+    }
+});
+
 // Auto-populate a mapping with saved configuration
 function autoPopulateMapping(layerName, dataTypeId, layerType) {
     // Find the mapping item in DOM
@@ -883,50 +1189,42 @@ function autoPopulateMapping(layerName, dataTypeId, layerType) {
     
     if (!targetItem) return;
     
-    // Determine which category this dataTypeId belongs to
-    var category = null;
-    for (var cat in dataTypes) {
-        for (var j = 0; j < dataTypes[cat].length; j++) {
-            if (dataTypes[cat][j].id === dataTypeId) {
-                category = cat;
+    // Find the data type info
+    var selectedType = null;
+    for (var category in dataTypes) {
+        for (var j = 0; j < dataTypes[category].length; j++) {
+            if (dataTypes[category][j].id === dataTypeId) {
+                selectedType = dataTypes[category][j];
                 break;
             }
         }
-        if (category) break;
+        if (selectedType) break;
     }
     
-    if (!category) return;
+    if (!selectedType) return;
     
-    // Set the category dropdown
-    var categorySelect = targetItem.querySelector('.category-select');
-    if (categorySelect) {
-        categorySelect.value = category;
+    // Update the dropdown button text and selection
+    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
+    var dropdown = document.getElementById('dropdown-' + cleanLayerName);
+    if (dropdown) {
+        var button = dropdown.querySelector('.dropdown-button');
+        var dropdownText = button.querySelector('.dropdown-text');
+        var panel = document.getElementById('panel-' + cleanLayerName);
         
-        // Trigger the category change to populate type dropdown
-        handleCategoryChange(layerName, category);
+        // Update button text
+        dropdownText.textContent = selectedType.label;
         
-        // Set the type dropdown
-        setTimeout(function() {
-            var typeSelect = targetItem.querySelector('.type-select');
-            if (typeSelect) {
-                typeSelect.value = dataTypeId;
-                handleTypeChange(layerName, dataTypeId);
-                
-                // Show integer controls if this is an integer type
-                if (dataTypeId === 'integer') {
-                    var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
-                    var integerControls = document.getElementById('integer-controls-' + cleanLayerName);
-                    if (integerControls) {
-                        integerControls.style.display = 'block';
-                        
-                        // Populate controls with saved settings if available
-                        setTimeout(function() {
-                            populateIntegerControlsFromSettings();
-                        }, 100);
-                    }
-                }
+        // Update selected state in dropdown options
+        var options = panel.querySelectorAll('.dropdown-option');
+        for (var i = 0; i < options.length; i++) {
+            options[i].classList.remove('selected');
+            if (options[i].getAttribute('data-type') === dataTypeId) {
+                options[i].classList.add('selected');
             }
-        }, 50); // Small delay to ensure category change has processed
+        }
+        
+        // Update the mapping data and show config panel
+        handleTypeChange(layerName, dataTypeId);
     }
 }
 
@@ -943,26 +1241,10 @@ function renderMappings(mappings, savedConfigurations) {
     var html = '';
     for (var i = 0; i < mappings.length; i++) {
         var mapping = mappings[i];
+        var cleanLayerName = mapping.layerName.replace(/[^a-zA-Z0-9]/g, '');
         
         // Get available categories for this layer type
         var availableCategories = getAvailableCategoriesForLayerType(mapping.layerType);
-        
-        // Build category options HTML based on layer type
-        var categoryOptionsHTML = '<option value="">Select Category</option>';
-        for (var j = 0; j < availableCategories.length; j++) {
-            var cat = availableCategories[j];
-            switch (cat) {
-                case 'numbers':
-                    categoryOptionsHTML += '<option value="numbers">🔢 Numbers</option>';
-                    break;
-                case 'text':
-                    categoryOptionsHTML += '<option value="text">📝 Text</option>';
-                    break;
-                case 'media':
-                    categoryOptionsHTML += '<option value="media">🖼️ Media</option>';
-                    break;
-            }
-        }
         
         // Add layer type indicator
         var layerTypeIndicator = '';
@@ -990,26 +1272,25 @@ function renderMappings(mappings, savedConfigurations) {
         html += '<div class="layer-name">' + mapping.layerName + '</div>';
         html += '<div class="layer-count">' + mapping.count + ' layer' + (mapping.count > 1 ? 's' : '') + '</div>';
         html += '</div>';
-        html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName + '\')">Remove</button>';
+        html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')">Remove</button>';
         html += '</div>';
         html += layerTypeIndicator;
         html += savedConfigIndicator;
         html += '<div class="data-type-selector">';
-        
-        // Category selector with filtered options
-        html += '<select class="category-select" onchange="handleCategoryChange(\'' + mapping.layerName + '\', this.value)">';
-        html += categoryOptionsHTML;
-        html += '</select>';
-        
-        // Type selector
-        html += '<select class="type-select" disabled onchange="handleTypeChange(\'' + mapping.layerName + '\', this.value)">';
-        html += '<option value="">Select Type</option>';
-        html += '</select>';
-        
+        html += '<div class="custom-dropdown" id="dropdown-' + cleanLayerName + '">';
+        html += '<button type="button" class="dropdown-button" data-layer-name="' + mapping.layerName + '">';
+        html += '<span class="dropdown-text">Select Data Type</span>';
+        html += '<span class="dropdown-arrow">▼</span>';
+        html += '</button>';
+        html += '<div class="dropdown-panel" id="panel-' + cleanLayerName + '">';
+        html += '<div class="dropdown-content">';
+        html += generateDropdownContent(availableCategories, mapping.layerName);
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
         html += '</div>';
         
         // Configuration panel (initially hidden, will be shown when a data type with options is selected)
-        var cleanLayerName = mapping.layerName.replace(/[^a-zA-Z0-9]/g, '');
         html += '<div class="config-panel" id="config-panel-' + cleanLayerName + '" style="display: none; margin-top: 12px; padding: 12px; background: #f0f4f8; border-radius: 6px; border: 1px solid #e1e8ed;">';
         html += '<div class="config-content" id="config-content-' + cleanLayerName + '"></div>';
         html += '</div>';
@@ -1041,49 +1322,11 @@ function handleRemoveMapping(layerName) {
     }, '*');
 }
 
+// Legacy function - no longer used with custom dropdown
+// Kept for backward compatibility during transition
 function handleCategoryChange(layerName, category) {
-    var mappingItem = document.querySelector('[data-layer="' + layerName + '"]');
-    if (!mappingItem) {
-        // Find by layer name in the DOM
-        var mappingItems = document.querySelectorAll('.mapping-item');
-        for (var i = 0; i < mappingItems.length; i++) {
-            var item = mappingItems[i];
-            var nameElement = item.querySelector('.layer-name');
-            if (nameElement && nameElement.textContent === layerName) {
-                mappingItem = item;
-                break;
-            }
-        }
-    }
-    
-    if (!mappingItem) return;
-    
-    var typeSelect = mappingItem.querySelector('.type-select');
-    
-    // Clear and populate type select
-    typeSelect.innerHTML = '<option value="">Select Type</option>';
-    
-    if (category && dataTypes[category]) {
-        typeSelect.disabled = false;
-        var types = dataTypes[category];
-        for (var i = 0; i < types.length; i++) {
-            var type = types[i];
-            var option = document.createElement('option');
-            option.value = type.id;
-            option.textContent = type.label;
-            typeSelect.appendChild(option);
-        }
-    } else {
-        typeSelect.disabled = true;
-    }
-    
-    // Update mapping
-    for (var i = 0; i < currentMappings.length; i++) {
-        if (currentMappings[i].layerName === layerName) {
-            currentMappings[i].dataTypeId = null;
-            break;
-        }
-    }
+    // This function is deprecated - custom dropdown handles selection directly
+    console.log('handleCategoryChange called - this function is deprecated with custom dropdown');
 }
 
 function handleTypeChange(layerName, dataTypeId) {
