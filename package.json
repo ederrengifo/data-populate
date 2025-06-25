@@ -1,5 +1,5 @@
 {
-  "name": "figma-data-populator",
+  "name": "figma-datalink",
   "version": "1.0.0",
   "description": "Figma plugin to populate layers with data based on % prefixes",
   "main": "code.js",

@@ -1,4 +1,4 @@
-// Main plugin code for Figma Data Populator
+// Main plugin code for Figma Datalink
 
 // Import the longTexts data from TypeScript file
 import { longTextsData } from './longTextsData';

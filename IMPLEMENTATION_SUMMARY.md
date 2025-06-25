@@ -1,7 +1,7 @@
 # Data Types Update - Implementation Summary
 
 ## Overview
-Successfully implemented a comprehensive overhaul of the data types system for the Figma Data Populator plugin, reorganizing data types into three main categories and adding extensive configuration options.
+Successfully implemented a comprehensive overhaul of the data types system for the Figma Datalink plugin, reorganizing data types into three main categories and adding extensive configuration options.
 
 ## Key Changes Implemented
 

@@ -1,4 +1,4 @@
-# Populate Data - Figma Plugin
+# Datalink - Figma Plugin
 
 A powerful Figma plugin for populating designs with realistic data including avatars, images, text, and more.
 

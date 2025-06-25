@@ -1,6 +1,6 @@
 {
-  "name": "Data Populator",
-  "id": "data-populator-plugin",
+  "name": "Datalink",
+  "id": "datalink-plugin",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
