@@ -197,6 +197,11 @@
             outline: none;
         }
 
+        /* Data type selector placeholder opacity - only when showing "Select..." */
+        .dropdown-text:not(:has(span)) {
+            opacity: 0.5;
+        }
+
         .config-checkbox {
             display: flex;
             align-items: center;
