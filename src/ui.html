@@ -1025,10 +1025,14 @@
                 }
             },
             internet: {
-                email: function() {
+                email: function(options) {
                     var domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'company.com', 'example.com', 'test.com', 'mail.com', 'email.com', 'service.com'];
                     var names = ['john', 'jane', 'mike', 'sarah', 'david', 'lisa', 'mark', 'anna', 'chris', 'emma', 'alex', 'maria', 'james', 'laura', 'robert', 'helen', 'paul', 'kate', 'steve', 'amy'];
-                    return names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 999) + '@' + domains[Math.floor(Math.random() * domains.length)];
+                    
+                    // Use custom provider if specified, otherwise random domain
+                    var domain = (options && options.provider) ? options.provider : domains[Math.floor(Math.random() * domains.length)];
+                    
+                    return names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 999) + '@' + domain;
                 },
                 userName: function() {
                     var names = ['user', 'admin', 'guest', 'john', 'jane', 'mike', 'sarah', 'david', 'lisa', 'mark', 'anna', 'chris', 'emma', 'alex', 'maria', 'james', 'laura', 'robert', 'helen', 'paul'];
@@ -2109,7 +2113,7 @@ function generateConfigHTML(dataTypeId, layerName) {
             
         case 'finances':
             addConfigHeader('💰 Finance Settings');
-            html += '<div class"config-row">';
+            html += '<div class="config-row">';
             html += '<select id="financeType-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="credit-card">Credit Card Number</option>';
             html += '<option value="account-number">Account Number</option>';
@@ -2122,9 +2126,18 @@ function generateConfigHTML(dataTypeId, layerName) {
             
         case 'person':
             addConfigHeader('👤 Person Settings');
-            html += '<div style="margin-bottom: 12px;">';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
-            html += '<select id="personType-' + cleanLayerName + '" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<input type="text" id="customPrefix-' + cleanLayerName + '" class="config-input" placeholder="Prefix">';
+            html += '</div>';
+            html += '<div style="flex: 1;">';
+            html += '<input type="text" id="customSuffix-' + cleanLayerName + '" class="config-input" placeholder="Sufix">';
+            html += '</div>';
+            html += '</div>';
+
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<select id="personType-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="full-name">Full Name</option>';
             html += '<option value="first-name">First Name</option>';
             html += '<option value="last-name">Last Name</option>';
@@ -2134,40 +2147,31 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="password">Password</option>';
             html += '</select>';
             html += '</div>';
-            html += '<div style="display: flex; gap: 12px; margin-bottom: 12px;">';
             html += '<div style="flex: 1;">';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Prefix</label>';
-            html += '<input type="text" id="customPrefix-' + cleanLayerName + '" class="config-select">';
-            html += '</div>';
-            html += '<div style="flex: 1;">';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Suffix</label>';
-            html += '<input type="text" id="customSuffix-' + cleanLayerName + '" class="config-select">';
-            html += '</div>';
-            html += '</div>';
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
             html += '<select id="sort-' + cleanLayerName + '" class="config-select">';
             html += '<option value="random">Random</option>';
             html += '<option value="a-z">A-Z</option>';
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
             html += '</div>';
+            html += '</div>';
+            
             closeConfigBody();
             break;
             
         case 'email':
             addConfigHeader('📧 Email Settings');
-            html += '<div style="margin-bottom: 12px;">';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Provider (optional)</label>';
-            html += '<input type="text" id="provider-' + cleanLayerName + '" placeholder="e.g., gmail.com" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;">';
+            html += '<input type="text" id="provider-' + cleanLayerName + '" placeholder="e.g., gmail.com" class="config-input">';
             html += '</div>';
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<div style="flex: 1;">';
             html += '<select id="sort-' + cleanLayerName + '" class="config-select">';
             html += '<option value="random">Random</option>';
             html += '<option value="a-z">A-Z</option>';
             html += '<option value="z-a">Z-A</option>';
             html += '</select>';
+            html += '</div>';
             html += '</div>';
             closeConfigBody();
             break;
@@ -2868,8 +2872,8 @@ function generateSingleValue(dataTypeId, layerName) {
         case 'email':
             var provider = config.provider;
             
-            if (provider) {
-                return window.faker.internet.email({ provider });
+            if (provider && provider.trim() !== '') {
+                return window.faker.internet.email({ provider: provider.trim() });
             }
             
             return window.faker.internet.email();
