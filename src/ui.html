@@ -201,6 +201,15 @@
             opacity: 1;
         }
 
+        /* Styles for mappings without selected data type */
+        .mapping-item:has(.remove-btn[style*="display: flex"]) .mapping-layer {
+            opacity: 0.5;
+        }
+
+        .mapping-item:has(.remove-btn[style*="display: flex"]) .layer-type-indicator svg {
+            fill: var(--figma-color-bg-inverse);
+        }
+
         .remove-btn svg {
             width: 16px;
             height: 16px;
