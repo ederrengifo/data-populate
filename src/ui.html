@@ -158,6 +158,13 @@
             border-right: 1px solid var(--figma-color-bg) !important;
         }
 
+        /* Ensure equal visual width for all elements in config rows */
+        .config-row > div {
+            box-sizing: border-box;
+        }
+        
+        /* Keep original padding for each element type - they're already properly sized */
+
         .config-input {
             width: 100%;
             padding: 6px 8px;
@@ -174,6 +181,7 @@
         }
 
         .config-select {
+            min-width: 142px;
             width: 100%;
             padding: 6px 24px 6px 24px;
             border: none;
@@ -194,6 +202,30 @@
         }
 
         .config-select:focus {
+            outline: none;
+        }
+
+        .config-select-simple {
+            min-width: 142px;
+            width: 100%;
+            padding: 6px 24px 6px 8px;
+            border: none;
+            border-radius: 0px;
+            font-size: 11px;
+            line-height: 16px;
+            color: var(--figma-color-text);
+            background: transparent;
+            background-image: 
+                url('data:image/svg+xml;charset=utf-8,<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.14651 3.39645C7.34177 3.20118 7.65828 3.20118 7.85354 3.39645C8.0488 3.59171 8.0488 3.90822 7.85354 4.10348L5.35354 6.60348C5.15828 6.79874 4.84177 6.79874 4.64651 6.60348L2.14651 4.10348C1.95125 3.90822 1.95125 3.59171 2.14651 3.39645C2.34177 3.20118 2.65828 3.20118 2.85354 3.39645L5.00002 5.54293L7.14651 3.39645Z" fill="%23666"/></svg>');
+            background-position: calc(100% - 8px) center;
+            background-repeat: no-repeat;
+            background-size: 10px 10px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        .config-select-simple:focus {
             outline: none;
         }
 
@@ -364,7 +396,7 @@
         }
 
         .dropdown-button {
-            width: 114px;
+            width: 110px;
             padding: 4px 8px;
             border: none;
             border-radius: 4px;
@@ -2023,28 +2055,26 @@ function generateConfigHTML(dataTypeId, layerName) {
             
         case 'percentage':
             addConfigHeader('📊 Percentage Settings');
-            html += '<div style="display: flex; gap: 16px; margin-bottom: 12px;">';
-            html += '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;" class="config-checkbox">';
             html += '<input type="checkbox" id="decimals-' + cleanLayerName + '">';
-            html += '<span style="font-size: 12px;">Include 2 decimals</span>';
-            html += '</label>';
+            html += '<span>Decimals</span>';
             html += '</div>';
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<div style="flex: 1;" >';
             html += '<select id="sort-' + cleanLayerName + '" class="config-select">';
             html += '<option value="random">Random</option>';
             html += '<option value="ascending">Ascending</option>';
             html += '<option value="descending">Descending</option>';
             html += '</select>';
             html += '</div>';
+            html += '</div>';
             closeConfigBody();
             break;
             
         case 'phone':
             addConfigHeader('📞 Phone Settings');
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Format</label>';
-            html += '<select id="phoneFormat-' + cleanLayerName + '" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<select id="phoneFormat-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="human">Human Readable</option>';
             html += '<option value="national">National Format</option>';
             html += '<option value="international">International Format</option>';
@@ -2055,9 +2085,9 @@ function generateConfigHTML(dataTypeId, layerName) {
             
         case 'date':
             addConfigHeader('📅 Date Settings');
-            html += '<div style="margin-bottom: 12px;">';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Format</label>';
-            html += '<select id="dateFormat-' + cleanLayerName + '" class="config-select">';
+            html += '<div class="config-row">';
+            html += '<div style="flex: 1;" >';
+            html += '<select id="dateFormat-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="MM/DD/YYYY">MM/DD/YYYY</option>';
             html += '<option value="DD/MM/YYYY">DD/MM/YYYY</option>';
             html += '<option value="YYYY/MM/DD">YYYY/MM/DD</option>';
@@ -2066,22 +2096,21 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<option value="weekday">Weekday only</option>';
             html += '</select>';
             html += '</div>';
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Sort Order</label>';
+            html += '<div style="flex: 1;" >';
             html += '<select id="sort-' + cleanLayerName + '" class="config-select">';
             html += '<option value="random">Random</option>';
             html += '<option value="recent">Most Recent</option>';
             html += '<option value="oldest">Oldest</option>';
             html += '</select>';
             html += '</div>';
+            html += '</div>';
             closeConfigBody();
             break;
             
         case 'finances':
             addConfigHeader('💰 Finance Settings');
-            html += '<div>';
-            html += '<label style="display: block; font-size: 11px; margin-bottom: 4px; color: #666;">Type</label>';
-            html += '<select id="financeType-' + cleanLayerName + '" class="config-select">';
+            html += '<div class"config-row">';
+            html += '<select id="financeType-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="credit-card">Credit Card Number</option>';
             html += '<option value="account-number">Account Number</option>';
             html += '<option value="bitcoin">Bitcoin Address</option>';
