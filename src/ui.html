@@ -85,23 +85,47 @@
         }
 
         .mapping-item {
-            background: #f8f9fa;
-            border: 1px solid #e1e5e9;
             border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 8px;
+            padding: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .mapping-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            background: var(--figma-color-bg-secondary);
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .config-panel {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .mapping-select {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .mapping-layer {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 16px;
+            padding: 6px 8px;
         }
 
         .layer-name {
-            font-weight: 500;
-            color: #1a1a1a;
+            font-size: 11px;
+            line-height: 16px;
+            font-weight: 510;
+            color: var(--figma-color-text);
         }
 
         .layer-count {
@@ -109,14 +133,50 @@
             font-size: 12px;
         }
 
+        /* Layer Type Indicator Styles */
+        .layer-type-indicator {
+            margin-right: 6px;
+            display: inline-flex;
+            align-items: center;
+            width: 12px;
+            height: 12px;
+        }
+
+        .layer-type-indicator svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .layer-type-text svg {
+            fill: var(--figma-color-icon-brand);
+        }
+
+        .layer-type-image svg {
+            fill: var(--figma-color-icon-brand);
+        }
+
+        .layer-type-mixed svg {
+            fill: var(--figma-color-icon-brand);
+        }
+
         .remove-btn {
-            background: #ff4444;
-            color: white;
+            background: transparent;
+            color: var(--figma-color-bg-inverse);
             border: none;
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 11px;
+            border-radius: 6px;
+            padding: 6px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+        }
+
+        .remove-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--figma-color-bg-inverse);
         }
 
         .data-type-selector {
@@ -128,9 +188,11 @@
         .category-select, .type-select {
             flex: 1;
             padding: 6px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 12px;
+            border-radius: 6px;
+            width: 114px;
+            font-size: 11px;
+            line-height: 16px;
+            padding: 4px 8px;
         }
 
         .type-select:disabled {
@@ -141,17 +203,18 @@
         /* Custom Dropdown Styles */
         .custom-dropdown {
             position: relative;
-            width: 100%;
+            width: auto;
         }
 
         .dropdown-button {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
+            width: 114px;
+            padding: 4px 8px;
+            border: none;
             border-radius: 4px;
-            background: white;
+            background: var(--figma-color-bg);
             text-align: left;
-            font-size: 12px;
+            font-size: 11px;
+            line-height: 16px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
@@ -170,8 +233,9 @@
         }
 
         .dropdown-arrow {
-            font-size: 10px;
-            color: #666;
+            width: 10px;
+            height: 10px;
+            fill: #666;
             transition: transform 0.2s;
         }
 
@@ -183,7 +247,7 @@
             position: absolute;
             top: 100%;
             left: 0;
-            right: 0;
+            min-width: 240px;
             background: white;
             border: 1px solid #0066ff;
             border-top: none;
@@ -270,7 +334,11 @@
         }
 
         .mappings-container {
-            overflow-y: auto;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 4px;
         }
 
         .empty-state {
@@ -547,13 +615,13 @@
             background: none;
             border: none;
             cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
+            padding: 6px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             transition: background-color 0.2s;
         }
 
@@ -561,14 +629,15 @@
             background: #f0f4f8;
         }
 
-        .config-toggle-icon {
-            font-size: 12px;
-            color: #666;
-            transition: transform 0.2s;
+        .config-toggle svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--figma-color-icon);
+            transition: fill 0.2s;
         }
 
-        .config-toggle.collapsed .config-toggle-icon {
-            transform: rotate(-90deg);
+        .config-toggle.open svg {
+            fill: var(--figma-color-icon-brand);
         }
 
         .config-body {
@@ -1175,7 +1244,7 @@ function deselectDataType(layerName) {
     var dropdownText = button.querySelector('.dropdown-text');
     
     // Reset button text
-    dropdownText.textContent = 'Select Data Type';
+    dropdownText.textContent = 'Select...';
     
     // Remove selected state from all dropdown options
     var options = panel.querySelectorAll('.dropdown-option');
@@ -1236,7 +1305,7 @@ function showRemoveButton(layerName) {
             var removeBtn = item.querySelector('.remove-btn');
             var toggleBtn = item.querySelector('.config-toggle');
             if (removeBtn) {
-                removeBtn.style.display = 'inline-block';
+                removeBtn.style.display = 'flex';
             }
             if (toggleBtn) {
                 toggleBtn.style.display = 'none';
@@ -1251,7 +1320,6 @@ function toggleConfigPanel(layerName) {
     console.log('🔄 Toggling config panel for layer:', layerName);
     
     var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
-    var configBody = document.getElementById('config-body-' + cleanLayerName);
     var configPanel = document.getElementById('config-panel-' + cleanLayerName);
     
     // Find the toggle button in the mapping header
@@ -1267,30 +1335,23 @@ function toggleConfigPanel(layerName) {
         }
     }
     
-    if (!configBody || !configPanel || !toggleButton) {
+    if (!configPanel || !toggleButton) {
         console.error('❌ Config panel elements not found for layer:', layerName);
         return;
     }
     
-    var toggleIcon = toggleButton.querySelector('.config-toggle-icon');
-    var isCollapsed = configBody.classList.contains('collapsed');
+    var isHidden = configPanel.style.display === 'none';
     
-    if (isCollapsed) {
-        // Expand the panel
-        configBody.classList.remove('collapsed');
-        toggleButton.classList.remove('collapsed');
-        if (toggleIcon) {
-            toggleIcon.textContent = '▼';
-        }
-        console.log('✅ Expanded config panel for layer:', layerName);
+    if (isHidden) {
+        // Show the panel
+        configPanel.style.display = 'block';
+        toggleButton.classList.add('open');
+        console.log('✅ Showed config panel for layer:', layerName);
     } else {
-        // Collapse the panel
-        configBody.classList.add('collapsed');
-        toggleButton.classList.add('collapsed');
-        if (toggleIcon) {
-            toggleIcon.textContent = '▼';
-        }
-        console.log('✅ Collapsed config panel for layer:', layerName);
+        // Hide the panel
+        configPanel.style.display = 'none';
+        toggleButton.classList.remove('open');
+        console.log('✅ Hidden config panel for layer:', layerName);
     }
 }
 
@@ -1486,17 +1547,21 @@ function renderMappings(mappings, savedConfigurations) {
         // Get available categories for this layer type
         var availableCategories = getAvailableCategoriesForLayerType(mapping.layerType);
         
-        // Add layer type indicator
+        // Generate layer type indicator for inline use
         var layerTypeIndicator = '';
+        var layerTypeClass = '';
         switch (mapping.layerType) {
             case 'TEXT':
-                layerTypeIndicator = '<div style="color: #0066ff; font-size: 11px; margin-bottom: 6px;">📝 Text layers</div>';
+                layerTypeIndicator = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 1.5C9.76522 1.5 10.0195 1.60543 10.207 1.79297C10.3946 1.98051 10.5 2.23478 10.5 2.5V3.5C10.5 3.77614 10.2761 4 10 4C9.72386 4 9.5 3.77614 9.5 3.5V2.5H6.5V9.5H7.5C7.77614 9.5 8 9.72386 8 10C8 10.2761 7.77614 10.5 7.5 10.5H4.5C4.22386 10.5 4 10.2761 4 10C4 9.72386 4.22386 9.5 4.5 9.5H5.5V2.5H2.5V3.5C2.5 3.77614 2.27614 4 2 4C1.72386 4 1.5 3.77614 1.5 3.5V2.5C1.5 2.23478 1.60543 1.9805 1.79297 1.79297C1.9805 1.60543 2.23478 1.5 2.5 1.5H9.5Z" /></svg>';
+                layerTypeClass = 'layer-type-text';
                 break;
             case 'OTHER':
-                layerTypeIndicator = '<div style="color: #ff6600; font-size: 11px; margin-bottom: 6px;">🖼️ Image layers</div>';
+                layerTypeIndicator = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_781_4798)"><path d="M9.56445 6.89746C9.70003 6.65698 10.0056 6.57153 10.2461 6.70703L10.9961 7.12988H10.9971C11.1508 7.21709 11.2792 7.34436 11.3682 7.49707C11.457 7.64973 11.5039 7.82339 11.5039 8C11.5039 8.17681 11.4572 8.35113 11.3682 8.50391C11.2795 8.65602 11.151 8.78103 10.998 8.86816L10.999 8.86914L6.75 11.3018L6.75098 11.3027C6.52321 11.4342 6.26397 11.5037 6.00098 11.5039C5.73817 11.5039 5.47966 11.4339 5.25195 11.3027V11.3037L1.00195 8.86914V8.86816C0.849263 8.78108 0.7214 8.65576 0.632812 8.50391C0.543766 8.35109 0.496107 8.17687 0.496094 8C0.496108 7.8233 0.543934 7.64978 0.632812 7.49707C0.721868 7.3443 0.85006 7.21707 1.00391 7.12988H1.00488L1.75488 6.70703C1.99542 6.57177 2.30105 6.65698 2.43652 6.89746C2.57146 7.13779 2.48611 7.44257 2.24609 7.57812L1.49707 8L1.49902 8.00098L5.74902 10.4365L5.75098 10.4375C5.82677 10.481 5.91356 10.5039 6.00098 10.5039C6.08843 10.5037 6.17523 10.4812 6.25098 10.4375L6.25195 10.4365L10.502 8.00098L10.5029 8L9.75488 7.57812C9.5146 7.4426 9.42929 7.13791 9.56445 6.89746ZM6.00098 0.496094C6.2634 0.496255 6.52162 0.565341 6.74902 0.696289L10.9971 3.12988C11.1508 3.21709 11.2792 3.34436 11.3682 3.49707C11.457 3.64973 11.5039 3.82338 11.5039 4C11.5039 4.17681 11.4572 4.35112 11.3682 4.50391C11.2795 4.65602 11.151 4.78103 10.998 4.86816L10.999 4.86914L6.75 7.30176L6.75098 7.30273C6.52321 7.43423 6.26396 7.50374 6.00098 7.50391C5.73817 7.50391 5.47966 7.4339 5.25195 7.30273V7.30371L1.00195 4.86914V4.86816C0.84926 4.78108 0.721402 4.65576 0.632812 4.50391C0.543763 4.35108 0.496104 4.17687 0.496094 4C0.496106 3.8233 0.543935 3.64978 0.632812 3.49707C0.721867 3.34431 0.850067 3.21707 1.00391 3.12988L5.25195 0.696289V0.697266C5.47966 0.566101 5.73817 0.496094 6.00098 0.496094ZM6.00098 1.49609C5.9134 1.49609 5.82687 1.51978 5.75098 1.56348H5.74902L1.49902 3.99902L1.49707 4L1.49902 4.00098L5.74902 6.43652L5.75098 6.4375C5.82677 6.48104 5.91356 6.50391 6.00098 6.50391C6.08843 6.50375 6.17523 6.48123 6.25098 6.4375L6.25195 6.43652L10.502 4.00098L10.5039 4L10.502 3.99902L6.25195 1.56348H6.25098C6.17523 1.51975 6.08843 1.49626 6.00098 1.49609Z" /></g><defs><clipPath id="clip0_781_4798"><rect width="12" height="12" /></clipPath></defs></svg>';
+                layerTypeClass = 'layer-type-image';
                 break;
             case 'MIXED':
-                layerTypeIndicator = '<div style="color: #9933cc; font-size: 11px; margin-bottom: 6px;">🎯 Mixed layers</div>';
+                layerTypeIndicator = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_781_4798)"><path d="M9.56445 6.89746C9.70003 6.65698 10.0056 6.57153 10.2461 6.70703L10.9961 7.12988H10.9971C11.1508 7.21709 11.2792 7.34436 11.3682 7.49707C11.457 7.64973 11.5039 7.82339 11.5039 8C11.5039 8.17681 11.4572 8.35113 11.3682 8.50391C11.2795 8.65602 11.151 8.78103 10.998 8.86816L10.999 8.86914L6.75 11.3018L6.75098 11.3027C6.52321 11.4342 6.26397 11.5037 6.00098 11.5039C5.73817 11.5039 5.47966 11.4339 5.25195 11.3027V11.3037L1.00195 8.86914V8.86816C0.849263 8.78108 0.7214 8.65576 0.632812 8.50391C0.543766 8.35109 0.496107 8.17687 0.496094 8C0.496108 7.8233 0.543934 7.64978 0.632812 7.49707C0.721868 7.3443 0.85006 7.21707 1.00391 7.12988H1.00488L1.75488 6.70703C1.99542 6.57177 2.30105 6.65698 2.43652 6.89746C2.57146 7.13779 2.48611 7.44257 2.24609 7.57812L1.49707 8L1.49902 8.00098L5.74902 10.4365L5.75098 10.4375C5.82677 10.481 5.91356 10.5039 6.00098 10.5039C6.08843 10.5037 6.17523 10.4812 6.25098 10.4375L6.25195 10.4365L10.502 8.00098L10.5029 8L9.75488 7.57812C9.5146 7.4426 9.42929 7.13791 9.56445 6.89746ZM6.00098 0.496094C6.2634 0.496255 6.52162 0.565341 6.74902 0.696289L10.9971 3.12988C11.1508 3.21709 11.2792 3.34436 11.3682 3.49707C11.457 3.64973 11.5039 3.82338 11.5039 4C11.5039 4.17681 11.4572 4.35112 11.3682 4.50391C11.2795 4.65602 11.151 4.78103 10.998 4.86816L10.999 4.86914L6.75 7.30176L6.75098 7.30273C6.52321 7.43423 6.26396 7.50374 6.00098 7.50391C5.73817 7.50391 5.47966 7.4339 5.25195 7.30273V7.30371L1.00195 4.86914V4.86816C0.84926 4.78108 0.721402 4.65576 0.632812 4.50391C0.543763 4.35108 0.496104 4.17687 0.496094 4C0.496106 3.8233 0.543935 3.64978 0.632812 3.49707C0.721867 3.34431 0.850067 3.21707 1.00391 3.12988L5.25195 0.696289V0.697266C5.47966 0.566101 5.73817 0.496094 6.00098 0.496094ZM6.00098 1.49609C5.9134 1.49609 5.82687 1.51978 5.75098 1.56348H5.74902L1.49902 3.99902L1.49707 4L1.49902 4.00098L5.74902 6.43652L5.75098 6.4375C5.82677 6.48104 5.91356 6.50391 6.00098 6.50391C6.08843 6.50375 6.17523 6.48123 6.25098 6.4375L6.25195 6.43652L10.502 4.00098L10.5039 4L10.502 3.99902L6.25195 1.56348H6.25098C6.17523 1.51975 6.08843 1.49626 6.00098 1.49609Z" /></g><defs><clipPath id="clip0_781_4798"><rect width="12" height="12" /></clipPath></defs></svg>';
+                layerTypeClass = 'layer-type-mixed';
                 break;
         }
         
@@ -1508,23 +1573,18 @@ function renderMappings(mappings, savedConfigurations) {
         
         html += '<div class="mapping-item">';
         html += '<div class="mapping-header">';
-        html += '<div>';
-        html += '<div class="layer-name">' + mapping.layerName + '</div>';
-        html += '<div class="layer-count">' + mapping.count + ' layer' + (mapping.count > 1 ? 's' : '') + '</div>';
+        html += '<div class="mapping-layer">';
+        html += '<span class="layer-type-indicator ' + layerTypeClass + '">' + layerTypeIndicator + '</span>';
+        html += '<span class="layer-name">' + mapping.layerName + '</span>';
         html += '</div>';
-        // Always create both buttons, show/hide based on configuration state
-        html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')" style="display: ' + (!mapping.dataTypeId ? 'inline-block' : 'none') + ';">Remove</button>';
-        html += '<button class="config-toggle" onclick="toggleConfigPanel(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')" style="display: ' + (mapping.dataTypeId ? 'flex' : 'none') + ';">';
-        html += '<span class="config-toggle-icon">▼</span>';
-        html += '</button>';
-        html += '</div>';
-        html += layerTypeIndicator;
-        html += savedConfigIndicator;
+        html += '<div class="mapping-select">';
         html += '<div class="data-type-selector">';
         html += '<div class="custom-dropdown" id="dropdown-' + cleanLayerName + '">';
         html += '<button type="button" class="dropdown-button" data-layer-name="' + mapping.layerName + '">';
-        html += '<span class="dropdown-text">Select Data Type</span>';
-        html += '<span class="dropdown-arrow">▼</span>';
+        html += '<span class="dropdown-text">Select...</span>';
+        html += '<svg class="dropdown-arrow" width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">';
+        html += '<path d="M7.14645 3.39648C7.34171 3.20122 7.65822 3.20122 7.85348 3.39648C8.04874 3.59174 8.04874 3.90825 7.85348 4.10351L5.35348 6.60351C5.15822 6.79877 4.84171 6.79877 4.64645 6.60351L2.14645 4.10351C1.95118 3.90825 1.95118 3.59174 2.14645 3.39648C2.34171 3.20121 2.65822 3.20121 2.85348 3.39648L4.99996 5.54296L7.14645 3.39648Z" />';
+        html += '</svg>';
         html += '</button>';
         html += '<div class="dropdown-panel" id="panel-' + cleanLayerName + '">';
         html += '<div class="dropdown-content">';
@@ -1533,6 +1593,20 @@ function renderMappings(mappings, savedConfigurations) {
         html += '</div>';
         html += '</div>';
         html += '</div>';
+        // Always create both buttons, show/hide based on configuration state
+        html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')" style="display: ' + (!mapping.dataTypeId ? 'flex' : 'none') + ';">';
+        html += '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">';
+        html += '<path d="M9.33301 0.833008C9.82878 0.833008 10.2834 1.07648 10.6035 1.39648C10.9234 1.7165 11.1658 2.17049 11.166 2.66602V3.5H14C14.2761 3.5 14.5 3.72386 14.5 4C14.5 4.27614 14.2761 4.5 14 4.5H13.166V13.333C13.166 13.8289 12.9236 14.2834 12.6035 14.6035C12.2834 14.9236 11.8289 15.167 11.333 15.167H4.66602C4.17042 15.1668 3.7165 14.9235 3.39648 14.6035C3.0764 14.2834 2.83301 13.8289 2.83301 13.333V4.5H2C1.72386 4.5 1.5 4.27614 1.5 4C1.5 3.72386 1.72386 3.5 2 3.5H4.83301V2.66602C4.83322 2.17033 5.07646 1.71652 5.39648 1.39648C5.71651 1.07646 6.17034 0.833234 6.66602 0.833008H9.33301ZM3.83301 13.333C3.83301 13.5037 3.92381 13.7167 4.10352 13.8965C4.28307 14.076 4.49547 14.1667 4.66602 14.167H11.333C11.5037 14.167 11.7167 14.0762 11.8965 13.8965C12.0762 13.7167 12.166 13.5037 12.166 13.333V4.5H3.83301V13.333ZM6.66699 6.83301C6.94286 6.83321 7.16682 7.05714 7.16699 7.33301V11.333C7.16699 11.609 6.94297 11.8328 6.66699 11.833C6.39085 11.833 6.16699 11.6092 6.16699 11.333V7.33301C6.16717 7.05702 6.39096 6.83301 6.66699 6.83301ZM9.33301 6.83301C9.60904 6.83301 9.83283 7.05702 9.83301 7.33301V11.333C9.83301 11.6092 9.60915 11.833 9.33301 11.833C9.05703 11.8328 8.83301 11.609 8.83301 11.333V7.33301C8.83318 7.05714 9.05714 6.83321 9.33301 6.83301ZM6.66602 1.83301C6.49542 1.83325 6.2831 1.92393 6.10352 2.10352C5.92393 2.28311 5.83324 2.49542 5.83301 2.66602V3.5H10.166V2.66602C10.1658 2.49551 10.0759 2.28304 9.89648 2.10352C9.71673 1.92392 9.50362 1.83301 9.33301 1.83301H6.66602Z" />';
+        html += '</svg>';
+        html += '</button>';
+        html += '<button class="config-toggle" onclick="toggleConfigPanel(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')" style="display: ' + (mapping.dataTypeId ? 'flex' : 'none') + ';">';
+        html += '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">';
+        html += '<path d="M11.333 8.83301C12.7136 8.83301 13.8328 9.95244 13.833 11.333C13.833 12.7137 12.7137 13.833 11.333 13.833C10.1235 13.8328 9.11426 12.9742 8.88281 11.833H3.33301C3.05703 11.8328 2.83301 11.609 2.83301 11.333C2.83318 11.0571 3.05714 10.8332 3.33301 10.833H8.88281C9.1145 9.6921 10.1238 8.83318 11.333 8.83301ZM11.333 9.83301C10.5049 9.83321 9.83318 10.5048 9.83301 11.333C9.83301 12.1613 10.5047 12.8328 11.333 12.833C12.1614 12.833 12.833 12.1614 12.833 11.333C12.8328 10.5047 12.1613 9.83301 11.333 9.83301ZM4.66699 2.16699C5.87646 2.16717 6.88574 3.02578 7.11719 4.16699H12.667C12.943 4.16719 13.167 4.39097 13.167 4.66699C13.1668 4.94287 12.9429 5.16679 12.667 5.16699H7.11719C6.8855 6.3079 5.87624 7.16682 4.66699 7.16699C3.28639 7.16699 2.16717 6.04756 2.16699 4.66699C2.16699 3.28628 3.28628 2.16699 4.66699 2.16699ZM4.66699 3.16699C3.83857 3.16699 3.16699 3.83857 3.16699 4.66699C3.16717 5.49527 3.83867 6.16699 4.66699 6.16699C5.49514 6.16679 6.16682 5.49515 6.16699 4.66699C6.16699 3.83869 5.49525 3.16719 4.66699 3.16699Z" />';
+        html += '</svg>';
+        html += '</button>';
+        html += '</div>';
+        html += '</div>';
+        // html += savedConfigIndicator; // Removed "Previously configured" message
         
         // Configuration panel (initially hidden, will be shown when a data type with options is selected)
         html += '<div class="config-panel" id="config-panel-' + cleanLayerName + '" style="display: none; margin-top: 12px; padding: 12px; background: #f0f4f8; border-radius: 6px; border: 1px solid #e1e8ed;">';
@@ -1600,9 +1674,27 @@ function handleTypeChange(layerName, dataTypeId) {
         if (dataType) break;
     }
     
+    // Find the toggle button to sync its state
+    var mappingItems = document.querySelectorAll('.mapping-item');
+    var toggleButton = null;
+    
+    for (var i = 0; i < mappingItems.length; i++) {
+        var item = mappingItems[i];
+        var nameElement = item.querySelector('.layer-name');
+        if (nameElement && nameElement.textContent === layerName) {
+            toggleButton = item.querySelector('.config-toggle');
+            break;
+        }
+    }
+
     if (dataType && dataType.hasOptions) {
         configPanel.style.display = 'block';
         configContent.innerHTML = generateConfigHTML(dataTypeId, layerName);
+        
+        // Set toggle button to open state since panel is visible
+        if (toggleButton) {
+            toggleButton.classList.add('open');
+        }
         
         // Set up preview for custom numbers
         if (dataTypeId === 'custom') {
@@ -1611,6 +1703,11 @@ function handleTypeChange(layerName, dataTypeId) {
     } else {
         configPanel.style.display = 'none';
         configContent.innerHTML = '';
+        
+        // Set toggle button to closed state since panel is hidden
+        if (toggleButton) {
+            toggleButton.classList.remove('open');
+        }
     }
 }
 
@@ -3242,7 +3339,7 @@ window.addEventListener('message', function(event) {
     } else if (msg.type === 'data-applied') {
         setLoadingState(applyButton, applyText, applyLoading, false);
         hideProgressScreen();
-        showStatusMessage(msg.message);
+        // showStatusMessage(msg.message); // Removed success message display
     } else if (msg.type === 'progress-update') {
         updateProgress(msg.completed, msg.total);
     } else if (msg.type === 'error') {
