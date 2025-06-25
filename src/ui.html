@@ -18,13 +18,34 @@
         .container {
             max-width: 400px;
             margin: 0 auto;
-            padding: 8px 16px 16px 16px;
+            padding: 8px 16px 60px 16px; /* Add bottom padding for sticky apply button */
         }
 
         .section {
             background: var(--figma-color-bg);
             border-radius: 8px;
             margin-bottom: 16px;
+        }
+
+        .apply-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--figma-color-bg);
+            padding: 8px 16px 16px 16px;
+            z-index: 100;
+        }
+
+        /* Hide apply section when selection screen is active */
+        .apply-section.hidden {
+            display: none;
+        }
+
+        .apply-section .apply-button {
+            max-width: 400px;
+            margin: 0 auto;
+            display: flex;
         }
 
         .section-title {
@@ -35,15 +56,17 @@
 
         .scan-button, .apply-button {
             width: 100%;
-            padding: 12px;
+            padding: 4px 8px;
             border: none;
             border-radius: 6px;
-            font-weight: 500;
+            font-weight: 510;
+            font-size: 11px;
+            line-height: 20px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 4px;
             transition: all 0.2s;
         }
 
@@ -57,16 +80,16 @@
         }
 
         .apply-button {
-            background: #00aa00;
-            color: white;
+            background: var(--figma-color-bg-inverse);
+            color: var(--figma-color-bg);
         }
 
         .apply-button:hover {
-            background: #008800;
+            background: linear-gradient(90deg, #007BE5 -5.77%, #FFC5D0 49.15%, #FFBDA7 100%);
         }
 
         .apply-button:disabled {
-            background: #ccc;
+            background: var(--figma-color-bg-disabled);
             cursor: not-allowed;
         }
 
@@ -171,6 +194,11 @@
             justify-content: center;
             width: 28px;
             height: 28px;
+            opacity: 0.5;
+        }   
+
+        .remove-btn:hover {
+            opacity: 1;
         }
 
         .remove-btn svg {
@@ -686,13 +714,15 @@
                         </div>
                     </div>
 
-                    <!-- Apply Section -->
-                    <div class="section">
-                        <button id="apply-button" class="apply-button" disabled>
-                            <span id="apply-text">Apply Data to Layers</span>
-                            <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
-                        </button>
-                    </div>
+                    <!-- Apply Section - Moved outside container to be sticky -->
+                </div>
+                
+                <!-- Sticky Apply Section -->
+                <div class="apply-section">
+                    <button id="apply-button" class="apply-button" disabled>
+                        <span id="apply-text">Apply Data to Layers</span>
+                        <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
+                    </button>
                 </div>
 
                 <!-- Selection Onboarding Screen (Generate tab only) -->
@@ -923,9 +953,10 @@ var applyLoading = document.getElementById('apply-loading');
 var mappingsContainer = document.getElementById('mappings-container');
 var statusContainer = document.getElementById('status-container');
 var progressScreen = document.getElementById('progress-screen');
-var selectionScreen = document.getElementById('selection-screen');
-var selectionScanButton = document.getElementById('selection-scan-button');
-var selectionNotice = document.getElementById('selection-notice');
+        var selectionScreen = document.getElementById('selection-screen');
+        var selectionScanButton = document.getElementById('selection-scan-button');
+        var selectionNotice = document.getElementById('selection-notice');
+        var applySection = document.querySelector('.apply-section');
 var mainContainer = document.querySelector('.container');
 var progressStatus = document.getElementById('progress-status');
 var progressBar = document.getElementById('progress-bar');
@@ -1072,12 +1103,14 @@ function showStatusMessage(message, type) {
 function showProgressScreen(totalLayers) {
     mainContainer.style.display = 'none';
     progressScreen.classList.add('active');
+    applySection.classList.add('hidden'); // Hide apply section when progress screen is shown
     updateProgress(0, totalLayers);
 }
 
 function hideProgressScreen() {
     progressScreen.classList.remove('active');
     mainContainer.style.display = 'block';
+    applySection.classList.remove('hidden'); // Show apply section when progress screen is hidden
     resetProgress();
 }
 
@@ -1096,12 +1129,14 @@ function resetProgress() {
 function showSelectionScreen(hasSelection) {
     mainContainer.style.display = 'none';
     selectionScreen.classList.add('active');
+    applySection.classList.add('hidden'); // Hide apply section when selection screen is shown
     updateSelectionButtonState(hasSelection);
 }
 
 function hideSelectionScreen() {
     selectionScreen.classList.remove('active');
     mainContainer.style.display = 'block';
+    applySection.classList.remove('hidden'); // Show apply section when selection screen is hidden
 }
 
 function updateSelectionButtonState(hasSelection) {
