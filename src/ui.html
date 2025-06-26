@@ -879,6 +879,55 @@
             margin: 0;
             padding: 0;
         }
+
+        /* Google Sheets sync styles */
+        .sheet-preview {
+            margin-bottom: 16px;
+        }
+
+        .preview-table {
+            border: 1px solid var(--figma-color-border);
+            border-radius: 6px;
+            overflow: hidden;
+            font-size: 11px;
+        }
+
+        .preview-row {
+            display: flex;
+            min-height: 24px;
+        }
+
+        .preview-row.header {
+            background: var(--figma-color-bg-secondary);
+            font-weight: 600;
+        }
+
+        .preview-cell {
+            flex: 1;
+            padding: 4px 8px;
+            border-right: 1px solid var(--figma-color-border);
+            border-bottom: 1px solid var(--figma-color-border);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+        .preview-cell:last-child {
+            border-right: none;
+        }
+
+        .preview-row:last-child .preview-cell {
+            border-bottom: none;
+        }
+
+        .sync-mapping-item {
+            margin-bottom: 4px;
+        }
+
+        .column-select {
+            min-width: 120px;
+        }
     </style>
 </head>
 <body>
@@ -967,9 +1016,45 @@
         
         <!-- Sync Tab Content -->
         <div id="sync-tab" class="tab-content">
-            <div class="tab-panel">
-                <div class="empty-tab">
-                    Sync functionality coming soon...
+            <div class="tab-panel" style="position: relative;">
+                <div class="container">
+                    <!-- Google Sheets URL Section -->
+                    <div class="section">
+                        <div class="section-title">Google Sheets URL</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <input 
+                                type="text" 
+                                id="sheet-url-input" 
+                                placeholder="https://docs.google.com/spreadsheets/d/your-sheet-id/edit"
+                                style="padding: 8px; border: 1px solid var(--figma-color-border); border-radius: 6px; font-size: 11px; width: 100%; box-sizing: border-box;"
+                            />
+                            <button id="sync-sheet-button" class="scan-button">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 1.5C8.27614 1.5 8.5 1.72386 8.5 2V7.79289L10.1464 6.14645C10.3417 5.95118 10.6583 5.95118 10.8536 6.14645C11.0488 6.34171 11.0488 6.65829 10.8536 6.85355L8.35355 9.35355C8.15829 9.54882 7.84171 9.54882 7.64645 9.35355L5.14645 6.85355C4.95118 6.65829 4.95118 6.34171 5.14645 6.14645C5.34171 5.95118 5.65829 5.95118 5.85355 6.14645L7.5 7.79289V2C7.5 1.72386 7.72386 1.5 8 1.5Z" fill="currentColor"/>
+                                    <path d="M2 10.5C2 10.2239 2.22386 10 2.5 10H13.5C13.7761 10 14 10.2239 14 10.5V12.5C14 13.3284 13.3284 14 12.5 14H3.5C2.67157 14 2 13.3284 2 12.5V10.5Z" fill="currentColor"/>
+                                </svg>
+                                <span id="sync-text">Sync & Scan Layers</span>
+                                <div id="sync-loading" class="loading-spinner" style="display: none;"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Layer Mappings Section -->
+                    <div class="section">
+                        <div id="sync-mappings-container" class="mappings-container">
+                            <div class="empty-state">
+                                Paste a Google Sheets URL and click "Sync & Scan Layers" to get started
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sticky Apply Section for Sync -->
+                <div id="sync-apply-section" class="apply-section" style="display: none;">
+                    <button id="sync-apply-button" class="apply-button" disabled>
+                        <span id="sync-apply-text">Apply Sheet Data to Layers</span>
+                        <div id="sync-apply-loading" class="loading-spinner" style="display: none;"></div>
+                    </button>
                 </div>
             </div>
         </div>
@@ -3734,6 +3819,185 @@ function tryImageWithCorsWorkarounds(imageUrl) {
 // Note: Theme colors are automatically handled by Figma when themeColors: true is set
 // Figma will inject CSS variables and add figma-light/figma-dark classes automatically
 
+// Google Sheets Sync functionality
+var syncMappings = [];
+var sheetColumns = [];
+var sheetDataPreview = [];
+
+// Get DOM elements for sync functionality
+var syncSheetButton = document.getElementById('sync-sheet-button');
+var syncText = document.getElementById('sync-text');
+var syncLoading = document.getElementById('sync-loading');
+var sheetUrlInput = document.getElementById('sheet-url-input');
+var syncMappingsContainer = document.getElementById('sync-mappings-container');
+var syncApplySection = document.getElementById('sync-apply-section');
+var syncApplyButton = document.getElementById('sync-apply-button');
+var syncApplyText = document.getElementById('sync-apply-text');
+var syncApplyLoading = document.getElementById('sync-apply-loading');
+
+// Event listeners for sync functionality
+if (syncSheetButton) {
+    syncSheetButton.addEventListener('click', function() {
+        var sheetUrl = sheetUrlInput.value.trim();
+        if (!sheetUrl) {
+            showStatusMessage('Please enter a Google Sheets URL', 'error');
+            return;
+        }
+        
+        setLoadingState(syncSheetButton, syncText, syncLoading, true);
+        parent.postMessage({
+            pluginMessage: {
+                type: 'sync-google-sheet',
+                data: { sheetUrl: sheetUrl }
+            }
+        }, '*');
+    });
+}
+
+if (syncApplyButton) {
+    syncApplyButton.addEventListener('click', function() {
+        var mappings = [];
+        
+        // Collect mappings from UI
+        var syncMappingItems = syncMappingsContainer.querySelectorAll('.sync-mapping-item');
+        syncMappingItems.forEach(function(item) {
+            var layerName = item.dataset.layerName;
+            var columnSelect = item.querySelector('.column-select');
+            if (columnSelect && columnSelect.value) {
+                mappings.push({
+                    layerName: layerName,
+                    columnName: columnSelect.value
+                });
+            }
+        });
+        
+        if (mappings.length === 0) {
+            showStatusMessage('Please select at least one column mapping', 'error');
+            return;
+        }
+        
+        setLoadingState(syncApplyButton, syncApplyText, syncApplyLoading, true);
+        parent.postMessage({
+            pluginMessage: {
+                type: 'apply-sheet-data',
+                data: { mappings: mappings }
+            }
+        }, '*');
+    });
+}
+
+// Render sync mappings
+function renderSyncMappings(layers, columns, dataPreview) {
+    console.log('🎨 Rendering sync mappings:', layers.length, 'layers,', columns.length, 'columns');
+    
+    syncMappings = layers;
+    sheetColumns = columns;
+    sheetDataPreview = dataPreview;
+    
+    if (layers.length === 0) {
+        syncMappingsContainer.innerHTML = '<div class="empty-state">No layers with % prefixes found in selection</div>';
+        syncApplySection.style.display = 'none';
+        return;
+    }
+    
+    // Show data preview
+    var previewHtml = '<div class="sheet-preview">';
+    previewHtml += '<div class="section-title">Sheet Preview</div>';
+    previewHtml += '<div class="preview-table">';
+    
+    // Headers
+    previewHtml += '<div class="preview-row header">';
+    columns.forEach(function(col) {
+        previewHtml += '<div class="preview-cell">' + escapeHtml(col) + '</div>';
+    });
+    previewHtml += '</div>';
+    
+    // Sample data rows
+    dataPreview.slice(0, 2).forEach(function(row) {
+        previewHtml += '<div class="preview-row">';
+        columns.forEach(function(col, index) {
+            var cellValue = row[index] || '';
+            previewHtml += '<div class="preview-cell">' + escapeHtml(cellValue.toString().substring(0, 20)) + '</div>';
+        });
+        previewHtml += '</div>';
+    });
+    
+    previewHtml += '</div></div>';
+    
+    // Layer mappings
+    var mappingsHtml = '<div class="section-title">Layer Mappings</div>';
+    
+    layers.forEach(function(layer) {
+        mappingsHtml += '<div class="sync-mapping-item mapping-item" data-layer-name="' + escapeHtml(layer.layerName) + '">';
+        mappingsHtml += '<div class="mapping-header">';
+        mappingsHtml += '<div class="mapping-layer">';
+        mappingsHtml += getLayerTypeIcon(layer.layerType);
+        mappingsHtml += '<span class="layer-name">' + escapeHtml(layer.layerName) + '</span>';
+        mappingsHtml += '<span class="layer-count">(' + layer.count + ')</span>';
+        mappingsHtml += '</div>';
+        mappingsHtml += '<select class="column-select config-select-simple">';
+        mappingsHtml += '<option value="">Select column...</option>';
+        columns.forEach(function(col) {
+            mappingsHtml += '<option value="' + escapeHtml(col) + '">' + escapeHtml(col) + '</option>';
+        });
+        mappingsHtml += '</select>';
+        mappingsHtml += '</div>';
+        mappingsHtml += '</div>';
+    });
+    
+    syncMappingsContainer.innerHTML = previewHtml + mappingsHtml;
+    
+    // Show apply section
+    syncApplySection.style.display = 'block';
+    syncApplyButton.disabled = false;
+    
+    // Add change listeners to enable/disable apply button
+    var columnSelects = syncMappingsContainer.querySelectorAll('.column-select');
+    columnSelects.forEach(function(select) {
+        select.addEventListener('change', updateSyncApplyButtonState);
+    });
+}
+
+function updateSyncApplyButtonState() {
+    var hasSelections = Array.from(syncMappingsContainer.querySelectorAll('.column-select')).some(function(select) {
+        return select.value !== '';
+    });
+    syncApplyButton.disabled = !hasSelections;
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Generate layer type icon for sync mappings (matching the main renderMappings function)
+function getLayerTypeIcon(layerType) {
+    var layerTypeIndicator = '';
+    var layerTypeClass = '';
+    
+    switch (layerType) {
+        case 'TEXT':
+            layerTypeIndicator = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 1.5C9.76522 1.5 10.0195 1.60543 10.207 1.79297C10.3946 1.98051 10.5 2.23478 10.5 2.5V3.5C10.5 3.77614 10.2761 4 10 4C9.72386 4 9.5 3.77614 9.5 3.5V2.5H6.5V9.5H7.5C7.77614 9.5 8 9.72386 8 10C8 10.2761 7.77614 10.5 7.5 10.5H4.5C4.22386 10.5 4 10.2761 4 10C4 9.72386 4.22386 9.5 4.5 9.5H5.5V2.5H2.5V3.5C2.5 3.77614 2.27614 4 2 4C1.72386 4 1.5 3.77614 1.5 3.5V2.5C1.5 2.23478 1.60543 1.9805 1.79297 1.79297C1.9805 1.60543 2.23478 1.5 2.5 1.5H9.5Z" /></svg>';
+            layerTypeClass = 'layer-type-text';
+            break;
+        case 'OTHER':
+            layerTypeIndicator = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_781_4798)"><path d="M9.56445 6.89746C9.70003 6.65698 10.0056 6.57153 10.2461 6.70703L10.9961 7.12988H10.9971C11.1508 7.21709 11.2792 7.34436 11.3682 7.49707C11.457 7.64973 11.5039 7.82339 11.5039 8C11.5039 8.17681 11.4572 8.35113 11.3682 8.50391C11.2795 8.65602 11.151 8.78103 10.998 8.86816L10.999 8.86914L6.75 11.3018L6.75098 11.3027C6.52321 11.4342 6.26397 11.5037 6.00098 11.5039C5.73817 11.5039 5.47966 11.4339 5.25195 11.3027V11.3037L1.00195 8.86914V8.86816C0.849263 8.78108 0.7214 8.65576 0.632812 8.50391C0.543766 8.35109 0.496107 8.17687 0.496094 8C0.496108 7.8233 0.543934 7.64978 0.632812 7.49707C0.721868 7.3443 0.85006 7.21707 1.00391 7.12988H1.00488L1.75488 6.70703C1.99542 6.57177 2.30105 6.65698 2.43652 6.89746C2.57146 7.13779 2.48611 7.44257 2.24609 7.57812L1.49707 8L1.49902 8.00098L5.74902 10.4365L5.75098 10.4375C5.82677 10.481 5.91356 10.5039 6.00098 10.5039C6.08843 10.5037 6.17523 10.4812 6.25098 10.4375L6.25195 10.4365L10.502 8.00098L10.5029 8L9.75488 7.57812C9.5146 7.4426 9.42929 7.13791 9.56445 6.89746ZM6.00098 0.496094C6.2634 0.496255 6.52162 0.565341 6.74902 0.696289L10.9971 3.12988C11.1508 3.21709 11.2792 3.34436 11.3682 3.49707C11.457 3.64973 11.5039 3.82338 11.5039 4C11.5039 4.17681 11.4572 4.35112 11.3682 4.50391C11.2795 4.65602 11.151 4.78103 10.998 4.86816L10.999 4.86914L6.75 7.30176L6.75098 7.30273C6.52321 7.43423 6.26396 7.50374 6.00098 7.50391C5.73817 7.50391 5.47966 7.4339 5.25195 7.30273V7.30371L1.00195 4.86914V4.86816C0.84926 4.78108 0.721402 4.65576 0.632812 4.50391C0.543763 4.35108 0.496104 4.17687 0.496094 4C0.496106 3.8233 0.543935 3.64978 0.632812 3.49707C0.721867 3.34431 0.850067 3.21707 1.00391 3.12988L5.25195 0.696289V0.697266C5.47966 0.566101 5.73817 0.496094 6.00098 0.496094ZM6.00098 1.49609C5.9134 1.49609 5.82687 1.51978 5.75098 1.56348H5.74902L1.49902 3.99902L1.49707 4L1.49902 4.00098L5.74902 6.43652L5.75098 6.4375C5.82677 6.48104 5.91356 6.50391 6.00098 6.50391C6.08843 6.50375 6.17523 6.48123 6.25098 6.4375L6.25195 6.43652L10.502 4.00098L10.5039 4L10.502 3.99902L6.25195 1.56348H6.25098C6.17523 1.51975 6.08843 1.49626 6.00098 1.49609Z" /></g><defs><clipPath id="clip0_781_4798"><rect width="12" height="12" /></clipPath></defs></svg>';
+            layerTypeClass = 'layer-type-image';
+            break;
+        case 'MIXED':
+            layerTypeIndicator = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_781_4798)"><path d="M9.56445 6.89746C9.70003 6.65698 10.0056 6.57153 10.2461 6.70703L10.9961 7.12988H10.9971C11.1508 7.21709 11.2792 7.34436 11.3682 7.49707C11.457 7.64973 11.5039 7.82339 11.5039 8C11.5039 8.17681 11.4572 8.35113 11.3682 8.50391C11.2795 8.65602 11.151 8.78103 10.998 8.86816L10.999 8.86914L6.75 11.3018L6.75098 11.3027C6.52321 11.4342 6.26397 11.5037 6.00098 11.5039C5.73817 11.5039 5.47966 11.4339 5.25195 11.3027V11.3037L1.00195 8.86914V8.86816C0.849263 8.78108 0.7214 8.65576 0.632812 8.50391C0.543766 8.35109 0.496107 8.17687 0.496094 8C0.496108 7.8233 0.543934 7.64978 0.632812 7.49707C0.721868 7.3443 0.85006 7.21707 1.00391 7.12988H1.00488L1.75488 6.70703C1.99542 6.57177 2.30105 6.65698 2.43652 6.89746C2.57146 7.13779 2.48611 7.44257 2.24609 7.57812L1.49707 8L1.49902 8.00098L5.74902 10.4365L5.75098 10.4375C5.82677 10.481 5.91356 10.5039 6.00098 10.5039C6.08843 10.5037 6.17523 10.4812 6.25098 10.4375L6.25195 10.4365L10.502 8.00098L10.5029 8L9.75488 7.57812C9.5146 7.4426 9.42929 7.13791 9.56445 6.89746ZM6.00098 0.496094C6.2634 0.496255 6.52162 0.565341 6.74902 0.696289L10.9971 3.12988C11.1508 3.21709 11.2792 3.34436 11.3682 3.49707C11.457 3.64973 11.5039 3.82338 11.5039 4C11.5039 4.17681 11.4572 4.35112 11.3682 4.50391C11.2795 4.65602 11.151 4.78103 10.998 4.86816L10.999 4.86914L6.75 7.30176L6.75098 7.30273C6.52321 7.43423 6.26396 7.50374 6.00098 7.50391C5.73817 7.50391 5.47966 7.4339 5.25195 7.30273V7.30371L1.00195 4.86914V4.86816C0.84926 4.78108 0.721402 4.65576 0.632812 4.50391C0.543763 4.35108 0.496104 4.17687 0.496094 4C0.496106 3.8233 0.543935 3.64978 0.632812 3.49707C0.721867 3.34431 0.850067 3.21707 1.00391 3.12988L5.25195 0.696289V0.697266C5.47966 0.566101 5.73817 0.496094 6.00098 0.496094ZM6.00098 1.49609C5.9134 1.49609 5.82687 1.51978 5.75098 1.56348H5.74902L1.49902 3.99902L1.49707 4L1.49902 4.00098L5.74902 6.43652L5.75098 6.4375C5.82677 6.48104 5.91356 6.50391 6.00098 6.50391C6.08843 6.50375 6.17523 6.48123 6.25098 6.4375L6.25195 6.43652L10.502 4.00098L10.5039 4L10.502 3.99902L6.25195 1.56348H6.25098C6.17523 1.51975 6.08843 1.49626 6.00098 1.49609Z" /></g><defs><clipPath id="clip0_781_4798"><rect width="12" height="12" /></clipPath></defs></svg>';
+            layerTypeClass = 'layer-type-mixed';
+            break;
+        default:
+            layerTypeIndicator = '';
+            layerTypeClass = '';
+    }
+    
+    return '<span class="layer-type-indicator ' + layerTypeClass + '">' + layerTypeIndicator + '</span>';
+}
+
 // Listen for messages from the main plugin code
 window.addEventListener('message', function(event) {
     var msg = event.data.pluginMessage;
@@ -3831,6 +4095,15 @@ window.addEventListener('message', function(event) {
                     }
                 }, '*');
             });
+    } else if (msg.type === 'sheet-sync-complete') {
+        // Google Sheets sync completed
+        setLoadingState(syncSheetButton, syncText, syncLoading, false);
+        renderSyncMappings(msg.data.layers, msg.data.columns, msg.data.dataPreview);
+        showStatusMessage('Google Sheets synced successfully! Found ' + msg.data.layers.length + ' layer(s) and ' + msg.data.columns.length + ' column(s).');
+    } else if (msg.type === 'success') {
+        // Success message (for sheet data applied)
+        setLoadingState(syncApplyButton, syncApplyText, syncApplyLoading, false);
+        showStatusMessage(msg.message);
     }
 });
 

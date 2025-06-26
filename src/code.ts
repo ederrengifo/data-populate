@@ -12,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data';
   data?: any;
 }
 
@@ -82,6 +82,14 @@ figma.ui.onmessage = async (msg: any) => {
       case 'save-detailed-config':
         console.log(`📨 Received save-detailed-config:`, msg.layerName, msg.dataTypeId, msg.config);
         await saveDetailedConfiguration(msg.layerName, msg.dataTypeId, msg.config);
+        break;
+      
+      case 'sync-google-sheet':
+        await syncGoogleSheet(msg.data.sheetUrl);
+        break;
+      
+      case 'apply-sheet-data':
+        await applySheetDataToLayers(msg.data.mappings);
         break;
     }
   } catch (error) {
@@ -605,4 +613,228 @@ async function loadIntegerSettings() {
 }
 
 // Send data when plugin starts
-sendLongTextsData(); 
+sendLongTextsData();
+
+// Google Sheets API integration
+const GOOGLE_SHEETS_API_KEY = 'AIzaSyAYD3uWGvGo0pxL6ACuPQEFg7JQrk__o14';
+
+// Store sheet data and layer mappings for sync
+let sheetData: any[] = [];
+let sheetColumns: string[] = [];
+let syncLayerMappings: LayerMapping[] = [];
+
+// Extract spreadsheet ID from Google Sheets URL
+function extractSpreadsheetId(url: string): string | null {
+  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return match ? match[1] : null;
+}
+
+// Sync with Google Sheet and scan layers
+async function syncGoogleSheet(sheetUrl: string) {
+  try {
+    console.log('🔄 Starting Google Sheets sync...');
+    
+    // Extract spreadsheet ID from URL
+    const spreadsheetId = extractSpreadsheetId(sheetUrl);
+    if (!spreadsheetId) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: 'Invalid Google Sheets URL. Please check the URL and try again.'
+      });
+      return;
+    }
+
+    console.log('📊 Spreadsheet ID:', spreadsheetId);
+
+    // Fetch data from Google Sheets API (via CORS proxy)
+    const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1?key=${GOOGLE_SHEETS_API_KEY}`;
+    const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+    
+    console.log('🌐 Fetching sheet data via CORS proxy...');
+    const response = await fetch(proxiedUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Google Sheets API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('📥 Sheet data received:', data);
+
+    if (!data.values || data.values.length === 0) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: 'No data found in the Google Sheet or sheet is empty.'
+      });
+      return;
+    }
+
+    // Parse sheet data
+    const rows = data.values;
+    sheetColumns = rows[0] || []; // First row as headers
+    sheetData = rows.slice(1) || []; // Rest as data
+
+    console.log('📋 Columns found:', sheetColumns);
+    console.log('📊 Data rows:', sheetData.length);
+
+    // Scan for layers with % prefix (similar to main scan function)
+    await scanLayersForSync();
+
+  } catch (error) {
+    console.error('❌ Google Sheets sync error:', error);
+    figma.ui.postMessage({
+      type: 'error',
+      message: `Failed to sync with Google Sheets: ${error}`
+    });
+  }
+}
+
+// Scan selected layers for % prefixes (sync version)
+async function scanLayersForSync() {
+  const selection = figma.currentPage.selection;
+  
+  if (selection.length === 0) {
+    figma.ui.postMessage({
+      type: 'error',
+      message: 'Please select at least one layer'
+    });
+    return;
+  }
+  
+  // Clear previous mappings
+  syncLayerMappings = [];
+  
+  // Find all layers with % prefix
+  const foundLayers = new Map<string, SceneNode[]>();
+  
+  function traverseNode(node: SceneNode) {
+    try {
+      if (node.name && node.name.startsWith('%')) {
+        const cleanName = node.name;
+        if (!foundLayers.has(cleanName)) {
+          foundLayers.set(cleanName, []);
+        }
+        foundLayers.get(cleanName)!.push(node);
+      }
+      
+      // Traverse children if it's a container
+      if ('children' in node && node.children) {
+        for (const child of node.children) {
+          traverseNode(child);
+        }
+      }
+    } catch (error) {
+      // Skip problematic nodes
+    }
+  }
+  
+  // Traverse all selected nodes
+  try {
+    for (const node of selection) {
+      // Check if node is directly a layer with % prefix
+      if (node.name && node.name.startsWith('%')) {
+        const cleanName = node.name;
+        if (!foundLayers.has(cleanName)) {
+          foundLayers.set(cleanName, []);
+        }
+        foundLayers.get(cleanName)!.push(node);
+      }
+      
+      // Also traverse children
+      traverseNode(node);
+    }
+  } catch (error) {
+    figma.ui.postMessage({
+      type: 'error',
+      message: 'Error scanning selected layers'
+    });
+    return;
+  }
+  
+  // Convert to layer mappings
+  for (const [layerName, layers] of foundLayers) {
+    // Determine the predominant layer type
+    const textLayers = layers.filter(layer => layer.type === 'TEXT');
+    let layerType: 'TEXT' | 'MIXED' | 'OTHER';
+    
+    if (textLayers.length === layers.length) {
+      layerType = 'TEXT';
+    } else if (textLayers.length > 0) {
+      layerType = 'MIXED';
+    } else {
+      layerType = 'OTHER';
+    }
+    
+    syncLayerMappings.push({
+      layerName,
+      dataTypeId: null, // Will be column name instead
+      count: layers.length,
+      layers,
+      layerType
+    });
+  }
+
+  console.log('📊 Found layers for sync:', syncLayerMappings.length);
+
+  // Send results to UI
+  figma.ui.postMessage({
+    type: 'sheet-sync-complete',
+    data: {
+      layers: syncLayerMappings,
+      columns: sheetColumns,
+      dataPreview: sheetData.slice(0, 3) // Send first 3 rows as preview
+    }
+  });
+}
+
+// Apply sheet data to layers
+async function applySheetDataToLayers(mappings: Array<{ layerName: string; columnName: string }>) {
+  try {
+    console.log('🎯 Applying sheet data to layers...');
+    
+    if (sheetData.length === 0) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: 'No sheet data available. Please sync with Google Sheets first.'
+      });
+      return;
+    }
+
+    for (const mapping of mappings) {
+      const layerMapping = syncLayerMappings.find(lm => lm.layerName === mapping.layerName);
+      
+      if (!layerMapping || !mapping.columnName) {
+        continue;
+      }
+
+      const columnIndex = sheetColumns.indexOf(mapping.columnName);
+      if (columnIndex === -1) {
+        console.warn(`Column "${mapping.columnName}" not found`);
+        continue;
+      }
+
+      console.log(`🔄 Processing ${layerMapping.layerName} with column ${mapping.columnName}`);
+
+      // Apply data to each layer instance
+      for (let i = 0; i < layerMapping.layers.length; i++) {
+        const layer = layerMapping.layers[i];
+        const rowIndex = i % sheetData.length; // Cycle through data if more layers than rows
+        const cellValue = sheetData[rowIndex][columnIndex] || '';
+        
+        await applyValueToLayer(layer, cellValue.toString(), 'sheet-data');
+      }
+    }
+
+    console.log('✅ Sheet data applied successfully');
+    figma.ui.postMessage({
+      type: 'success',
+      message: 'Google Sheets data applied successfully!'
+    });
+
+  } catch (error) {
+    console.error('❌ Error applying sheet data:', error);
+    figma.ui.postMessage({
+      type: 'error',
+      message: `Failed to apply sheet data: ${error}`
+    });
+  }
+} 
