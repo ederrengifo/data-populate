@@ -2044,6 +2044,14 @@ function deselectDataType(layerName) {
         }
     }
     
+    // Remove saved configuration to persist deselection intent
+    parent.postMessage({ 
+        pluginMessage: { 
+            type: 'remove-configuration', 
+            layerName: layerName 
+        } 
+    }, '*');
+    
     // Show remove button since no data type is selected
     showRemoveButton(layerName);
     
@@ -2545,7 +2553,12 @@ function handleCategoryChange(layerName, category) {
 function handleTypeChange(layerName, dataTypeId) {
     for (var i = 0; i < currentMappings.length; i++) {
         if (currentMappings[i].layerName === layerName) {
-            currentMappings[i].dataTypeId = dataTypeId;
+            // If dataTypeId is falsy (empty string, null, undefined), remove it entirely
+            if (!dataTypeId || dataTypeId.trim() === '') {
+                delete currentMappings[i].dataTypeId;
+            } else {
+                currentMappings[i].dataTypeId = dataTypeId;
+            }
             break;
         }
     }

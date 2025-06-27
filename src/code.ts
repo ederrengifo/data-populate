@@ -12,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state' | 'clear-sync-data';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state' | 'clear-sync-data' | 'remove-configuration';
   data?: any;
 }
 
@@ -154,6 +154,10 @@ figma.ui.onmessage = async (msg: any) => {
           type: 'sync-data-cleared',
           message: 'Google Sheets sync data cleared successfully'
         });
+        break;
+      
+      case 'remove-configuration':
+        await removeConfiguration(msg.layerName);
         break;
     }
   } catch (error) {
@@ -304,31 +308,34 @@ async function applyDataToLayers(mappings: Array<{ layerName: string; dataTypeId
       }
     }
     
-    // Generate data for each mapping
+    // Generate data for each mapping - only process mappings sent from UI
     const dataResults: Record<string, string[]> = {};
     
-    for (const layerMapping of layerMappings) {
-      if (layerMapping.dataTypeId) {
-        const data = await generateDataForType(layerMapping.dataTypeId, layerMapping.count, layerMapping.layerName);
+    for (const mapping of mappings) {
+      const layerMapping = layerMappings.find(lm => lm.layerName === mapping.layerName);
+      if (layerMapping && mapping.dataTypeId && typeof mapping.dataTypeId === 'string') {
+        const data = await generateDataForType(mapping.dataTypeId, layerMapping.count, layerMapping.layerName);
         dataResults[layerMapping.layerName] = data;
       }
     }
     
-    // Apply data to layers with progress tracking
+    // Apply data to layers with progress tracking - only process mappings sent from UI
     let completedLayers = 0;
-    const totalLayers = layerMappings
-      .filter(lm => lm.dataTypeId && dataResults[lm.layerName])
-      .reduce((sum, lm) => sum + lm.layers.length, 0);
+    const totalLayers = mappings
+      .map(mapping => layerMappings.find(lm => lm.layerName === mapping.layerName))
+      .filter(lm => lm && dataResults[lm.layerName])
+      .reduce((sum, lm) => sum + lm!.layers.length, 0);
     
-    for (const layerMapping of layerMappings) {
-      if (layerMapping.dataTypeId && dataResults[layerMapping.layerName]) {
+    for (const mapping of mappings) {
+      const layerMapping = layerMappings.find(lm => lm.layerName === mapping.layerName);
+      if (layerMapping && dataResults[layerMapping.layerName]) {
         const data = dataResults[layerMapping.layerName];
         
         for (let i = 0; i < layerMapping.layers.length; i++) {
           const layer = layerMapping.layers[i];
           const value = data[i] || data[0]; // Fallback to first value if not enough data
           
-          await applyValueToLayer(layer, value, layerMapping.dataTypeId);
+          await applyValueToLayer(layer, value, mapping.dataTypeId);
           
           // Send progress update after each individual layer
           completedLayers++;
@@ -604,6 +611,24 @@ async function saveConfiguration(layerName: string, dataTypeId: string) {
     console.log(`💾 Saved configuration: ${layerName} → ${dataTypeId}`);
   } catch (error) {
     console.error('Error saving configuration:', error);
+  }
+}
+
+// Remove configuration for a layer name (document-scoped)
+async function removeConfiguration(layerName: string) {
+  try {
+    const currentConfigs = await loadSavedConfigurations();
+    const detailedConfigs = await loadDetailedConfigurations();
+    
+    // Remove from both basic and detailed configurations
+    delete currentConfigs[layerName];
+    delete detailedConfigs[layerName];
+    
+    figma.root.setPluginData(CONFIG_STORAGE_KEY, JSON.stringify(currentConfigs));
+    figma.root.setPluginData(DETAILED_CONFIG_STORAGE_KEY, JSON.stringify(detailedConfigs));
+    console.log(`🗑️ Removed configuration for: ${layerName}`);
+  } catch (error) {
+    console.error('Error removing configuration:', error);
   }
 }
 
