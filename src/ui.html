@@ -79,20 +79,61 @@
         }
 
         .apply-button {
-            background: var(--figma-color-bg-inverse);
+            background: var(--figma-color-bg-inverse); /* solid background (default) */
             color: var(--figma-color-bg);
             padding: 5px 8px !important;
+            background-size: 240% 100%;
+            background-position: 0% 50%;
+            border: none;
+            transition: background 0.3s ease, color 0.3s ease;
+            font-weight: 510 !important;
+        }
+
+        .apply-button span {
+            font-weight: 510 !important;
         }
 
         .apply-button:hover {
-            color: #062642;
-            background: linear-gradient(90deg, #007BE5 -5.77%, #FFC5D0 49.15%, #FFBDA7 100%);
+            background: linear-gradient(90deg, 
+            #007BE5 0%, 
+            #FFC5D0 20%, 
+            #FFBDA7 40%, 
+            #007BE5 60%,
+            #FFC5D0 80%, 
+            #FFBDA7 100% 
+            );
+            background-size: 240% 100%;
+            background-position: 0% 50%;
+            animation: gradientMove 2s linear infinite;
+            color: transparent; /* Hide original text */
+            position: relative;
+        }
+
+        .apply-button:hover span {
+            /* Apply blend mode only to text content */
+            mix-blend-mode: difference;
+            color: #707070;
+            position: relative;
+            z-index: 1;
+            text-shadow: 
+                0 0 1px rgba(0, 0, 0, 1),
+        }
+
+        @keyframes gradientMove {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 100% 50%;
+            }
         }
 
         .apply-button:disabled {
             background: var(--figma-color-bg-disabled);
             cursor: not-allowed;
         }
+
+       
         
         .clear-sync-button {
             background: transparent;
@@ -635,7 +676,7 @@
             font-size: 11px;
             line-height: 16px;
             font-weight: 400;
-            height: 380px;
+            height: 280px;
             opacity: 0.5;
         }
 
@@ -790,6 +831,13 @@
 
         .synced-container .sync-url-input {
             border: 1px solid var(--figma-color-border-component);
+            text-align: left;
+            background: var(--figma-color-border-component);
+            color: var(--figma-color-text);
+        }
+
+        .synced-container .sync-url-input:focus {
+            border: 1px solid var(--figma-color-border-component-hover);
         }
 
         .synced-container div .selection-scan-button {
@@ -808,13 +856,14 @@
             font-size: 11px;
             line-height: 20px;
             color: var(--figma-color-text);
-            background: var(--figma-color-bg);
-            border: 1px solid var(--figma-color-border);
+            background: var(--figma-color-bg-hover);
+            border: 1px solid var(--figma-color-bg-hover);
+            text-align: center;
         }
 
         .sync-url-input:focus {
             outline: none;
-            border: 1px solid var(--figma-color-bg-inverse);
+            border: 1px solid var(--figma-color-border);
         }
 
         .sync-url-input::placeholder {
@@ -1029,18 +1078,20 @@
 
         .preview-row.header {
             background: transparent;
-            font-weight: 600;
+            font-weight: 510;
         }
 
         .preview-cell {
             flex: 1;
-            padding: 4px 8px;
+            padding: 4px 6px;
             border-right: 1px solid var(--figma-color-border-component);
             border-bottom: 1px solid var(--figma-color-border-component);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             min-width: 0;
+            font-size: 11px;
+            line-height: 16px;
         }
 
         .preview-cell:last-child {
@@ -1052,7 +1103,7 @@
         }
 
         .sync-mapping-item {
-            margin-bottom: 4px;
+            margin-bottom: 0px;
         }
 
     </style>
