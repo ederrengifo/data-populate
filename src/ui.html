@@ -81,6 +81,7 @@
         .apply-button {
             background: var(--figma-color-bg-inverse);
             color: var(--figma-color-bg);
+            padding: 5px 8px !important;
         }
 
         .apply-button:hover {
@@ -91,6 +92,29 @@
         .apply-button:disabled {
             background: var(--figma-color-bg-disabled);
             cursor: not-allowed;
+        }
+        
+        .clear-sync-button {
+            background: transparent;
+            padding: 5px;
+            border-radius: 6px;
+            border: none;
+            width: 30px;
+            height: 30px;
+        }
+
+        .clear-sync-button:hover {
+            background: var(--figma-color-bg-component);
+        }
+
+        .clear-sync-button svg {
+            fill: var(--figma-color-icon-component-secondary);
+            width: 16px;
+            height: 16px;
+        }
+
+        .clear-sync-button:hover svg {
+            fill: var(--figma-color-bg);
         }
 
         .loading-spinner {
@@ -229,9 +253,31 @@
             -moz-appearance: none;
         }
 
-
-
         .config-select-simple:focus {
+            outline: none;
+        }
+
+        .column-select-simple {
+            width: 120px;
+            padding: 4px 24px 4px 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            line-height: 16px;
+            color: var(--figma-color-text);
+            background: var(--figma-color-bg);
+            background-image: url('data:image/svg+xml;charset=utf-8,<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.14651 3.39645C7.34177 3.20118 7.65828 3.20118 7.85354 3.39645C8.0488 3.59171 8.0488 3.90822 7.85354 4.10348L5.35354 6.60348C5.15828 6.79874 4.84177 6.79874 4.64651 6.60348L2.14651 4.10348C1.95125 3.90822 1.95125 3.59171 2.14651 3.39645C2.34177 3.20118 2.65828 3.20118 2.85354 3.39645L5.00002 5.54293L7.14651 3.39645Z" fill="%23666"/></svg>');
+            background-repeat: no-repeat;
+            background-position: calc(100% - 8px) center;
+            background-size: 10px 10px;
+            position: relative;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            margin-right: 2px;
+        }
+
+        .column-select-simple:focus {
             outline: none;
         }
 
@@ -719,12 +765,39 @@
             opacity: 0.75;
         }
 
+        .synced-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 16px;
+            background: var(--figma-color-bg-component-tertiary);
+            padding: 4px;
+            border-radius: 6px;
+        }
+
         .sync-url-container {
             display: flex;
             flex-direction: column;
             gap: 8px;
             width: 100%;
             margin-bottom: 8px;
+        }
+
+        .synced-input-container {
+             display: flex;
+             flex-direction: row;
+             gap: 4px;
+         }
+
+        .synced-container .sync-url-input {
+            border: 1px solid var(--figma-color-border-component);
+        }
+
+        .synced-container div .selection-scan-button {
+            border: none;
+        }
+
+        .sheet-preview-container {
+             margin: 8px 0 0 0;
         }
 
         .sync-url-input {
@@ -939,11 +1012,11 @@
 
         /* Google Sheets sync styles */
         .sheet-preview {
-            margin-bottom: 16px;
+            margin-bottom: 8px;
         }
 
         .preview-table {
-            border: 1px solid var(--figma-color-border);
+            border: 1px solid var(--figma-color-border-component);
             border-radius: 6px;
             overflow: hidden;
             font-size: 11px;
@@ -955,15 +1028,15 @@
         }
 
         .preview-row.header {
-            background: var(--figma-color-bg-secondary);
+            background: transparent;
             font-weight: 600;
         }
 
         .preview-cell {
             flex: 1;
             padding: 4px 8px;
-            border-right: 1px solid var(--figma-color-border);
-            border-bottom: 1px solid var(--figma-color-border);
+            border-right: 1px solid var(--figma-color-border-component);
+            border-bottom: 1px solid var(--figma-color-border-component);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -982,9 +1055,6 @@
             margin-bottom: 4px;
         }
 
-        .column-select {
-            min-width: 120px;
-        }
     </style>
 </head>
 <body>
@@ -1026,7 +1096,7 @@
                 <!-- Sticky Apply Section -->
                 <div class="apply-section">
                     <button id="apply-button" class="apply-button" disabled>
-                        <span id="apply-text">Apply Data to Layers</span>
+                        <span id="apply-text">Apply data to layers</span>
                         <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
                     </button>
                 </div>
@@ -1077,22 +1147,43 @@
                 <div class="container" id="sync-main-container">
                     <!-- Google Sheets URL Section -->
                     <div class="section">
-                        <div class="section-title">Google Sheets URL</div>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <input 
+                        <div class="synced-container">
+                            <div class="synced-input-container">
+                                <input 
                                 type="text" 
                                 id="sheet-url-input" 
                                 placeholder="https://docs.google.com/spreadsheets/d/your-sheet-id/edit"
-                                style="padding: 8px; border: 1px solid var(--figma-color-border); border-radius: 6px; font-size: 11px; width: 100%; box-sizing: border-box;"
-                            />
-                            <button id="sync-sheet-button" class="scan-button">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M8 1.5C8.27614 1.5 8.5 1.72386 8.5 2V7.79289L10.1464 6.14645C10.3417 5.95118 10.6583 5.95118 10.8536 6.14645C11.0488 6.34171 11.0488 6.65829 10.8536 6.85355L8.35355 9.35355C8.15829 9.54882 7.84171 9.54882 7.64645 9.35355L5.14645 6.85355C4.95118 6.65829 4.95118 6.34171 5.14645 6.14645C5.34171 5.95118 5.65829 5.95118 5.85355 6.14645L7.5 7.79289V2C7.5 1.72386 7.72386 1.5 8 1.5Z" fill="currentColor"/>
-                                    <path d="M2 10.5C2 10.2239 2.22386 10 2.5 10H13.5C13.7761 10 14 10.2239 14 10.5V12.5C14 13.3284 13.3284 14 12.5 14H3.5C2.67157 14 2 13.3284 2 12.5V10.5Z" fill="currentColor"/>
-                                </svg>
-                                <span id="sync-text">Sync & Scan Layers</span>
-                                <div id="sync-loading" class="loading-spinner" style="display: none;"></div>
-                            </button>
+                                class="sync-url-input"
+                                />
+                                <button id="clear-sync-button" class="clear-sync-button" title="Clear sync">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g clip-path="url(#clip0_813_4925)">
+                                        <path d="M10.667 12.167C10.943 12.1672 11.167 12.391 11.167 12.667V14.667C11.1668 14.9429 10.9429 15.1668 10.667 15.167C10.391 15.167 10.1672 14.943 10.167 14.667V12.667C10.167 12.3908 10.3908 12.167 10.667 12.167ZM3.09277 7.47949C3.28793 7.28448 3.60456 7.28464 3.7998 7.47949C3.99502 7.67471 3.99493 7.99125 3.7998 8.18652L2.66602 9.32031L2.48145 9.53125C2.07752 10.0425 1.86002 10.6807 1.87109 11.3379C1.88387 12.0885 2.19436 12.8037 2.7334 13.3262C3.26219 13.8361 3.96851 14.121 4.70312 14.1211C5.43782 14.1211 6.14401 13.8362 6.67285 13.3262L7.80664 12.1924C8.00183 11.9977 8.31854 11.9976 8.51367 12.1924C8.70878 12.3875 8.70848 12.7041 8.51367 12.8994L7.36719 14.0459C6.65196 14.7356 5.69675 15.1211 4.70312 15.1211C3.77174 15.121 2.87456 14.7824 2.17676 14.1719L2.03906 14.0459C1.30903 13.339 0.889316 12.3706 0.87207 11.3545C0.854969 10.3385 1.24165 9.35714 1.94727 8.62598L1.95312 8.61914L3.09277 7.47949ZM14.667 10.167C14.943 10.1672 15.167 10.391 15.167 10.667C15.1668 10.9429 14.9429 11.1668 14.667 11.167H12.667C12.391 11.167 12.1672 10.943 12.167 10.667C12.167 10.3908 12.3908 10.167 12.667 10.167H14.667ZM11.2959 0.87793C12.2272 0.87793 13.1254 1.2167 13.8232 1.82715L13.96 1.95312L13.9609 1.9541C14.6908 2.6609 15.1106 3.62865 15.1279 4.64453C15.1445 5.6227 14.7852 6.56739 14.1289 7.28906C14.1087 7.32148 14.0864 7.35316 14.0586 7.38086L12.9121 8.52051C12.7163 8.7152 12.3998 8.71439 12.2051 8.51855C12.0108 8.32269 12.0114 8.00606 12.207 7.81152L13.2812 6.74219C13.2966 6.72001 13.3139 6.69853 13.333 6.67871C13.8547 6.13807 14.1407 5.41232 14.1279 4.66113C14.115 3.91019 13.8052 3.19432 13.2656 2.67188V2.67285C12.7368 2.16315 12.0304 1.87793 11.2959 1.87793C10.5616 1.87811 9.85579 2.16317 9.32715 2.67285L8.18555 3.80762C7.98975 4.00226 7.67322 4.00138 7.47852 3.80566C7.28416 3.60985 7.28485 3.29323 7.48047 3.09863L8.62695 1.95801L8.63281 1.95312C9.34786 1.26362 10.3026 0.878115 11.2959 0.87793ZM3.33301 4.83301C3.60904 4.83301 3.83283 5.05702 3.83301 5.33301C3.83301 5.60915 3.60915 5.83301 3.33301 5.83301H1.33301C1.05703 5.83281 0.833008 5.60903 0.833008 5.33301C0.833185 5.05714 1.05714 4.83321 1.33301 4.83301H3.33301ZM5.33301 0.833008C5.60904 0.833008 5.83283 1.05702 5.83301 1.33301V3.33301C5.83301 3.60915 5.60915 3.83301 5.33301 3.83301C5.05703 3.83281 4.83301 3.60903 4.83301 3.33301V1.33301C4.83318 1.05714 5.05714 0.833205 5.33301 0.833008Z" />
+                                        </g>
+                                        <defs>
+                                        <clipPath id="clip0_813_4925">
+                                        <rect width="16" height="16" />
+                                        </clipPath>
+                                        </defs>
+                                        </svg>
+                                        
+                                </button>
+                            </div>
+                            
+                            <!-- Sheet Preview Section -->
+                            <div id="sheet-preview-container" class="sheet-preview-container" style="display: none;">
+                            </div>
+                            
+                            <div style="display: flex;">
+                                <button id="sync-sheet-button" class="selection-scan-button" style="flex: 1;">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2 7.5C2.27614 7.5 2.5 7.72386 2.5 8C2.5 9.45869 3.07988 10.8572 4.11133 11.8887C5.14232 12.9197 6.54006 13.4985 7.99805 13.499C9.54638 13.4932 11.0323 12.8896 12.1455 11.8135L12.792 11.167H10.667C10.391 11.167 10.1672 10.943 10.167 10.667C10.167 10.3908 10.3908 10.167 10.667 10.167H14C14.0327 10.167 14.0655 10.1694 14.0977 10.1758L14.1016 10.1768C14.1618 10.1892 14.2175 10.2131 14.2676 10.2451C14.2754 10.2501 14.2824 10.2563 14.29 10.2617C14.3089 10.2753 14.327 10.2896 14.3438 10.3057C14.3467 10.3085 14.3506 10.3105 14.3535 10.3135C14.3571 10.3171 14.3598 10.3215 14.3633 10.3252C14.3771 10.3399 14.3894 10.3557 14.4014 10.3721C14.4096 10.3833 14.4176 10.3945 14.4248 10.4062C14.4352 10.4232 14.4438 10.4408 14.4521 10.459C14.4559 10.4672 14.4605 10.475 14.4639 10.4834C14.4718 10.5036 14.4781 10.5245 14.4834 10.5459C14.4859 10.556 14.4893 10.5659 14.4912 10.5762C14.4966 10.6055 14.5 10.6361 14.5 10.667V14C14.4998 14.2759 14.2759 14.4998 14 14.5C13.7241 14.4998 13.5002 14.2759 13.5 14V11.874L12.8408 12.5332C11.5421 13.7886 9.80822 14.4932 8.00195 14.5H8C6.27609 14.5 4.62231 13.8157 3.40332 12.5967C2.18433 11.3777 1.5 9.72391 1.5 8C1.5 7.72386 1.72386 7.5 2 7.5ZM8 1.5C9.72391 1.5 11.3777 2.18433 12.5967 3.40332C13.8157 4.62231 14.5 6.27609 14.5 8C14.5 8.27614 14.2761 8.5 14 8.5C13.7239 8.5 13.5 8.27614 13.5 8C13.5 6.54131 12.9201 5.14278 11.8887 4.11133C10.8575 3.08011 9.45931 2.50026 8.00098 2.5C6.45297 2.50606 4.96749 3.11056 3.85449 4.18652L3.20801 4.83301H5.33301C5.60904 4.83301 5.83283 5.05702 5.83301 5.33301C5.83301 5.60915 5.60915 5.83301 5.33301 5.83301H2C1.96695 5.83301 1.93389 5.82976 1.90137 5.82324C1.85024 5.81301 1.80299 5.79309 1.75879 5.76855C1.71891 5.74644 1.68034 5.72038 1.64648 5.68652C1.61232 5.65233 1.58568 5.61357 1.56348 5.57324C1.52404 5.50174 1.5 5.42044 1.5 5.33301V2C1.5 1.72386 1.72386 1.5 2 1.5C2.27614 1.5 2.5 1.72386 2.5 2V4.12598L3.15918 3.4668C4.45789 2.21141 6.19178 1.50681 7.99805 1.5H8Z" />
+                                    </svg>                                        
+                                    <span id="sync-text">Sync & re-scan layers</span>
+                                    <div id="sync-loading" class="loading-spinner" style="display: none;"></div>
+                                </button>
+                                
+                            </div>
                         </div>
                     </div>
 
@@ -1109,7 +1200,7 @@
                 <!-- Sticky Apply Section for Sync -->
                 <div id="sync-apply-section" class="apply-section" style="display: none;">
                     <button id="sync-apply-button" class="apply-button" disabled>
-                        <span id="sync-apply-text">Apply Sheet Data to Layers</span>
+                        <span id="sync-apply-text">Apply data to layers</span>
                         <div id="sync-apply-loading" class="loading-spinner" style="display: none;"></div>
                     </button>
                 </div>
@@ -4061,11 +4152,13 @@ var syncSheetButton = document.getElementById('sync-sheet-button');
 var syncText = document.getElementById('sync-text');
 var syncLoading = document.getElementById('sync-loading');
 var sheetUrlInput = document.getElementById('sheet-url-input');
+var sheetPreviewContainer = document.getElementById('sheet-preview-container');
 var syncMappingsContainer = document.getElementById('sync-mappings-container');
 var syncApplySection = document.getElementById('sync-apply-section');
 var syncApplyButton = document.getElementById('sync-apply-button');
 var syncApplyText = document.getElementById('sync-apply-text');
 var syncApplyLoading = document.getElementById('sync-apply-loading');
+var clearSyncButton = document.getElementById('clear-sync-button');
 
 // Event listeners for sync functionality
 if (syncSheetButton) {
@@ -4118,23 +4211,23 @@ if (syncApplyButton) {
     });
 }
 
-// Render sync mappings
-function renderSyncMappings(layers, columns, dataPreview) {
-    console.log('🎨 Rendering sync mappings:', layers.length, 'layers,', columns.length, 'columns');
+if (clearSyncButton) {
+    clearSyncButton.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear the saved sync data for this document?')) {
+            parent.postMessage({
+                pluginMessage: {
+                    type: 'clear-sync-data'
+                }
+            }, '*');
+        }
+    });
+}
+
+// Render sheet preview in dedicated container
+function renderSheetPreview(columns, dataPreview) {
+    if (!sheetPreviewContainer) return;
     
-    syncMappings = layers;
-    sheetColumns = columns;
-    sheetDataPreview = dataPreview;
-    
-    if (layers.length === 0) {
-        syncMappingsContainer.innerHTML = '<div class="empty-state">No layers with % prefixes found in selection.</div>';
-        syncApplySection.style.display = 'none';
-        return;
-    }
-    
-    // Show data preview
     var previewHtml = '<div class="sheet-preview">';
-    previewHtml += '<div class="section-title">Sheet Preview</div>';
     previewHtml += '<div class="preview-table">';
     
     // Headers
@@ -4144,8 +4237,8 @@ function renderSyncMappings(layers, columns, dataPreview) {
     });
     previewHtml += '</div>';
     
-    // Sample data rows
-    dataPreview.slice(0, 2).forEach(function(row) {
+    // Sample data row (just one)
+    dataPreview.slice(0, 1).forEach(function(row) {
         previewHtml += '<div class="preview-row">';
         columns.forEach(function(col, index) {
             var cellValue = row[index] || '';
@@ -4156,8 +4249,37 @@ function renderSyncMappings(layers, columns, dataPreview) {
     
     previewHtml += '</div></div>';
     
-    // Layer mappings
-    var mappingsHtml = '<div class="section-title">Layer Mappings</div>';
+    sheetPreviewContainer.innerHTML = previewHtml;
+    sheetPreviewContainer.style.display = 'block';
+}
+
+// Hide sheet preview
+function hideSheetPreview() {
+    if (sheetPreviewContainer) {
+        sheetPreviewContainer.style.display = 'none';
+        sheetPreviewContainer.innerHTML = '';
+    }
+}
+
+// Render sync mappings (without preview)
+function renderSyncMappings(layers, columns, dataPreview) {
+    console.log('🎨 Rendering sync mappings:', layers.length, 'layers,', columns.length, 'columns');
+    
+    syncMappings = layers;
+    sheetColumns = columns;
+    sheetDataPreview = dataPreview;
+    
+    // Render the preview in the dedicated container first
+    renderSheetPreview(columns, dataPreview);
+    
+    if (layers.length === 0) {
+        syncMappingsContainer.innerHTML = '<div class="empty-state">No layers with % prefixes found in selection.</div>';
+        syncApplySection.style.display = 'none';
+        return;
+    }
+    
+    // Layer mappings only (no preview)
+    var mappingsHtml = '';
     
     layers.forEach(function(layer) {
         mappingsHtml += '<div class="sync-mapping-item mapping-item" data-layer-name="' + escapeHtml(layer.layerName) + '">';
@@ -4165,9 +4287,8 @@ function renderSyncMappings(layers, columns, dataPreview) {
         mappingsHtml += '<div class="mapping-layer">';
         mappingsHtml += getLayerTypeIcon(layer.layerType);
         mappingsHtml += '<span class="layer-name">' + escapeHtml(layer.layerName) + '</span>';
-        mappingsHtml += '<span class="layer-count">(' + layer.count + ')</span>';
         mappingsHtml += '</div>';
-        mappingsHtml += '<select class="column-select config-select-simple">';
+        mappingsHtml += '<select class="column-select column-select-simple">';
         mappingsHtml += '<option value="">Select column...</option>';
         columns.forEach(function(col) {
             mappingsHtml += '<option value="' + escapeHtml(col) + '">' + escapeHtml(col) + '</option>';
@@ -4177,7 +4298,7 @@ function renderSyncMappings(layers, columns, dataPreview) {
         mappingsHtml += '</div>';
     });
     
-    syncMappingsContainer.innerHTML = previewHtml + mappingsHtml;
+    syncMappingsContainer.innerHTML = mappingsHtml;
     
     // Show apply section
     syncApplySection.style.display = 'block';
@@ -4346,6 +4467,29 @@ window.addEventListener('message', function(event) {
         hideSyncSelectionScreen(); // Hide the pre-sync screen
         renderSyncMappings(msg.data.layers, msg.data.columns, msg.data.dataPreview);
         showStatusMessage('Google Sheets synced successfully! Found ' + msg.data.layers.length + ' layer(s) and ' + msg.data.columns.length + ' column(s).');
+    } else if (msg.type === 'sync-data-restored') {
+        // Google Sheets sync data was restored from storage
+        setLoadingState(syncSheetButton, syncText, syncLoading, false);
+        hasSyncedSheet = true; // Mark that we have synced data
+        hideSyncSelectionScreen(); // Hide the pre-sync screen
+        
+        // Update the URL input with the saved URL
+        if (sheetUrlInput && msg.data.url) {
+            sheetUrlInput.value = msg.data.url;
+        }
+        
+        renderSyncMappings(msg.data.layers, msg.data.columns, msg.data.dataPreview);
+        showStatusMessage('Document Google Sheets sync restored! Found ' + msg.data.layers.length + ' layer(s) and ' + msg.data.columns.length + ' column(s).');
+    } else if (msg.type === 'sync-data-cleared') {
+        // Google Sheets sync data was cleared
+        hasSyncedSheet = false;
+        if (sheetUrlInput) {
+            sheetUrlInput.value = '';
+        }
+        hideSheetPreview();
+        syncMappingsContainer.innerHTML = '<div class="empty-state">Paste a Google Sheets URL and click "Sync & Scan Layers" to get started</div>';
+        syncApplySection.style.display = 'none';
+        showStatusMessage(msg.message);
     } else if (msg.type === 'error') {
         // Handle errors and show them in sync selection screen if applicable
         var currentTab = document.querySelector('.tab-button.active');

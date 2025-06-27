@@ -173,4 +173,129 @@ interface DataType {
 - **Safe**: Fallback systems ensure reliability
 
 ## Ready for Production
-All requested features have been successfully implemented while maintaining full compatibility with existing functionality. The plugin now offers a comprehensive, professional-grade data generation system with extensive customization options. 
+All requested features have been successfully implemented while maintaining full compatibility with existing functionality. The plugin now offers a comprehensive, professional-grade data generation system with extensive customization options.
+
+## Latest Update: Google Sheets Sync Persistence 
+
+### Problem Solved
+Users needed to resync with Google Sheets every time they closed and reopened the plugin, losing all sync data and configurations.
+
+### Solution Implemented
+Added persistent storage for Google Sheets sync data using Figma's document storage API, consistent with the Generate tab configurations.
+
+#### Key Features Added:
+1. **Automatic data persistence**: Sync data is automatically saved after successful sync
+2. **Automatic restoration**: Document sync data is restored when plugin reopens  
+3. **Team collaboration**: Sync data is shared with all team members on the same file
+4. **User control**: Clear sync data button for manual cleanup
+5. **Visual feedback**: Status messages inform users when data is restored or cleared
+
+#### Technical Implementation:
+- **Storage keys**: Added 4 new document storage keys for URL, data, columns, and mappings
+- **Helper functions**: Created save/load/clear functions for sync data management
+- **Plugin initialization**: Added initialization function to restore saved data on startup
+- **UI updates**: Added message handlers and clear button for complete user control
+
+#### Storage Details:
+- Uses `figma.root.setPluginData()` (document-specific, shared with team)
+- Data persists across plugin sessions and Figma restarts
+- Consistent with Generate tab configuration storage
+- Each Figma file maintains its own sync data
+- Team members see the same synced data when working on the same file
+
+#### User Experience:
+- ✅ Sync once per document, use indefinitely until manually cleared
+- ✅ Automatic restoration with clear status messages  
+- ✅ Team members share the same sync data on each file
+- ✅ Different projects can use different Google Sheets
+- ✅ Optional manual cleanup when needed
+- ✅ No performance impact on plugin startup
+
+This implementation completely solves the resync requirement while providing full team collaboration and per-project sync data management.
+
+## Core Features
+
+### 1. Data Generation System
+- **Faker.js Integration**: Advanced fake data generation with 50+ data types
+- **Custom Data Types**: Specialized generators for design-specific content
+- **Avatar System**: Multiple avatar providers with CORS proxy support
+- **Long Text Content**: Curated long-form content for realistic designs
+
+### 2. Layer Management
+- **Smart Scanning**: Automatic detection of layers with % prefixes
+- **Bulk Operations**: Apply data to multiple layer instances simultaneously  
+- **Layer Type Detection**: Handles TEXT, IMAGE, and MIXED layer types
+- **Configuration Persistence**: Saves layer mappings and settings per document
+
+### 3. Google Sheets Integration  
+- **Direct Sync**: Connect to public Google Sheets via API
+- **Column Mapping**: Map sheet columns to Figma layers
+- **Data Preview**: See sheet data before applying to layers
+- **Persistent Storage**: Sync data survives plugin restarts ✨ NEW
+
+### 4. Advanced Configuration
+- **Data Type Options**: Configurable parameters for each data type (gender, format, etc.)
+- **Integer Settings**: Range, formatting, prefix, and sorting options
+- **Avatar Configuration**: Choose avatar style and gender preferences
+- **Detailed Settings**: Per-layer configuration storage
+
+### 5. User Experience
+- **Modern UI**: Clean, Figma-native design with dark/light theme support
+- **Progress Tracking**: Real-time progress bars for bulk operations
+- **Error Handling**: Comprehensive error messages and offline detection
+- **Tabbed Interface**: Organized workflow with Generate and Sync tabs
+
+## Technical Architecture
+
+### Frontend (src/ui.html)
+- Vanilla JavaScript for minimal bundle size
+- Memory router for navigation without History API
+- CSS modules with PostCSS for styling
+- Comprehensive state management for UI interactions
+
+### Backend (src/code.ts)  
+- TypeScript for type safety
+- Plugin/UI message passing architecture
+- Figma API integration for layer manipulation
+- Storage management with both document and client storage
+
+### Data Providers (src/dataProviders.ts)
+- Modular data generation system
+- CORS proxy integration for avatar loading
+- Faker.js configuration and management
+- Custom content curation for realistic outputs
+
+### Storage Strategy
+- **Document Storage**: Layer configurations, mappings, and Google Sheets sync data (shared with team) ✨ ENHANCED
+- **Client Storage**: Reserved for user preferences (user-specific)
+- **Memory**: Runtime state and temporary data
+
+## File Structure
+```
+populate-data/
+├── src/
+│   ├── code.ts              # Main plugin logic & Figma API
+│   ├── ui.html              # User interface & frontend logic  
+│   ├── dataProviders.ts     # Data generation & providers
+│   ├── fakerConfig.ts       # Faker.js configuration
+│   └── longTextsData.ts     # Curated long-form content
+├── scripts/
+│   └── bundle-faker.js      # Faker.js bundling script
+└── [config files]          # Webpack, TypeScript, etc.
+```
+
+## Performance Optimizations
+- **Lazy Loading**: UI components load on demand
+- **Batch Processing**: Efficient bulk layer updates  
+- **Memory Management**: Proper cleanup of temporary data
+- **CORS Proxy**: Cached avatar loading with fallbacks
+- **Persistent Storage**: Eliminates redundant API calls ✨ NEW
+
+## Key Dependencies
+- **Faker.js**: Core fake data generation
+- **TypeScript**: Type safety and development experience
+- **Webpack**: Module bundling and optimization  
+- **Google Sheets API**: Direct sheet integration
+- **Figma Plugin API**: Core platform integration
+
+This implementation provides a production-ready, feature-complete data population solution for Figma with enterprise-grade reliability and user experience. 

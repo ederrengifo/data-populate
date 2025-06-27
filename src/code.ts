@@ -12,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state' | 'clear-sync-data';
   data?: any;
 }
 
@@ -24,6 +24,12 @@ const CONFIG_STORAGE_KEY = 'layerConfigurations';
 const DETAILED_CONFIG_STORAGE_KEY = 'detailedLayerConfigurations';
 const INTEGER_SETTINGS_KEY = 'integerSettings';
 
+// Google Sheets sync storage keys (document-specific via root.setPluginData)
+const SHEETS_DATA_KEY = 'googleSheetsData';
+const SHEETS_COLUMNS_KEY = 'googleSheetsColumns';
+const SHEETS_MAPPINGS_KEY = 'googleSheetsMappings';
+const SHEETS_URL_KEY = 'googleSheetsUrl';
+
 // Initialize plugin with theme colors support
 figma.showUI(__html__, { 
   width: 320, 
@@ -31,7 +37,38 @@ figma.showUI(__html__, {
   themeColors: true 
 });
 
-// Send initial selection state
+// Initialize plugin by loading saved sync data
+async function initializePlugin() {
+  // Load saved Google Sheets sync data
+  const savedSyncData = await loadSyncDataFromStorage();
+  if (savedSyncData.url && savedSyncData.data.length > 0) {
+    sheetData = savedSyncData.data;
+    sheetColumns = savedSyncData.columns;
+    syncLayerMappings = savedSyncData.mappings;
+    
+    console.log('📋 Restored Google Sheets sync data:', {
+      url: savedSyncData.url,
+      dataRows: sheetData.length,
+      columns: sheetColumns.length,
+      mappings: syncLayerMappings.length
+    });
+
+    // Notify UI that we have existing sync data
+    figma.ui.postMessage({
+      type: 'sync-data-restored',
+      data: {
+        url: savedSyncData.url,
+        layers: syncLayerMappings,
+        columns: sheetColumns,
+        dataPreview: sheetData.slice(0, 3)
+      }
+    });
+  }
+
+  // Send initial selection state
+  sendSelectionState();
+}
+
 // Send current selection state to UI
 function sendSelectionState() {
   const hasSelection = figma.currentPage.selection.length > 0;
@@ -46,6 +83,9 @@ figma.ui.postMessage({
   type: 'selection-changed',
   hasSelection: initialHasSelection
 });
+
+// Initialize the plugin
+initializePlugin();
 
 // Listen for selection changes
 figma.on('selectionchange', () => {
@@ -103,6 +143,17 @@ figma.ui.onmessage = async (msg: any) => {
       
       case 'get-selection-state':
         sendSelectionState();
+        break;
+      
+      case 'clear-sync-data':
+        await clearSyncDataFromStorage();
+        sheetData = [];
+        sheetColumns = [];
+        syncLayerMappings = [];
+        figma.ui.postMessage({
+          type: 'sync-data-cleared',
+          message: 'Google Sheets sync data cleared successfully'
+        });
         break;
     }
   } catch (error) {
@@ -644,6 +695,57 @@ let sheetData: any[] = [];
 let sheetColumns: string[] = [];
 let syncLayerMappings: LayerMapping[] = [];
 
+// Save Google Sheets sync data to document storage (document-scoped)
+async function saveSyncDataToStorage(url: string, data: any[], columns: string[], mappings: LayerMapping[]) {
+  try {
+    figma.root.setPluginData(SHEETS_URL_KEY, url);
+    figma.root.setPluginData(SHEETS_DATA_KEY, JSON.stringify(data));
+    figma.root.setPluginData(SHEETS_COLUMNS_KEY, JSON.stringify(columns));
+    figma.root.setPluginData(SHEETS_MAPPINGS_KEY, JSON.stringify(mappings));
+    console.log('💾 Google Sheets sync data saved to document storage');
+  } catch (error) {
+    console.error('❌ Error saving sync data to storage:', error);
+  }
+}
+
+// Load Google Sheets sync data from document storage (document-scoped)
+async function loadSyncDataFromStorage(): Promise<{url: string | null, data: any[], columns: string[], mappings: LayerMapping[]}> {
+  try {
+    const url = figma.root.getPluginData(SHEETS_URL_KEY) || null;
+    const dataStr = figma.root.getPluginData(SHEETS_DATA_KEY);
+    const columnsStr = figma.root.getPluginData(SHEETS_COLUMNS_KEY);
+    const mappingsStr = figma.root.getPluginData(SHEETS_MAPPINGS_KEY);
+
+    const data = dataStr ? JSON.parse(dataStr) : [];
+    const columns = columnsStr ? JSON.parse(columnsStr) : [];
+    const mappings = mappingsStr ? JSON.parse(mappingsStr) : [];
+
+    console.log('📥 Google Sheets sync data loaded from document storage');
+    return {
+      url,
+      data,
+      columns,
+      mappings
+    };
+  } catch (error) {
+    console.error('❌ Error loading sync data from storage:', error);
+    return { url: null, data: [], columns: [], mappings: [] };
+  }
+}
+
+// Clear Google Sheets sync data from document storage (document-scoped)
+async function clearSyncDataFromStorage() {
+  try {
+    figma.root.setPluginData(SHEETS_URL_KEY, '');
+    figma.root.setPluginData(SHEETS_DATA_KEY, '');
+    figma.root.setPluginData(SHEETS_COLUMNS_KEY, '');
+    figma.root.setPluginData(SHEETS_MAPPINGS_KEY, '');
+    console.log('🗑️ Google Sheets sync data cleared from document storage');
+  } catch (error) {
+    console.error('❌ Error clearing sync data from storage:', error);
+  }
+}
+
 // Extract spreadsheet ID from Google Sheets URL
 function extractSpreadsheetId(url: string): string | null {
   const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
@@ -699,6 +801,9 @@ async function syncGoogleSheet(sheetUrl: string) {
 
     // Scan for layers with % prefix (similar to main scan function)
     await scanLayersForSync();
+
+    // Save sync data to storage after successful sync
+    await saveSyncDataToStorage(sheetUrl, sheetData, sheetColumns, syncLayerMappings);
 
   } catch (error) {
     console.error('❌ Google Sheets sync error:', error);
