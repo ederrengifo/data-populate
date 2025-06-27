@@ -722,9 +722,9 @@
         .sync-url-container {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 8px;
             width: 100%;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
         }
 
         .sync-url-input {
@@ -750,13 +750,15 @@
         }
 
         .sync-url-error {
-            color: var(--figma-color-bg-danger);
+            color: var(--figma-color-text-warning);
             font-size: 11px;
             line-height: 16px;
+            padding: 4px 8px;
             display: none;
             margin: 0;
-            padding: 0;
-            text-align: left;
+            text-align: center;
+            background: var(--figma-color-bg-warning-tertiary);
+            border-radius: 6px;
         }
 
         .selection-scan-button {
@@ -805,9 +807,9 @@
             font-size: 11px;
             line-height: 16px;
             color: var(--figma-color-text-brand);
-            padding: 0px;
+            padding: 4px 8px;
             border-radius: 6px;
-            margin-top: 16px;
+            background: var(--figma-color-bg-brand-tertiary);
         }
 
         /* Tab System Styles */
@@ -1625,10 +1627,11 @@ function hideSelectionScreen() {
 
 function updateSelectionButtonState(hasSelection) {
     if (hasSelection) {
+        selectionScanButton.style.display = 'block';
         selectionScanButton.disabled = false;
         selectionNotice.style.display = 'none';
     } else {
-        selectionScanButton.disabled = true;
+        selectionScanButton.style.display = 'none';
         selectionNotice.style.display = 'block';
     }
 }
@@ -1660,10 +1663,10 @@ function updateSyncSelectionButtonState(hasSelection) {
     }
     
     if (syncSelectionScanButton) {
-        // Show button only if there's a valid URL
-        if (hasValidUrl) {
+        // Show button only if there's a valid URL and a layer is selected
+        if (shouldEnable) {
             syncSelectionScanButton.style.display = 'block';
-            syncSelectionScanButton.disabled = !shouldEnable;
+            syncSelectionScanButton.disabled = false;
         } else {
             syncSelectionScanButton.style.display = 'none';
         }
