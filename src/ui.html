@@ -715,8 +715,48 @@
             line-height: 16px;
             color: var(--figma-color-text);
             line-height: 1.5;
-            margin-bottom: 24px;
+            margin: 9px 24px 24px 24px;
+            opacity: 0.75;
+        }
+
+        .sync-url-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .sync-url-input {
+            width: 100%;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 11px;
+            line-height: 20px;
+            color: var(--figma-color-text);
+            background: var(--figma-color-bg);
+            border: 1px solid var(--figma-color-border);
+        }
+
+        .sync-url-input:focus {
+            outline: none;
+            border: 1px solid var(--figma-color-bg-inverse);
+        }
+
+        .sync-url-input::placeholder {
+            color: var(--figma-color-text);
             opacity: 0.5;
+        }
+
+        .sync-url-error {
+            color: var(--figma-color-bg-danger);
+            font-size: 11px;
+            line-height: 16px;
+            display: none;
+            margin: 0;
+            padding: 0;
+            text-align: left;
         }
 
         .selection-scan-button {
@@ -1032,7 +1072,7 @@
         <!-- Sync Tab Content -->
         <div id="sync-tab" class="tab-content">
             <div class="tab-panel" style="position: relative;">
-                <div class="container">
+                <div class="container" id="sync-main-container">
                     <!-- Google Sheets URL Section -->
                     <div class="section">
                         <div class="section-title">Google Sheets URL</div>
@@ -1070,6 +1110,42 @@
                         <span id="sync-apply-text">Apply Sheet Data to Layers</span>
                         <div id="sync-apply-loading" class="loading-spinner" style="display: none;"></div>
                     </button>
+                </div>
+
+                <!-- Sync Pre-Selection Screen (Sync tab only) -->
+                <div id="sync-selection-screen" class="selection-screen">
+                    <div class="selection-content">
+                        <div class="selection-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M25.333 1.66699C25.9518 1.66699 26.5458 1.913 26.9834 2.35059C27.4207 2.78806 27.6659 3.38146 27.666 4V28C27.6659 28.6186 27.4208 29.2129 26.9834 29.6504C26.5458 30.0878 25.9517 30.334 25.333 30.334H8.66602C7.51705 30.3338 6.41504 29.8768 5.60254 29.0645C4.78997 28.2519 4.3331 27.1491 4.33301 26V6C4.33309 4.85099 4.79015 3.74908 5.60254 2.93652C6.41506 2.124 7.51695 1.66714 8.66602 1.66699H25.333ZM8.66602 23.667C8.04738 23.6671 7.45405 23.9131 7.0166 24.3506C6.57928 24.7881 6.33309 25.3814 6.33301 26C6.3331 26.6187 6.5791 27.2129 7.0166 27.6504C7.45403 28.0877 8.04749 28.3338 8.66602 28.334H25.333C25.4211 28.334 25.5059 28.2984 25.5684 28.2363C25.6308 28.1739 25.6659 28.0883 25.666 28V23.667H8.66602ZM8.66602 3.66699C8.04738 3.66714 7.45405 3.91314 7.0166 4.35059C6.57928 4.78806 6.33309 5.38142 6.33301 6V22.3496C7.02433 21.9078 7.83273 21.6671 8.66602 21.667H25.666V4C25.6659 3.91174 25.6308 3.82708 25.5684 3.76465C25.5059 3.70224 25.4213 3.66699 25.333 3.66699H8.66602ZM16 8.33301C16.5522 8.33301 16.9998 8.78089 17 9.33301V14.9189L19.293 12.626C19.6835 12.2357 20.3166 12.2356 20.707 12.626C21.0975 13.0164 21.0974 13.6495 20.707 14.04L16.707 18.04C16.6832 18.0639 16.6579 18.0861 16.6318 18.1074C16.5948 18.1378 16.5557 18.1643 16.5156 18.1885C16.4446 18.2314 16.3682 18.2657 16.2871 18.29C16.2813 18.2918 16.2754 18.2933 16.2695 18.2949C16.2151 18.3101 16.1593 18.3223 16.1016 18.3281C16.0337 18.335 15.9653 18.3351 15.8975 18.3281C15.8432 18.3226 15.7906 18.3117 15.7393 18.2979C15.7288 18.295 15.7184 18.2922 15.708 18.2891C15.6284 18.2648 15.5532 18.2308 15.4834 18.1885C15.4434 18.1643 15.4042 18.1378 15.3672 18.1074C15.3413 18.0862 15.3166 18.0637 15.293 18.04L11.293 14.04C10.9026 13.6495 10.9025 13.0165 11.293 12.626C11.6835 12.2357 12.3166 12.2356 12.707 12.626L15 14.9189V9.33301C15.0002 8.78089 15.4478 8.33301 16 8.33301Z" fill="url(#paint0_linear_750_2116)"/>
+                                <defs>
+                                <linearGradient id="paint0_linear_750_2116" x1="15.9995" y1="0.0131273" x2="15.9995" y2="30.334" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#007BE5"/>
+                                <stop offset="0.519231" stop-color="#FFC5D0"/>
+                                <stop offset="1" stop-color="#FFBDA7"/>
+                                </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <div class="selection-message">
+                            Sync data from a Google Sheet and use it to populate your layers with "%” prefix.
+                        </div>
+                        <div class="sync-url-container">
+                            <input 
+                                type="text" 
+                                id="sync-url-input" 
+                                placeholder="Paste Google Sheet shared link"
+                                class="sync-url-input"
+                            />
+                            <div id="sync-url-error" class="sync-url-error"></div>
+                        </div>
+                        <button id="sync-selection-scan-button" class="selection-scan-button" style="display: none;">
+                            <span>Sync and scan layer</span>
+                        </button>
+                        <div id="sync-selection-notice" class="selection-notice" style="display: none;">
+                            Select a layer to scan.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1264,6 +1340,18 @@ var mainContainer = document.querySelector('.container');
 var progressStatus = document.getElementById('progress-status');
 var progressBar = document.getElementById('progress-bar');
 
+// Sync tab variables
+var syncSelectionScreen = document.getElementById('sync-selection-screen');
+var syncMainContainer = document.getElementById('sync-main-container');
+var syncUrlInput = document.getElementById('sync-url-input');
+var syncUrlError = document.getElementById('sync-url-error');
+var syncSelectionScanButton = document.getElementById('sync-selection-scan-button');
+var syncSelectionNotice = document.getElementById('sync-selection-notice');
+var syncApplySection = document.getElementById('sync-apply-section');
+
+// Track sync state
+var hasSyncedSheet = false;
+
 // Tab system functionality
 function initializeTabs() {
     var tabButtons = document.querySelectorAll('.tab-button');
@@ -1280,6 +1368,14 @@ function initializeTabs() {
             // Add active class to clicked button and corresponding content
             this.classList.add('active');
             document.getElementById(targetTab + '-tab').classList.add('active');
+            
+            // Handle sync tab specific logic
+            if (targetTab === 'sync') {
+                if (!hasSyncedSheet) {
+                    // Show sync selection screen if no sheet has been synced yet
+                    parent.postMessage({ pluginMessage: { type: 'get-selection-state' } }, '*');
+                }
+            }
         });
     });
 }
@@ -1326,6 +1422,47 @@ selectionScanButton.addEventListener('click', function() {
     setLoadingState(scanButton, scanText, scanLoading, true);
     performScan();
 });
+
+// Sync tab event listeners
+if (syncUrlInput) {
+    syncUrlInput.addEventListener('input', function() {
+        // Update button state when URL input changes (includes validation)
+        parent.postMessage({ pluginMessage: { type: 'get-selection-state' } }, '*');
+    });
+}
+
+if (syncSelectionScanButton) {
+    syncSelectionScanButton.addEventListener('click', function() {
+        var sheetUrl = syncUrlInput.value.trim();
+        var validation = validateGoogleSheetsUrl(sheetUrl);
+        
+        if (!validation.isValid) {
+            if (validation.error) {
+                showSyncUrlError(validation.error);
+            } else {
+                showSyncUrlError('Please enter a Google Sheets URL');
+            }
+            return;
+        }
+        
+        // Copy URL to main sync input and trigger sync
+        var mainSheetUrlInput = document.getElementById('sheet-url-input');
+        if (mainSheetUrlInput) {
+            mainSheetUrlInput.value = sheetUrl;
+        }
+        
+        // Hide sync selection screen and trigger sync
+        hideSyncSelectionScreen();
+        setLoadingState(syncSheetButton, syncText, syncLoading, true);
+        
+        parent.postMessage({
+            pluginMessage: {
+                type: 'sync-google-sheet',
+                data: { sheetUrl: sheetUrl }
+            }
+        }, '*');
+    });
+}
 
 applyButton.addEventListener('click', function() {
     if (currentMappings.length === 0) {
@@ -1494,6 +1631,83 @@ function updateSelectionButtonState(hasSelection) {
         selectionScanButton.disabled = true;
         selectionNotice.style.display = 'block';
     }
+}
+
+// Sync tab selection screen functions
+function showSyncSelectionScreen(hasSelection) {
+    if (syncMainContainer) syncMainContainer.style.display = 'none';
+    if (syncSelectionScreen) syncSelectionScreen.classList.add('active');
+    if (syncApplySection) syncApplySection.style.display = 'none';
+    updateSyncSelectionButtonState(hasSelection);
+}
+
+function hideSyncSelectionScreen() {
+    if (syncSelectionScreen) syncSelectionScreen.classList.remove('active');
+    if (syncMainContainer) syncMainContainer.style.display = 'block';
+}
+
+function updateSyncSelectionButtonState(hasSelection) {
+    var urlValue = syncUrlInput ? syncUrlInput.value.trim() : '';
+    var validation = validateGoogleSheetsUrl(urlValue);
+    var hasValidUrl = validation.isValid;
+    var shouldEnable = hasSelection && hasValidUrl;
+    
+    // Show URL validation error if there's an error message
+    if (validation.error) {
+        showSyncUrlError(validation.error);
+    } else {
+        hideSyncUrlError();
+    }
+    
+    if (syncSelectionScanButton) {
+        // Show button only if there's a valid URL
+        if (hasValidUrl) {
+            syncSelectionScanButton.style.display = 'block';
+            syncSelectionScanButton.disabled = !shouldEnable;
+        } else {
+            syncSelectionScanButton.style.display = 'none';
+        }
+    }
+    
+    if (syncSelectionNotice) {
+        // Show notice only if button is visible but no layers are selected
+        if (hasValidUrl && !hasSelection) {
+            syncSelectionNotice.style.display = 'block';
+        } else {
+            syncSelectionNotice.style.display = 'none';
+        }
+    }
+}
+
+function showSyncUrlError(message) {
+    if (syncUrlError) {
+        syncUrlError.textContent = message;
+        syncUrlError.style.display = 'block';
+    }
+}
+
+function hideSyncUrlError() {
+    if (syncUrlError) {
+        syncUrlError.style.display = 'none';
+    }
+}
+
+function validateGoogleSheetsUrl(url) {
+    if (!url || url.trim().length === 0) {
+        return { isValid: false, error: '' }; // Empty URL, no error message needed
+    }
+    
+    // Check if it's a Google Sheets URL pattern
+    var sheetsUrlPattern = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/;
+    
+    if (!sheetsUrlPattern.test(url)) {
+        return { 
+            isValid: false, 
+            error: 'Invalid Google Sheets URL.' 
+        };
+    }
+    
+    return { isValid: true, error: '' };
 }
 
 // Get available categories based on layer type
@@ -4037,6 +4251,18 @@ window.addEventListener('message', function(event) {
     } else if (msg.type === 'selection-changed') {
         // Show selection screen when layers are selected
         showSelectionScreen(msg.hasSelection);
+        
+        // Also update sync selection screen if it's active
+        var currentTab = document.querySelector('.tab-button.active');
+        if (currentTab && currentTab.getAttribute('data-tab') === 'sync' && !hasSyncedSheet) {
+            showSyncSelectionScreen(msg.hasSelection);
+        }
+    } else if (msg.type === 'selection-state') {
+        // Handle selection state for sync tab
+        var currentTab = document.querySelector('.tab-button.active');
+        if (currentTab && currentTab.getAttribute('data-tab') === 'sync' && !hasSyncedSheet) {
+            showSyncSelectionScreen(msg.hasSelection);
+        }
     } else if (msg.type === 'integer-settings-loaded') {
         // Restore integer settings from storage
         if (msg.data && Object.keys(msg.data).length > 0) {
@@ -4113,8 +4339,17 @@ window.addEventListener('message', function(event) {
     } else if (msg.type === 'sheet-sync-complete') {
         // Google Sheets sync completed
         setLoadingState(syncSheetButton, syncText, syncLoading, false);
+        hasSyncedSheet = true; // Mark that a sheet has been synced
+        hideSyncSelectionScreen(); // Hide the pre-sync screen
         renderSyncMappings(msg.data.layers, msg.data.columns, msg.data.dataPreview);
         showStatusMessage('Google Sheets synced successfully! Found ' + msg.data.layers.length + ' layer(s) and ' + msg.data.columns.length + ' column(s).');
+    } else if (msg.type === 'error') {
+        // Handle errors and show them in sync selection screen if applicable
+        var currentTab = document.querySelector('.tab-button.active');
+        if (currentTab && currentTab.getAttribute('data-tab') === 'sync' && !hasSyncedSheet && msg.message.includes('Google Sheets')) {
+            setLoadingState(syncSheetButton, syncText, syncLoading, false);
+            showSyncUrlError(msg.message);
+        }
     } else if (msg.type === 'success') {
         // Success message (for sheet data applied)
         setLoadingState(syncApplyButton, syncApplyText, syncApplyLoading, false);

@@ -12,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state';
   data?: any;
 }
 
@@ -32,6 +32,15 @@ figma.showUI(__html__, {
 });
 
 // Send initial selection state
+// Send current selection state to UI
+function sendSelectionState() {
+  const hasSelection = figma.currentPage.selection.length > 0;
+  figma.ui.postMessage({
+    type: 'selection-state',
+    hasSelection: hasSelection
+  });
+}
+
 const initialHasSelection = figma.currentPage.selection.length > 0;
 figma.ui.postMessage({
   type: 'selection-changed',
@@ -90,6 +99,10 @@ figma.ui.onmessage = async (msg: any) => {
       
       case 'apply-sheet-data':
         await applySheetDataToLayers(msg.data.mappings);
+        break;
+      
+      case 'get-selection-state':
+        sendSelectionState();
         break;
     }
   } catch (error) {
