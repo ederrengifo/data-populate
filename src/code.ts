@@ -19,7 +19,7 @@ interface PluginMessage {
 // Store the current mappings
 let layerMappings: LayerMapping[] = [];
 
-// Configuration storage key for this file
+// Configuration storage keys for this file (now stored in document)
 const CONFIG_STORAGE_KEY = 'layerConfigurations';
 const DETAILED_CONFIG_STORAGE_KEY = 'detailedLayerConfigurations';
 const INTEGER_SETTINGS_KEY = 'integerSettings';
@@ -503,41 +503,47 @@ async function loadImageFromURL(url: string): Promise<Uint8Array | null> {
   });
 }
 
-// Load saved configurations for this file
+// Load saved configurations for this file (document-scoped)
 async function loadSavedConfigurations(): Promise<Record<string, string>> {
   try {
-    const savedConfigs = await figma.clientStorage.getAsync(CONFIG_STORAGE_KEY);
-    return savedConfigs || {};
+    const savedConfigsStr = figma.root.getPluginData(CONFIG_STORAGE_KEY);
+    if (savedConfigsStr) {
+      return JSON.parse(savedConfigsStr);
+    }
+    return {};
   } catch (error) {
     console.log('No saved configurations found or error loading:', error);
     return {};
   }
 }
 
-// Load detailed configurations (including sub-settings) for this file
+// Load detailed configurations (including sub-settings) for this file (document-scoped)
 async function loadDetailedConfigurations(): Promise<Record<string, any>> {
   try {
-    const savedConfigs = await figma.clientStorage.getAsync(DETAILED_CONFIG_STORAGE_KEY);
-    return savedConfigs || {};
+    const savedConfigsStr = figma.root.getPluginData(DETAILED_CONFIG_STORAGE_KEY);
+    if (savedConfigsStr) {
+      return JSON.parse(savedConfigsStr);
+    }
+    return {};
   } catch (error) {
     console.log('No detailed configurations found or error loading:', error);
     return {};
   }
 }
 
-// Save configuration for a layer name
+// Save configuration for a layer name (document-scoped)
 async function saveConfiguration(layerName: string, dataTypeId: string) {
   try {
     const currentConfigs = await loadSavedConfigurations();
     currentConfigs[layerName] = dataTypeId;
-    await figma.clientStorage.setAsync(CONFIG_STORAGE_KEY, currentConfigs);
+    figma.root.setPluginData(CONFIG_STORAGE_KEY, JSON.stringify(currentConfigs));
     console.log(`💾 Saved configuration: ${layerName} → ${dataTypeId}`);
   } catch (error) {
     console.error('Error saving configuration:', error);
   }
 }
 
-// Save detailed configuration (including sub-settings) for a layer name
+// Save detailed configuration (including sub-settings) for a layer name (document-scoped)
 async function saveDetailedConfiguration(layerName: string, dataTypeId: string, config: any) {
   try {
     const currentConfigs = await loadDetailedConfigurations();
@@ -545,12 +551,13 @@ async function saveDetailedConfiguration(layerName: string, dataTypeId: string, 
       dataTypeId: dataTypeId,
       config: config
     };
-    await figma.clientStorage.setAsync(DETAILED_CONFIG_STORAGE_KEY, currentConfigs);
+    figma.root.setPluginData(DETAILED_CONFIG_STORAGE_KEY, JSON.stringify(currentConfigs));
     console.log(`💾 Saved detailed configuration: ${layerName} → ${dataTypeId}`, config);
     console.log(`💾 All detailed configs now:`, currentConfigs);
     
     // Debug: Immediately verify what was saved
-    const verifyConfigs = await figma.clientStorage.getAsync(DETAILED_CONFIG_STORAGE_KEY);
+    const verifyConfigsStr = figma.root.getPluginData(DETAILED_CONFIG_STORAGE_KEY);
+    const verifyConfigs = verifyConfigsStr ? JSON.parse(verifyConfigsStr) : {};
     console.log(`🔍 VERIFY: Storage immediately after save:`, verifyConfigs);
   } catch (error) {
     console.error('Error saving detailed configuration:', error);
@@ -567,23 +574,24 @@ function sendDataTypesToUI() {
   });
 }
 
-// Store integer settings
+// Store integer settings (document-scoped)
 async function storeIntegerSettings(settings: Record<string, any>) {
   try {
-    await figma.clientStorage.setAsync(INTEGER_SETTINGS_KEY, settings);
+    figma.root.setPluginData(INTEGER_SETTINGS_KEY, JSON.stringify(settings));
     console.log('💾 Integer settings stored successfully');
   } catch (error) {
     console.error('Error storing integer settings:', error);
   }
 }
 
-// Load integer settings and send to UI
+// Load integer settings and send to UI (document-scoped)
 async function loadIntegerSettings() {
   try {
-    const settings = await figma.clientStorage.getAsync(INTEGER_SETTINGS_KEY);
+    const settingsStr = figma.root.getPluginData(INTEGER_SETTINGS_KEY);
+    const settings = settingsStr ? JSON.parse(settingsStr) : {};
     figma.ui.postMessage({
       type: 'integer-settings-loaded',
-      data: settings || {}
+      data: settings
     });
     console.log('📥 Integer settings loaded and sent to UI');
   } catch (error) {
@@ -593,7 +601,7 @@ async function loadIntegerSettings() {
       data: {}
     });
   }
-  }
+}
   
   // Send longTexts data to UI when plugin starts
   function sendLongTextsData() {
