@@ -578,10 +578,18 @@
         }
 
         .empty-state {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            color: #666;
-            font-style: italic;
+            color: var(--figma-color-text);
             padding: 20px;
+            font-size: 11px;
+            line-height: 16px;
+            font-weight: 400;
+            height: 380px;
+            opacity: 0.5;
         }
 
         /* Progress Screen Styles */
@@ -3901,7 +3909,7 @@ function renderSyncMappings(layers, columns, dataPreview) {
     sheetDataPreview = dataPreview;
     
     if (layers.length === 0) {
-        syncMappingsContainer.innerHTML = '<div class="empty-state">No layers with % prefixes found in selection</div>';
+        syncMappingsContainer.innerHTML = '<div class="empty-state">No layers with % prefixes found in selection.</div>';
         syncApplySection.style.display = 'none';
         return;
     }
