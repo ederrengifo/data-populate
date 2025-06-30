@@ -299,7 +299,7 @@
         }
 
         .column-select-simple {
-            width: 120px;
+            width: 100%;
             padding: 4px 24px 4px 8px;
             border: none;
             border-radius: 6px;
@@ -377,7 +377,9 @@
         .mapping-select {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
             gap: 4px;
+            width: 148px;
         }
 
         .mapping-layer {
@@ -2499,7 +2501,14 @@ function renderMappings(mappings, savedConfigurations, detailedConfigs) {
         // Always create both buttons, show/hide based on configuration state
         html += '<button class="remove-btn" onclick="handleRemoveMapping(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')" style="display: ' + (!mapping.dataTypeId ? 'flex' : 'none') + ';">';
         html += '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">';
-        html += '<path d="M9.33301 0.833008C9.82878 0.833008 10.2834 1.07648 10.6035 1.39648C10.9234 1.7165 11.1658 2.17049 11.166 2.66602V3.5H14C14.2761 3.5 14.5 3.72386 14.5 4C14.5 4.27614 14.2761 4.5 14 4.5H13.166V13.333C13.166 13.8289 12.9236 14.2834 12.6035 14.6035C12.2834 14.9236 11.8289 15.167 11.333 15.167H4.66602C4.17042 15.1668 3.7165 14.9235 3.39648 14.6035C3.0764 14.2834 2.83301 13.8289 2.83301 13.333V4.5H2C1.72386 4.5 1.5 4.27614 1.5 4C1.5 3.72386 1.72386 3.5 2 3.5H4.83301V2.66602C4.83322 2.17033 5.07646 1.71652 5.39648 1.39648C5.71651 1.07646 6.17034 0.833234 6.66602 0.833008H9.33301ZM3.83301 13.333C3.83301 13.5037 3.92381 13.7167 4.10352 13.8965C4.28307 14.076 4.49547 14.1667 4.66602 14.167H11.333C11.5037 14.167 11.7167 14.0762 11.8965 13.8965C12.0762 13.7167 12.166 13.5037 12.166 13.333V4.5H3.83301V13.333ZM6.66699 6.83301C6.94286 6.83321 7.16682 7.05714 7.16699 7.33301V11.333C7.16699 11.609 6.94297 11.8328 6.66699 11.833C6.39085 11.833 6.16699 11.6092 6.16699 11.333V7.33301C6.16717 7.05702 6.39096 6.83301 6.66699 6.83301ZM9.33301 6.83301C9.60904 6.83301 9.83283 7.05702 9.83301 7.33301V11.333C9.83301 11.6092 9.60915 11.833 9.33301 11.833C9.05703 11.8328 8.83301 11.609 8.83301 11.333V7.33301C8.83318 7.05714 9.05714 6.83321 9.33301 6.83301ZM6.66602 1.83301C6.49542 1.83325 6.2831 1.92393 6.10352 2.10352C5.92393 2.28311 5.83324 2.49542 5.83301 2.66602V3.5H10.166V2.66602C10.1658 2.49551 10.0759 2.28304 9.89648 2.10352C9.71673 1.92392 9.50362 1.83301 9.33301 1.83301H6.66602Z" />';
+        html += '<g clip-path="url(#clip0_828_6358)">';
+        html += '<path d="M8 0.833008C11.9578 0.833184 15.1658 4.04224 15.166 8C15.1658 11.9578 11.9578 15.1658 8 15.166C4.04224 15.1658 0.833184 11.9578 0.833008 8C0.833206 4.04225 4.04225 0.833206 8 0.833008ZM8 1.83301C4.59453 1.83321 1.83321 4.59453 1.83301 8C1.83318 11.4055 4.59452 14.1658 8 14.166C11.4055 14.1658 14.1658 11.4055 14.166 8C14.1658 4.59452 11.4055 1.83318 8 1.83301ZM9.64648 5.64648C9.84175 5.45122 10.1583 5.45122 10.3535 5.64648C10.5487 5.84175 10.5488 6.15827 10.3535 6.35352L8.70703 8L10.3535 9.64648L10.418 9.72461C10.5461 9.91868 10.5244 10.1827 10.3535 10.3535C10.1827 10.5244 9.91868 10.5461 9.72461 10.418L9.64648 10.3535L8 8.70703L6.35352 10.3535C6.15827 10.5488 5.84175 10.5487 5.64648 10.3535C5.45122 10.1583 5.45122 9.84175 5.64648 9.64648L7.29297 8L5.64648 6.35352C5.45122 6.15825 5.45122 5.84175 5.64648 5.64648C5.84175 5.45122 6.15825 5.45122 6.35352 5.64648L8 7.29297L9.64648 5.64648Z" />';
+        html += '</g>';
+        html += '<defs>';
+        html += '<clipPath id="clip0_828_6358">';
+        html += '<rect width="16" height="16" />';
+        html += '</clipPath>';
+        html += '</defs>';
         html += '</svg>';
         html += '</button>';
         html += '<button class="config-toggle" onclick="toggleConfigPanel(\'' + mapping.layerName.replace(/'/g, "\\'") + '\')" style="display: ' + (mapping.dataTypeId ? 'flex' : 'none') + ';">';
@@ -4352,12 +4361,26 @@ function renderSyncMappings(layers, columns, dataPreview) {
         mappingsHtml += getLayerTypeIcon(layer.layerType);
         mappingsHtml += '<span class="layer-name">' + escapeHtml(layer.layerName) + '</span>';
         mappingsHtml += '</div>';
+        mappingsHtml += '<div class="mapping-select">';
         mappingsHtml += '<select class="column-select column-select-simple">';
         mappingsHtml += '<option value="">Select column...</option>';
         columns.forEach(function(col) {
             mappingsHtml += '<option value="' + escapeHtml(col) + '">' + escapeHtml(col) + '</option>';
         });
         mappingsHtml += '</select>';
+        mappingsHtml += '<button class="remove-btn sync-remove-btn" onclick="handleSyncRemoveMapping(\'' + layer.layerName.replace(/'/g, "\\'") + '\')" style="display: flex;">';
+        mappingsHtml += '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">';
+        mappingsHtml += '<g clip-path="url(#clip0_828_6358)">';
+        mappingsHtml += '<path d="M8 0.833008C11.9578 0.833184 15.1658 4.04224 15.166 8C15.1658 11.9578 11.9578 15.1658 8 15.166C4.04224 15.1658 0.833184 11.9578 0.833008 8C0.833206 4.04225 4.04225 0.833206 8 0.833008ZM8 1.83301C4.59453 1.83321 1.83321 4.59453 1.83301 8C1.83318 11.4055 4.59452 14.1658 8 14.166C11.4055 14.1658 14.1658 11.4055 14.166 8C14.1658 4.59452 11.4055 1.83318 8 1.83301ZM9.64648 5.64648C9.84175 5.45122 10.1583 5.45122 10.3535 5.64648C10.5487 5.84175 10.5488 6.15827 10.3535 6.35352L8.70703 8L10.3535 9.64648L10.418 9.72461C10.5461 9.91868 10.5244 10.1827 10.3535 10.3535C10.1827 10.5244 9.91868 10.5461 9.72461 10.418L9.64648 10.3535L8 8.70703L6.35352 10.3535C6.15827 10.5488 5.84175 10.5487 5.64648 10.3535C5.45122 10.1583 5.45122 9.84175 5.64648 9.64648L7.29297 8L5.64648 6.35352C5.45122 6.15825 5.45122 5.84175 5.64648 5.64648C5.84175 5.45122 6.15825 5.45122 6.35352 5.64648L8 7.29297L9.64648 5.64648Z" />';
+        mappingsHtml += '</g>';
+        mappingsHtml += '<defs>';
+        mappingsHtml += '<clipPath id="clip0_828_6358">';
+        mappingsHtml += '<rect width="16" height="16" />';
+        mappingsHtml += '</clipPath>';
+        mappingsHtml += '</defs>';
+        mappingsHtml += '</svg>';
+        mappingsHtml += '</button>';
+        mappingsHtml += '</div>';
         mappingsHtml += '</div>';
         mappingsHtml += '</div>';
     });
@@ -4368,10 +4391,15 @@ function renderSyncMappings(layers, columns, dataPreview) {
     syncApplySection.style.display = 'block';
     syncApplyButton.disabled = false;
     
-    // Add change listeners to enable/disable apply button
+    // Add change listeners to enable/disable apply button and manage remove button visibility
     var columnSelects = syncMappingsContainer.querySelectorAll('.column-select');
     columnSelects.forEach(function(select) {
-        select.addEventListener('change', updateSyncApplyButtonState);
+        select.addEventListener('change', function() {
+            updateSyncApplyButtonState();
+            updateSyncRemoveButtonVisibility(select);
+        });
+        // Initialize remove button visibility
+        updateSyncRemoveButtonVisibility(select);
     });
 }
 
@@ -4380,6 +4408,87 @@ function updateSyncApplyButtonState() {
         return select.value !== '';
     });
     syncApplyButton.disabled = !hasSelections;
+}
+
+// Update sync remove button visibility based on column selection
+function updateSyncRemoveButtonVisibility(select) {
+    var syncMappingItem = select.closest('.sync-mapping-item');
+    if (!syncMappingItem) return;
+    
+    var removeBtn = syncMappingItem.querySelector('.sync-remove-btn');
+    if (!removeBtn) return;
+    
+    // Show remove button when no column is selected, hide when column is selected
+    if (select.value === '') {
+        removeBtn.style.display = 'flex';
+    } else {
+        removeBtn.style.display = 'none';
+    }
+}
+
+// Handle sync mapping removal
+function handleSyncRemoveMapping(layerName) {
+    console.log('🗑️ Removing sync mapping for layer:', layerName);
+    
+    // Preserve current column selections before removing and re-rendering
+    var currentSelections = {};
+    var columnSelects = syncMappingsContainer.querySelectorAll('.column-select');
+    columnSelects.forEach(function(select) {
+        var mappingItem = select.closest('.sync-mapping-item');
+        if (mappingItem) {
+            var layerNameElement = mappingItem.querySelector('.layer-name');
+            if (layerNameElement && layerNameElement.textContent !== layerName) {
+                currentSelections[layerNameElement.textContent] = select.value;
+            }
+        }
+    });
+    
+    // Remove from syncMappings array
+    syncMappings = syncMappings.filter(function(mapping) {
+        return mapping.layerName !== layerName;
+    });
+    
+    // Re-render the sync mappings
+    renderSyncMappings(syncMappings, sheetColumns, sheetDataPreview);
+    
+    // Restore the column selections
+    restoreSyncColumnSelections(currentSelections);
+    
+    // Show status message
+    showStatusMessage('Layer removed from sync mappings');
+    
+    console.log('✅ Sync mapping removed for layer:', layerName);
+}
+
+// Restore column selections after re-rendering sync mappings
+function restoreSyncColumnSelections(selections) {
+    console.log('🔄 Restoring sync column selections:', selections);
+    
+    for (var layerName in selections) {
+        var selectedColumn = selections[layerName];
+        if (selectedColumn) {
+            // Find the sync mapping item for this layer
+            var syncMappingItems = syncMappingsContainer.querySelectorAll('.sync-mapping-item');
+            for (var i = 0; i < syncMappingItems.length; i++) {
+                var item = syncMappingItems[i];
+                var layerNameElement = item.querySelector('.layer-name');
+                if (layerNameElement && layerNameElement.textContent === layerName) {
+                    var columnSelect = item.querySelector('.column-select');
+                    if (columnSelect) {
+                        columnSelect.value = selectedColumn;
+                        // Update remove button visibility for this restored selection
+                        updateSyncRemoveButtonVisibility(columnSelect);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Update apply button state after restoration
+    updateSyncApplyButtonState();
+    
+    console.log('✅ Sync column selections restored');
 }
 
 // Helper function to escape HTML
