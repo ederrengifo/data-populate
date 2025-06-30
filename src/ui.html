@@ -15,6 +15,23 @@
             font-size: 12px;
         }
 
+        h2 {
+            font-size: 14px;
+            font-weight: 510;
+            line-height: 20px;
+            color: var(--figma-color-text);
+            margin: 0;
+        }
+
+        p {
+            font-size: 11px;
+            line-height: 16px;
+            color: var(--figma-color-text);
+            opacity: 0.75;
+            margin: 0;
+            padding: 0 16px;
+        }
+
         .container {
             max-width: 400px;
             margin: 0 auto;
@@ -1108,6 +1125,17 @@
             margin-bottom: 0px;
         }
 
+        .upgrade-content {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            text-align: center;
+            height: 450px;
+        }
+
     </style>
 </head>
 <body>
@@ -1116,7 +1144,7 @@
         <nav class="tab-nav">
             <button class="tab-button active" data-tab="generate">Generate</button>
             <button class="tab-button" data-tab="sync">Sync</button>
-            <button class="tab-button" data-tab="license">License</button>
+            <button class="tab-button" data-tab="license">Upgrade</button>
         </nav>
         
         <!-- Generate Tab Content -->
@@ -1299,8 +1327,50 @@
         <!-- License Tab Content -->
         <div id="license-tab" class="tab-content">
             <div class="tab-panel">
-                <div class="empty-tab">
-                    License information coming soon...
+                <div class="upgrade-content">
+                    <!-- SVG Icon -->
+                    <div>
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15.1953 1.3667C17.169 1.16734 19.1469 1.70886 20.7441 2.88525C22.3414 4.06186 23.445 5.79072 23.8398 7.73486C23.9861 8.45635 23.5193 9.15965 22.7979 9.30615C22.0765 9.45225 21.3731 8.98649 21.2266 8.26514C20.9634 6.96922 20.2277 5.8171 19.1631 5.03271C18.0983 4.24847 16.7796 3.88716 15.4639 4.02002C14.1482 4.15299 12.9284 4.77013 12.042 5.75146C11.1556 6.73291 10.6648 8.00908 10.666 9.33154V13.3335H25.333C27.5421 13.3335 29.333 15.1244 29.333 17.3335V26.6665C29.333 28.8756 27.5421 30.6665 25.333 30.6665H6.66699C4.45785 30.6665 2.66699 28.8756 2.66699 26.6665V17.3335C2.66705 15.1244 4.45789 13.3335 6.66699 13.3335H8V9.3335C7.99828 7.35005 8.7331 5.43638 10.0625 3.96436C11.3921 2.4922 13.2217 1.56622 15.1953 1.3667ZM6.66699 15.9995C5.93065 15.9995 5.33306 16.5972 5.33301 17.3335V26.6665C5.33301 27.4029 5.93061 27.9995 6.66699 27.9995H25.333C26.0694 27.9995 26.667 27.4029 26.667 26.6665V17.3335C26.6669 16.5972 26.0694 15.9995 25.333 15.9995H6.66699Z" fill="url(#paint0_linear_824_5878)"/>
+                            <defs>
+                                <linearGradient id="paint0_linear_824_5878" x1="16" y1="-0.36605" x2="16" y2="30.667" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#007BE5"/>
+                                    <stop offset="0.519231" stop-color="#FFC5D0"/>
+                                    <stop offset="1" stop-color="#FFBDA7"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+
+                    <!-- Title -->
+                    <h2>Unlock unlimited requests</h2>
+
+                    <!-- Description -->
+                    <p>Enter your license key and unlock unlimited requests. You can find your license key in your confirmation email.</p>
+
+                    <!-- License Key Input Section -->
+                    <div style="margin-bottom: 24px; width: 100%; max-width: 320px;">
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <input 
+                                id="license-key-input"
+                                type="text" 
+                                placeholder="Enter your license key"
+                                class="sync-url-input"
+                                style="flex: 1; text-align: left;"
+                            />
+                            <button id="validate-license-button" class="selection-scan-button" style="width: auto; flex-shrink: 0; padding: 4px 12px;">
+                                Validate
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Need License Text -->
+                    <p>Do you need a license key?</p>
+
+                    <!-- Get License Button -->
+                    <button id="get-license-button" class="apply-button" style="width: 100%; max-width: 320px;">
+                        <span>Get it now</span>
+                    </button>
                 </div>
             </div>
         </div>
