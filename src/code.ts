@@ -12,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state' | 'clear-sync-data' | 'remove-configuration' | 'validate-license' | 'get-license-status' | 'clear-license-data';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state' | 'clear-sync-data' | 'remove-configuration' | 'validate-license' | 'get-license-status' | 'clear-license-data' | 'refresh-plugin';
   data?: any;
 }
 
@@ -553,6 +553,18 @@ figma.ui.onmessage = async (msg: any) => {
           type: 'license-data-cleared',
           message: 'License data cleared for testing'
         });
+        break;
+      
+      case 'refresh-plugin':
+        // Force UI refresh by reloading the HTML (preserve current size)
+        const currentSize = msg.currentSize || { width: 320, height: 600 };
+        figma.showUI(__html__, { 
+          width: currentSize.width, 
+          height: currentSize.height, 
+          themeColors: true 
+        });
+        // Re-initialize plugin state
+        await initializePlugin();
         break;
     }
   } catch (error) {

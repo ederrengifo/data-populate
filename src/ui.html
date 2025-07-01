@@ -912,6 +912,18 @@
             border-radius: 6px;
         }
 
+        .license-error {
+            color: var(--figma-color-text-danger);
+            font-size: 11px;
+            margin-top: 4px;
+            display: none;
+            text-align: left;
+        }
+
+        .license-input-error {
+            border-color: var(--figma-color-border-danger) !important;
+        }
+
         .selection-scan-button {
             width: 100%;
             padding: 4px 8px;
@@ -1456,7 +1468,7 @@
                                 Validate
                             </button>
                         </div>
-                        <div id="license-error" style="color: #ff6b6b; font-size: 11px; margin-top: 4px; display: none;"></div>
+                        <div id="license-error" class="license-error"></div>
                     </div>
 
                     <!-- Need License Text -->
@@ -1721,10 +1733,10 @@ function initializeLicenseSystem() {
              
              // Visual feedback for input validation
              if (licenseKey.length > 0 && !isValid) {
-                 this.style.borderColor = '#ff6b6b';
+                 this.classList.add('license-input-error');
                  showLicenseError('Invalid license key format');
              } else {
-                 this.style.borderColor = '';
+                 this.classList.remove('license-input-error');
                  hideLicenseError();
              }
              
@@ -1740,7 +1752,7 @@ function initializeLicenseSystem() {
              }
              
              if (!validateLicenseKeyFormat(licenseKey)) {
-                 showLicenseError('Invalid license key format. Please check and try again.');
+                 showLicenseError('Invalid license key format.');
                  return;
              }
              
@@ -1764,10 +1776,19 @@ function initializeLicenseSystem() {
         });
     }
     
-    // Continue button - switch to Generate tab
+    // Continue button - force plugin refresh to ensure license status is updated
     if (licenseContinueButton) {
         licenseContinueButton.addEventListener('click', function() {
-            showTab('generate');
+            // Get current window dimensions and send with refresh request
+            var currentWidth = window.innerWidth;
+            var currentHeight = window.innerHeight;
+            
+            parent.postMessage({
+                pluginMessage: { 
+                    type: 'refresh-plugin',
+                    currentSize: { width: currentWidth, height: currentHeight }
+                }
+            }, '*');
         });
     }
     
@@ -1790,16 +1811,24 @@ function initializeLicenseSystem() {
 
 function showLicenseError(message) {
     var licenseError = document.getElementById('license-error');
+    var licenseInput = document.getElementById('license-key-input');
     if (licenseError) {
         licenseError.textContent = message;
         licenseError.style.display = 'block';
+    }
+    if (licenseInput) {
+        licenseInput.classList.add('license-input-error');
     }
 }
 
 function hideLicenseError() {
     var licenseError = document.getElementById('license-error');
+    var licenseInput = document.getElementById('license-key-input');
     if (licenseError) {
         licenseError.style.display = 'none';
+    }
+    if (licenseInput) {
+        licenseInput.classList.remove('license-input-error');
     }
 }
 
