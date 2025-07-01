@@ -39,7 +39,7 @@ class LicenseManager {
     LAST_ATTEMPT_TIME: '[plugin-name]-last-attempt-time',
     REMAINING_ACTIVATIONS: '[plugin-name]-remaining-activations'
   };
-  private static readonly MAX_FREE_USES = 5;
+  private static readonly MAX_FREE_USES = 10;
   private static readonly MAX_LICENSE_USES = 10;
   private static readonly MAX_VALIDATION_ATTEMPTS = 15;
   private static readonly RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour

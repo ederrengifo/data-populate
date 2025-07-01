@@ -67,7 +67,7 @@ class LicenseManager {
     IS_LICENSED: 'datalink-is-licensed'
   };
   
-  private static readonly MAX_FREE_DAILY_USES = 15;
+  private static readonly MAX_FREE_DAILY_USES = 10;
   private static readonly MAX_LICENSE_USES = 10;
   private static readonly MAX_VALIDATION_ATTEMPTS = 15;
   private static readonly RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour

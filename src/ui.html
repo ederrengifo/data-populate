@@ -1707,7 +1707,7 @@ var needsRescan = false; // Flag to force rescan instead of showing cached mappi
 // License system variables and state
 var licenseStatus = {
     isLicensed: false,
-    remainingUses: 15,
+    remainingUses: 10,
     canUse: true,
     quotaMessage: ''
 };
@@ -5289,9 +5289,9 @@ window.addEventListener('message', function(event) {
         // Reset license status
         updateLicenseStatus({
             isLicensed: false,
-            remainingUses: 15,
+            remainingUses: 10,
             canUse: true,
-            quotaMessage: '15 requests left today. Get unlimited'
+            quotaMessage: '10 requests left today. Get unlimited'
         });
     } else if (msg.type === 'verify-license') {
         // Handle license verification request from main thread
