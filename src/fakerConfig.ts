@@ -45,7 +45,7 @@ export interface DataTypeOptions {
   avatarType?: 'any' | 'real-people' | 'male' | 'female' | 'robots' | 'cartoon';
   
   // Image-specific
-  imageCategory?: 'any' | 'products' | 'landscapes';
+  imageCategory?: 'any' | 'products' | 'landscape' | 'illustration' | 'home' | 'abstract';
   
   // Color-specific
   colorType?: 'solid' | 'gradient';
@@ -450,11 +450,14 @@ export const mediaDataTypes: DataType[] = [
     generator: (options) => {
       const category = options?.imageCategory || 'any';
       
+      // Will be implemented with Pixabay integration in UI
+      // This is just the fallback for direct generator usage
       switch (category) {
         case 'products':
-          return `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`;
-        case 'landscapes':
-          return `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`;
+        case 'landscape':
+        case 'illustration':
+        case 'home':
+        case 'abstract':
         default: // any
           return `https://picsum.photos/400/300?random=${faker.number.int({ min: 1, max: 1000 })}`;
       }

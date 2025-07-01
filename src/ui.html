@@ -422,6 +422,10 @@
             line-height: 16px;
             font-weight: 510;
             color: var(--figma-color-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 92px;
         }
 
         .layer-count {
@@ -3515,7 +3519,10 @@ function generateConfigHTML(dataTypeId, layerName) {
             html += '<select id="imageCategory-' + cleanLayerName + '" class="config-select-simple">';
             html += '<option value="any">Any Category</option>';
             html += '<option value="products">Products</option>';
-            html += '<option value="landscapes">Landscapes</option>';
+            html += '<option value="landscape">Landscape</option>';
+            html += '<option value="illustration">Illustration</option>';
+            html += '<option value="home">Home</option>';
+            html += '<option value="abstract">Abstract</option>';
             html += '</select>';
             html += '</div>';
             html += '</div>';
@@ -3898,12 +3905,33 @@ function generateData(dataTypeId, count, layerName) {
             })
             .catch(function(error) {
                 console.error('DummyJSON API failed:', error);
-                var fallback = [];
+                // Use Pixabay products as fallback, then Lorem Picsum
+                var fallbackPromises = [];
                 for (var i = 0; i < count; i++) {
-                    fallback.push('https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000));
+                    fallbackPromises.push(
+                        fetchPixabayImage('products').catch(function() {
+                            return getLorumPicsumFallback();
+                        })
+                    );
                 }
-                return fallback;
+                return Promise.all(fallbackPromises);
             });
+    }
+    
+    // Handle image generation with Pixabay
+    if (dataTypeId === 'image') {
+        var config = getConfigForLayer(dataTypeId, layerName);
+        var category = config && config.imageCategory || 'any';
+        
+        var imagePromises = [];
+        for (var i = 0; i < count; i++) {
+            imagePromises.push(
+                fetchPixabayImage(category).catch(function() {
+                    return getLorumPicsumFallback();
+                })
+            );
+        }
+        return Promise.all(imagePromises);
     }
     
     // Handle new enhanced data types
@@ -4338,16 +4366,9 @@ function generateSingleValue(dataTypeId, layerName) {
             }
             
         case 'image':
-            var category = config.imageCategory || 'any';
-            
-            switch (category) {
-                case 'products':
-                    return 'https://picsum.photos/400/300?random=' + window.faker.number.int({ min: 1, max: 1000 });
-                case 'landscapes':
-                    return 'https://picsum.photos/400/300?random=' + window.faker.number.int({ min: 1, max: 1000 });
-                default: // any
-                    return 'https://picsum.photos/400/300?random=' + window.faker.number.int({ min: 1, max: 1000 });
-            }
+            // Image generation is now handled asynchronously in main generateData function
+            // This case should not be reached as 'image' is handled at the async level
+            return getLorumPicsumFallback();
             
         case 'color':
             var type = config.colorType || 'solid';
@@ -4702,6 +4723,145 @@ function getConfigForLayer(dataTypeId, layerName) {
 
 // ... existing code ...
 
+// Pixabay API configuration
+var PIXABAY_API_KEY = '51135270-da8d88cfa7e291253b78f3cd8';
+var PIXABAY_BASE_URL = 'https://pixabay.com/api/';
+
+// Rate limiting tracking for Pixabay
+var pixabayRateLimitData = {
+    requestCount: 0,
+    windowStart: Date.now(),
+    isRateLimited: false,
+    rateLimitResetTime: 0
+};
+
+// Fetch images from Pixabay with CORS proxy support and fallback to Lorem Picsum
+function fetchPixabayImage(category) {
+    return new Promise(function(resolve) {
+        // Check if we're currently rate limited
+        var now = Date.now();
+        
+        // Reset rate limit window every 60 seconds
+        if (now - pixabayRateLimitData.windowStart > 60000) {
+            pixabayRateLimitData.requestCount = 0;
+            pixabayRateLimitData.windowStart = now;
+            pixabayRateLimitData.isRateLimited = false;
+        }
+        
+        // If rate limited or approaching limit, use fallback
+        if (pixabayRateLimitData.isRateLimited || pixabayRateLimitData.requestCount >= 95) {
+            console.log('🚫 Pixabay rate limit reached, using Lorem Picsum fallback');
+            resolve(getLorumPicsumFallback());
+            return;
+        }
+        
+        // Map categories to search keywords
+        var searchQuery = 'nature'; // default
+        switch (category) {
+            case 'products':
+                searchQuery = 'product+shoot';
+                break;
+            case 'landscape':
+                searchQuery = 'landscape';
+                break;
+            case 'illustration':
+                searchQuery = 'illustration';
+                break;
+            case 'home':
+                searchQuery = 'aesthetic+home';
+                break;
+            case 'abstract':
+                searchQuery = 'abstract';
+                break;
+            default:
+                searchQuery = 'nature';
+        }
+        
+        var pixabayUrl = PIXABAY_BASE_URL + '?key=' + PIXABAY_API_KEY + 
+                        '&q=' + encodeURIComponent(searchQuery) + 
+                        '&image_type=photo&orientation=all&safesearch=true&per_page=20';
+        
+        console.log('🔄 Fetching from Pixabay:', searchQuery);
+        
+        // Increment request count
+        pixabayRateLimitData.requestCount++;
+        
+        // Use the existing CORS proxy pattern - try multiple methods
+        tryPixabayWithCorsWorkarounds(pixabayUrl)
+            .then(function(data) {
+                if (data && data.hits && data.hits.length > 0) {
+                    // Get a random image from results
+                    var randomIndex = Math.floor(Math.random() * data.hits.length);
+                    var imageUrl = data.hits[randomIndex].webformatURL;
+                    console.log('✅ Pixabay image found:', imageUrl);
+                    resolve(imageUrl);
+                } else {
+                    console.log('⚠️ No Pixabay images found, using fallback');
+                    resolve(getLorumPicsumFallback());
+                }
+            })
+            .catch(function(error) {
+                console.error('❌ Pixabay API failed:', error);
+                resolve(getLorumPicsumFallback());
+            });
+    });
+}
+
+// Try multiple methods to fetch Pixabay API with CORS workarounds
+function tryPixabayWithCorsWorkarounds(pixabayUrl) {
+    return new Promise(function(resolve, reject) {
+        // Method 1: Direct fetch
+        console.log('🔄 Pixabay Method 1: Direct fetch...');
+        fetch(pixabayUrl)
+            .then(function(response) {
+                if (response.status === 429) {
+                    pixabayRateLimitData.isRateLimited = true;
+                    pixabayRateLimitData.rateLimitResetTime = Date.now() + 60000;
+                    throw new Error('Rate limit exceeded');
+                }
+                if (!response.ok) throw new Error('Direct fetch failed: ' + response.status);
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('✅ Pixabay Method 1 SUCCESS: Direct fetch worked!');
+                resolve(data);
+            })
+            .catch(function(error) {
+                console.log('❌ Pixabay Method 1 failed:', error.message);
+                
+                // Method 2: Try with CORS proxy (corsproxy.io)
+                console.log('🔄 Pixabay Method 2: Trying CORS proxy...');
+                var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(pixabayUrl);
+                fetch(proxyUrl)
+                    .then(function(response) {
+                        if (response.status === 429) {
+                            pixabayRateLimitData.isRateLimited = true;
+                            pixabayRateLimitData.rateLimitResetTime = Date.now() + 60000;
+                            throw new Error('Rate limit exceeded via proxy');
+                        }
+                        if (!response.ok) throw new Error('CORS proxy failed: ' + response.status);
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        console.log('✅ Pixabay Method 2 SUCCESS: CORS proxy worked!');
+                        resolve(data);
+                    })
+                    .catch(function(proxyError) {
+                        console.log('❌ Pixabay Method 2 failed:', proxyError.message);
+                        
+                        // Method 3: Final fallback - mark as failed
+                        console.log('❌ All Pixabay methods failed, using Lorem Picsum fallback');
+                        reject(new Error('All Pixabay methods failed'));
+                    });
+            });
+    });
+}
+
+// Lorem Picsum fallback function
+function getLorumPicsumFallback() {
+    return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000);
+}
+
 // Load image data using fetch with CORS workarounds
 function loadImageData(imageUrl) {
     console.log('🔄 Loading image from URL:', imageUrl);
@@ -4769,8 +4929,8 @@ function tryImageWithCorsWorkarounds(imageUrl) {
                                      // Avatar fallback
                                      fallbackUrl = 'https://api.dicebear.com/7.x/avataaars/png?seed=' + Math.random().toString(36).substring(7) + '&size=200&backgroundColor=transparent';
                                  } else {
-                                     // General image fallback
-                                     fallbackUrl = 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000);
+                                     // General image fallback - try Pixabay first, then Lorem Picsum
+                                     fallbackUrl = getLorumPicsumFallback();
                                  }
                                 
                                 fetch(fallbackUrl)

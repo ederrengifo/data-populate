@@ -42,6 +42,7 @@ export default {
         'picsum.photos',
         'fastly.picsum.photos',
         'source.unsplash.com',
+        'pixabay.com',
         'dummyjson.com',
         'fakestoreapi.com',
         'jsonplaceholder.typicode.com'
