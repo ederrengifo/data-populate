@@ -44,6 +44,7 @@ export default {
         'source.unsplash.com',
         'pixabay.com',
         'static.photos',
+        'images.weserv.nl',
         'cdn.statically.io',
         'cors-anywhere.herokuapp.com',
         'api.allorigins.win',
@@ -79,11 +80,19 @@ export default {
       const response = await fetch(proxyRequest);
       
       // Create a new response with CORS headers
+      // Filter out any existing CORS headers to prevent duplicates
+      const filteredHeaders = {};
+      for (const [key, value] of response.headers) {
+        if (!key.toLowerCase().startsWith('access-control-')) {
+          filteredHeaders[key] = value;
+        }
+      }
+      
       const corsResponse = new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
         headers: {
-          ...Object.fromEntries(response.headers),
+          ...filteredHeaders,
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',

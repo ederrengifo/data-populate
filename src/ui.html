@@ -4811,27 +4811,28 @@ function fetchPixabayImage(category) {
 // Try multiple methods to fetch Pixabay API with CORS workarounds
 function tryPixabayWithCorsWorkarounds(pixabayUrl) {
     return new Promise(function(resolve, reject) {
-        // Method 1: Direct fetch
-        console.log('🔄 Pixabay Method 1: Direct fetch...');
-        fetch(pixabayUrl)
+        // Method 1: Use your Cloudflare Worker (primary)
+        console.log('🔄 Pixabay Method 1: Using Cloudflare Worker...');
+        var workerUrl = 'https://autumn-resonance-57ca.rengifo-eder.workers.dev/?url=' + encodeURIComponent(pixabayUrl);
+        fetch(workerUrl)
             .then(function(response) {
                 if (response.status === 429) {
                     pixabayRateLimitData.isRateLimited = true;
                     pixabayRateLimitData.rateLimitResetTime = Date.now() + 60000;
                     throw new Error('Rate limit exceeded');
                 }
-                if (!response.ok) throw new Error('Direct fetch failed: ' + response.status);
+                if (!response.ok) throw new Error('Cloudflare Worker failed: ' + response.status);
                 return response.json();
             })
             .then(function(data) {
-                console.log('✅ Pixabay Method 1 SUCCESS: Direct fetch worked!');
+                console.log('✅ Pixabay Method 1 SUCCESS: Cloudflare Worker worked!');
                 resolve(data);
             })
             .catch(function(error) {
                 console.log('❌ Pixabay Method 1 failed:', error.message);
                 
-                // Method 2: Try with CORS proxy (corsproxy.io)
-                console.log('🔄 Pixabay Method 2: Trying CORS proxy...');
+                // Method 2: Fallback to free proxy
+                console.log('🔄 Pixabay Method 2: Trying fallback proxy...');
                 var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(pixabayUrl);
                 fetch(proxyUrl)
                     .then(function(response) {
@@ -4918,20 +4919,20 @@ function getStaticPhotosFallback(category) {
 // Try static.photos with multiple CORS proxies (following Figma's recommendations)
 function tryStaticPhotosWithCorsWorkarounds(staticPhotosUrl) {
     return new Promise(function(resolve, reject) {
-        // Method 1: Try alternative CORS proxy (static.photos blocks corsproxy.io)
-        console.log('🔄 static.photos Method 1: Trying cors-anywhere proxy...');
-        var corsAnywhereUrl = 'https://cors-anywhere.herokuapp.com/' + staticPhotosUrl;
-        fetch(corsAnywhereUrl, { method: 'HEAD' })
+        // Method 1: Use your Cloudflare Worker (primary)
+        console.log('🔄 static.photos Method 1: Using Cloudflare Worker...');
+        var workerUrl = 'https://autumn-resonance-57ca.rengifo-eder.workers.dev/?url=' + encodeURIComponent(staticPhotosUrl);
+        fetch(workerUrl, { method: 'HEAD' })
             .then(function(response) {
-                if (!response.ok) throw new Error('cors-anywhere failed: ' + response.status);
-                console.log('✅ static.photos Method 1 SUCCESS: cors-anywhere worked!');
-                resolve(corsAnywhereUrl); // Return proxy URL for image loading
+                if (!response.ok) throw new Error('Cloudflare Worker failed: ' + response.status);
+                console.log('✅ static.photos Method 1 SUCCESS: Cloudflare Worker worked!');
+                resolve(workerUrl); // Return worker URL for image loading
             })
             .catch(function(error) {
                 console.log('❌ static.photos Method 1 failed:', error.message);
                 
-                // Method 2: Try allorigins proxy
-                console.log('🔄 static.photos Method 2: Trying allorigins proxy...');
+                // Method 2: Fallback to allorigins proxy
+                console.log('🔄 static.photos Method 2: Trying fallback proxy...');
                 var alloriginsUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(staticPhotosUrl);
                 fetch(alloriginsUrl, { method: 'HEAD' })
                     .then(function(response) {
@@ -5008,16 +5009,16 @@ function tryImageWithCorsWorkarounds(imageUrl) {
                     .catch(function(noCorsError) {
                         console.log('❌ Image Method 2 failed:', noCorsError.message);
                         
-                        // Method 3: Try with CORS proxy
-                        console.log('🔄 Image Method 3: Trying CORS proxy...');
-                        var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(imageUrl);
-                        fetch(proxyUrl)
+                        // Method 3: Try with Cloudflare Worker
+                        console.log('🔄 Image Method 3: Using Cloudflare Worker...');
+                        var workerUrl = 'https://autumn-resonance-57ca.rengifo-eder.workers.dev/?url=' + encodeURIComponent(imageUrl);
+                        fetch(workerUrl)
                             .then(function(response) {
-                                if (!response.ok) throw new Error('CORS proxy failed: ' + response.status);
+                                if (!response.ok) throw new Error('Cloudflare Worker failed: ' + response.status);
                                 return response.arrayBuffer();
                             })
                             .then(function(arrayBuffer) {
-                                console.log('✅ Image Method 3 SUCCESS: CORS proxy worked!');
+                                console.log('✅ Image Method 3 SUCCESS: Cloudflare Worker worked!');
                                 resolve(new Uint8Array(arrayBuffer));
                             })
                             .catch(function(proxyError) {
