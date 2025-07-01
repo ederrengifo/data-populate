@@ -2204,8 +2204,7 @@ applyButton.addEventListener('click', function() {
     // Reset batch tracking for new operation
     resetBatchTracking();
     
-    // Debug: Log current mappings before saving configurations
-    console.log('🔍 DEBUG: Current mappings before saving configs:', currentMappings);
+
     
         // First, save detailed configurations for all mappings SEQUENTIALLY to avoid race conditions
     async function saveDetailedConfigsSequentially() {
@@ -2213,16 +2212,6 @@ applyButton.addEventListener('click', function() {
             var mapping = currentMappings[i];
             if (mapping.dataTypeId) {
                 var config = getConfigForLayer(mapping.dataTypeId, mapping.layerName);
-                console.log('💾 Saving detailed config for:', mapping.layerName, 'dataType:', mapping.dataTypeId, 'config:', config);
-                
-                // Debug: Check if this is an avatar and what config was captured
-                if (mapping.dataTypeId === 'avatar') {
-                    var cleanLayerName = mapping.layerName.replace(/[^a-zA-Z0-9]/g, '');
-                    var avatarTypeInput = document.getElementById('avatarType-' + cleanLayerName);
-                    console.log('🔍 AVATAR DEBUG - Element found:', !!avatarTypeInput, 'Value:', avatarTypeInput ? avatarTypeInput.value : 'N/A');
-                }
-                
-                console.log('📤 Sending save-detailed-config message to backend...');
                 parent.postMessage({
                     pluginMessage: {
                         type: 'save-detailed-config',
@@ -2231,7 +2220,6 @@ applyButton.addEventListener('click', function() {
                         config: config
                     }
                 }, '*');
-                console.log('✅ save-detailed-config message sent');
                 
                 // Add delay between saves to prevent race conditions
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -2271,7 +2259,7 @@ applyButton.addEventListener('click', function() {
 
     // Execute sequential saving, then apply
     saveDetailedConfigsSequentially().then(function() {
-        console.log('🏁 All detailed configs saved, proceeding with apply...');
+
         parent.postMessage({ 
             pluginMessage: { 
                 type: 'apply-data', 
@@ -2527,7 +2515,7 @@ function generateDropdownContent(availableCategories, layerName) {
 
 // Toggle dropdown open/closed
 function toggleDropdown(layerName) {
-    console.log('🔄 Toggle dropdown for layer:', layerName);
+
     var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
     var dropdown = document.getElementById('dropdown-' + cleanLayerName);
     var panel = document.getElementById('panel-' + cleanLayerName);
@@ -2642,7 +2630,7 @@ function deselectDataType(layerName) {
     // Show remove button since no data type is selected
     showRemoveButton(layerName);
     
-    console.log('✅ Data type deselected for layer:', layerName);
+    
 }
 
 // Hide remove button and show toggle button for a specific mapping
@@ -2686,8 +2674,7 @@ function showRemoveButton(layerName) {
 }
 
 // Toggle configuration panel visibility
-function toggleConfigPanel(layerName) {
-    console.log('🔄 Toggling config panel for layer:', layerName);
+  function toggleConfigPanel(layerName) {
     
     var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
     var configPanel = document.getElementById('config-panel-' + cleanLayerName);
@@ -2716,18 +2703,16 @@ function toggleConfigPanel(layerName) {
         // Show the panel
         configPanel.style.display = 'block';
         toggleButton.classList.add('open');
-        console.log('✅ Showed config panel for layer:', layerName);
     } else {
         // Hide the panel
         configPanel.style.display = 'none';
         toggleButton.classList.remove('open');
-        console.log('✅ Hidden config panel for layer:', layerName);
     }
 }
 
 // Select a data type from dropdown
 function selectDataType(layerName, dataTypeId) {
-    console.log('🎯 Select data type:', dataTypeId, 'for layer:', layerName);
+
     
     var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
     var dropdown = document.getElementById('dropdown-' + cleanLayerName);
@@ -2752,7 +2737,7 @@ function selectDataType(layerName, dataTypeId) {
     
     if (currentMapping && currentMapping.dataTypeId === dataTypeId) {
         // Deselect the data type
-        console.log('🔄 Deselecting data type:', dataTypeId, 'for layer:', layerName);
+
         deselectDataType(layerName);
         return;
     }
@@ -2772,7 +2757,7 @@ function selectDataType(layerName, dataTypeId) {
     // Update button text with icon
     if (selectedType) {
         dropdownText.innerHTML = '<span style="display: flex; align-items: center; gap: 8px;">' + selectedType.icon + '<span>' + selectedType.label + '</span></span>';
-        console.log('✅ Updated button text to:', selectedType.label);
+
     }
     
     // Update selected state in dropdown
@@ -2804,7 +2789,7 @@ document.addEventListener('click', function(event) {
         event.stopPropagation();
         var layerName = dropdownButton.getAttribute('data-layer-name');
         if (layerName) {
-            console.log('🖱️ Dropdown button clicked for:', layerName);
+
             toggleDropdown(layerName);
         }
         return;
@@ -2818,7 +2803,7 @@ document.addEventListener('click', function(event) {
         var layerName = dropdownOption.getAttribute('data-layer-name');
         var dataType = dropdownOption.getAttribute('data-type');
         if (layerName && dataType) {
-            console.log('🖱️ Dropdown option clicked:', dataType, 'for:', layerName);
+
             selectDataType(layerName, dataType);
         }
         return;
@@ -2842,7 +2827,7 @@ document.addEventListener('click', function(event) {
 
 // Auto-populate a mapping with saved configuration
 function autoPopulateMapping(layerName, dataTypeId, layerType) {
-    console.log('🔄 Auto-populating mapping for:', layerName, 'dataType:', dataTypeId);
+
     
     // Find the mapping item in DOM
     var mappingItems = document.querySelectorAll('.mapping-item');
@@ -2915,7 +2900,7 @@ function autoPopulateMapping(layerName, dataTypeId, layerType) {
 function restoreDetailedConfig(layerName, config) {
     var cleanLayerName = layerName.replace(/[^a-zA-Z0-9]/g, '');
     
-    console.log('🔄 Restoring detailed config for:', layerName, config);
+
     
     // Restore all possible configuration values
     if (config.min !== undefined) {
@@ -2993,10 +2978,7 @@ function restoreDetailedConfig(layerName, config) {
     if (config.avatarType !== undefined) {
         var avatarTypeInput = document.getElementById('avatarType-' + cleanLayerName);
         if (avatarTypeInput) {
-            console.log('✅ Setting avatarType to:', config.avatarType, 'for element:', avatarTypeInput);
             avatarTypeInput.value = config.avatarType;
-        } else {
-            console.log('❌ Avatar type input not found for:', cleanLayerName);
         }
     }
     if (config.imageCategory !== undefined) {
@@ -3021,7 +3003,7 @@ function renderMappings(mappings, savedConfigurations, detailedConfigs) {
     savedConfigurations = savedConfigurations || {};
     detailedConfigurations = detailedConfigs || {};
     
-    console.log('📥 UI received detailed configurations:', detailedConfigurations);
+
     
     if (mappings.length === 0) {
         mappingsContainer.innerHTML = '<div class="empty-state">No layers with % prefixes found</div>';
@@ -3141,7 +3123,6 @@ function handleRemoveMapping(layerName) {
 // Kept for backward compatibility during transition
 function handleCategoryChange(layerName, category) {
     // This function is deprecated - custom dropdown handles selection directly
-    console.log('handleCategoryChange called - this function is deprecated with custom dropdown');
 }
 
 function handleTypeChange(layerName, dataTypeId) {
@@ -3833,7 +3814,7 @@ function populateIntegerControlsFromSettings() {
 
 // Enhanced data generation function
 function generateData(dataTypeId, count, layerName) {
-    console.log('🔄 Generating data for:', dataTypeId, 'count:', count, 'layer:', layerName);
+    
     
     // Handle special external API types first
     if (dataTypeId === 'avatar_randomuser') {
@@ -3950,7 +3931,7 @@ function generateData(dataTypeId, count, layerName) {
             results = applySorting(results, config.sorting, dataTypeId);
         }
         
-        console.log('✅ Generated', results.length, 'items for:', dataTypeId);
+
         console.log('Sample data:', results.slice(0, 3));
         return Promise.resolve(results);
     }
@@ -4782,7 +4763,7 @@ function fetchPixabayImage(category) {
                         '&q=' + encodeURIComponent(searchQuery) + 
                         '&image_type=photo&orientation=all&safesearch=true&per_page=20';
         
-        console.log('🔄 Fetching from Pixabay:', searchQuery);
+    
         
         // Increment request count
         pixabayRateLimitData.requestCount++;
@@ -4794,7 +4775,7 @@ function fetchPixabayImage(category) {
                     // Get a random image from results
                     var randomIndex = Math.floor(Math.random() * data.hits.length);
                     var imageUrl = data.hits[randomIndex].webformatURL;
-                    console.log('✅ Pixabay image found:', imageUrl);
+        
                     resolve(imageUrl);
                 } else {
                     console.log('⚠️ No Pixabay images found, using static.photos fallback');
@@ -4812,7 +4793,7 @@ function fetchPixabayImage(category) {
 function tryPixabayWithCorsWorkarounds(pixabayUrl) {
     return new Promise(function(resolve, reject) {
         // Method 1: Use your Cloudflare Worker (primary)
-        console.log('🔄 Pixabay Method 1: Using Cloudflare Worker...');
+
         var workerUrl = 'https://autumn-resonance-57ca.rengifo-eder.workers.dev/?url=' + encodeURIComponent(pixabayUrl);
         fetch(workerUrl)
             .then(function(response) {
@@ -4825,14 +4806,11 @@ function tryPixabayWithCorsWorkarounds(pixabayUrl) {
                 return response.json();
             })
             .then(function(data) {
-                console.log('✅ Pixabay Method 1 SUCCESS: Cloudflare Worker worked!');
+
                 resolve(data);
             })
             .catch(function(error) {
-                console.log('❌ Pixabay Method 1 failed:', error.message);
-                
                 // Method 2: Fallback to free proxy
-                console.log('🔄 Pixabay Method 2: Trying fallback proxy...');
                 var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(pixabayUrl);
                 fetch(proxyUrl)
                     .then(function(response) {
@@ -4845,14 +4823,10 @@ function tryPixabayWithCorsWorkarounds(pixabayUrl) {
                         return response.json();
                     })
                     .then(function(data) {
-                        console.log('✅ Pixabay Method 2 SUCCESS: CORS proxy worked!');
                         resolve(data);
                     })
                     .catch(function(proxyError) {
-                        console.log('❌ Pixabay Method 2 failed:', proxyError.message);
-                        
                         // Method 3: Final fallback - mark as failed
-                        console.log('❌ All Pixabay methods failed, using static.photos fallback');
                         reject(new Error('All Pixabay methods failed'));
                     });
             });
@@ -4901,16 +4875,12 @@ function getStaticPhotosFallback(category) {
         var originalUrl = 'https://static.photos/640x360/' + staticCategory + '/' + randomId;
         var staticPhotosUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(originalUrl) + '&output=jpg&q=85';
         
-        console.log('🔄 Trying static.photos:', staticCategory);
-        
         // Try static.photos with CORS workarounds
         tryStaticPhotosWithCorsWorkarounds(staticPhotosUrl)
             .then(function(imageUrl) {
-                console.log('✅ static.photos SUCCESS:', imageUrl);
                 resolve(imageUrl);
             })
             .catch(function(error) {
-                console.log('❌ static.photos failed, using Lorem Picsum final fallback');
                 resolve(getLorumPicsumFallback());
             });
     });
@@ -4920,39 +4890,28 @@ function getStaticPhotosFallback(category) {
 function tryStaticPhotosWithCorsWorkarounds(staticPhotosUrl) {
     return new Promise(function(resolve, reject) {
         // Method 1: Use your Cloudflare Worker (primary)
-        console.log('🔄 static.photos Method 1: Using Cloudflare Worker...');
         var workerUrl = 'https://autumn-resonance-57ca.rengifo-eder.workers.dev/?url=' + encodeURIComponent(staticPhotosUrl);
         fetch(workerUrl, { method: 'HEAD' })
             .then(function(response) {
                 if (!response.ok) throw new Error('Cloudflare Worker failed: ' + response.status);
-                console.log('✅ static.photos Method 1 SUCCESS: Cloudflare Worker worked!');
                 resolve(workerUrl); // Return worker URL for image loading
             })
             .catch(function(error) {
-                console.log('❌ static.photos Method 1 failed:', error.message);
-                
                 // Method 2: Fallback to allorigins proxy
-                console.log('🔄 static.photos Method 2: Trying fallback proxy...');
                 var alloriginsUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(staticPhotosUrl);
                 fetch(alloriginsUrl, { method: 'HEAD' })
                     .then(function(response) {
                         if (!response.ok) throw new Error('allorigins failed: ' + response.status);
-                        console.log('✅ static.photos Method 2 SUCCESS: allorigins worked!');
                         resolve(alloriginsUrl);
                     })
                     .catch(function(alloriginsError) {
-                        console.log('❌ static.photos Method 2 failed:', alloriginsError.message);
-                        
                         // Method 3: Try direct fetch (last resort)
-                        console.log('🔄 static.photos Method 3: Trying direct fetch...');
                         fetch(staticPhotosUrl, { method: 'HEAD' })
                             .then(function(response) {
                                 if (!response.ok) throw new Error('Direct fetch failed: ' + response.status);
-                                console.log('✅ static.photos Method 3 SUCCESS: Direct fetch worked!');
                                 resolve(staticPhotosUrl);
                             })
                             .catch(function(directError) {
-                                console.log('❌ static.photos Method 3 failed:', directError.message);
                                 reject(new Error('All static.photos CORS methods failed'));
                             });
                     });
@@ -4967,7 +4926,7 @@ function getLorumPicsumFallback() {
 
 // Load image data using fetch with CORS workarounds
 function loadImageData(imageUrl) {
-    console.log('🔄 Loading image from URL:', imageUrl);
+
     
     return tryImageWithCorsWorkarounds(imageUrl);
 }
@@ -4976,21 +4935,16 @@ function loadImageData(imageUrl) {
 function tryImageWithCorsWorkarounds(imageUrl) {
     return new Promise(function(resolve) {
         // Method 1: Direct fetch
-        console.log('🔄 Image Method 1: Direct fetch...');
         fetch(imageUrl)
             .then(function(response) {
                 if (!response.ok) throw new Error('Direct fetch failed: ' + response.status);
                 return response.arrayBuffer();
             })
             .then(function(arrayBuffer) {
-                console.log('✅ Image Method 1 SUCCESS: Direct fetch worked!');
                 resolve(new Uint8Array(arrayBuffer));
             })
             .catch(function(error) {
-                console.log('❌ Image Method 1 failed:', error.message);
-                
                 // Method 2: Try with no-cors mode (for some services)
-                console.log('🔄 Image Method 2: Trying no-cors mode...');
                 fetch(imageUrl, { mode: 'no-cors' })
                     .then(function(response) {
                         // no-cors mode returns opaque response, we can't read the body
@@ -5003,14 +4957,10 @@ function tryImageWithCorsWorkarounds(imageUrl) {
                         return response.arrayBuffer();
                     })
                     .then(function(arrayBuffer) {
-                        console.log('✅ Image Method 2 SUCCESS: No-cors mode worked!');
                         resolve(new Uint8Array(arrayBuffer));
                     })
                     .catch(function(noCorsError) {
-                        console.log('❌ Image Method 2 failed:', noCorsError.message);
-                        
                         // Method 3: Try with Cloudflare Worker
-                        console.log('🔄 Image Method 3: Using Cloudflare Worker...');
                         var workerUrl = 'https://autumn-resonance-57ca.rengifo-eder.workers.dev/?url=' + encodeURIComponent(imageUrl);
                         fetch(workerUrl)
                             .then(function(response) {
@@ -5018,14 +4968,10 @@ function tryImageWithCorsWorkarounds(imageUrl) {
                                 return response.arrayBuffer();
                             })
                             .then(function(arrayBuffer) {
-                                console.log('✅ Image Method 3 SUCCESS: Cloudflare Worker worked!');
                                 resolve(new Uint8Array(arrayBuffer));
                             })
                             .catch(function(proxyError) {
-                                console.log('❌ Image Method 3 failed:', proxyError.message);
-                                
                                 // Method 4: Generate a fallback based on the original URL type
-                                console.log('🔄 Image Method 4: Generating fallback...');
                                 var fallbackUrl;
                                 
                                                                  if (imageUrl.includes('randomuser.me') || imageUrl.includes('ui-avatars.com') || imageUrl.includes('pravatar.cc') || imageUrl.includes('multiavatar.com') || imageUrl.includes('robohash.org')) {
@@ -5042,11 +4988,11 @@ function tryImageWithCorsWorkarounds(imageUrl) {
                                         return response.arrayBuffer();
                                     })
                                     .then(function(arrayBuffer) {
-                                        console.log('✅ Image Method 4 SUCCESS: Fallback image loaded!');
+        
                                         resolve(new Uint8Array(arrayBuffer));
                                     })
                                     .catch(function(fallbackError) {
-                                        console.log('❌ Image Method 4 failed:', fallbackError.message);
+        
                                         console.error('❌ All image loading methods failed for:', imageUrl);
                                         resolve(null);
                                     });
@@ -5180,7 +5126,7 @@ function hideSheetPreview() {
 
 // Render sync mappings (without preview)
 function renderSyncMappings(layers, columns, dataPreview) {
-    console.log('🎨 Rendering sync mappings:', layers.length, 'layers,', columns.length, 'columns');
+
     
     syncMappings = layers;
     sheetColumns = columns;
@@ -5284,7 +5230,7 @@ function updateSyncRemoveButtonVisibility(select) {
 
 // Handle sync mapping removal
 function handleSyncRemoveMapping(layerName) {
-    console.log('🗑️ Removing sync mapping for layer:', layerName);
+
     
     // Preserve current column selections before removing and re-rendering
     var currentSelections = {};
@@ -5313,12 +5259,12 @@ function handleSyncRemoveMapping(layerName) {
     // Show status message
     showStatusMessage('Layer removed from sync mappings');
     
-    console.log('✅ Sync mapping removed for layer:', layerName);
+    
 }
 
 // Restore column selections after re-rendering sync mappings
 function restoreSyncColumnSelections(selections) {
-    console.log('🔄 Restoring sync column selections:', selections);
+
     
     for (var layerName in selections) {
         var selectedColumn = selections[layerName];
@@ -5344,7 +5290,7 @@ function restoreSyncColumnSelections(selections) {
     // Update apply button state after restoration
     updateSyncApplyButtonState();
     
-    console.log('✅ Sync column selections restored');
+
 }
 
 // Helper function to escape HTML
@@ -5420,7 +5366,7 @@ window.addEventListener('message', function(event) {
         // Restore integer settings from storage
         if (msg.data && Object.keys(msg.data).length > 0) {
             integerSettings = msg.data;
-            console.log('📥 Integer settings restored:', integerSettings);
+    
             // Populate the UI controls with loaded settings
             populateIntegerControlsFromSettings();
         }
@@ -5443,7 +5389,7 @@ window.addEventListener('message', function(event) {
     } else if (msg.type === 'long-texts-loaded') {
         // Store longTexts data globally for use in content generation
         window.longTextsData = msg.data;
-        console.log('📥 LongTexts data loaded:', msg.data ? 'Successfully' : 'Failed');
+
     } else if (msg.type === 'generate-data') {
         // Generate data and send back to main code
         Promise.resolve(generateData(msg.dataTypeId, msg.count, msg.layerName))
@@ -5471,7 +5417,7 @@ window.addEventListener('message', function(event) {
         console.log('📨 Received image load request:', msg.requestId, msg.url);
         loadImageData(msg.url)
             .then(function(imageData) {
-                console.log('📤 Sending image data response:', msg.requestId, imageData ? 'Success' : 'Failed');
+        
                 parent.postMessage({
                     pluginMessage: {
                         type: 'image-loaded',
