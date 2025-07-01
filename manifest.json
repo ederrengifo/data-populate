@@ -26,8 +26,9 @@
       "https://dummyjson.com",
       "https://fakestoreapi.com",
       "https://cdn.jsdelivr.net",
-      "https://sheets.googleapis.com"
+      "https://sheets.googleapis.com",
+      "https://api.gumroad.com"
     ],
-    "reasoning": "This plugin generates realistic data by fetching from various APIs: DiceBear for cartoon avatars, RandomUser for real people photos with gender selection, Pravatar for profile photos, Multiavatar for unique avatars, RoboHash for robot avatars, all with CORS proxy support via corsproxy.io, plus Picsum/Unsplash for images, DummyJSON/FakeStore for product data, JSDelivr CDN for the Faker.js library, and Google Sheets API for syncing data from shared spreadsheets."
+    "reasoning": "This plugin generates realistic data by fetching from various APIs: DiceBear for cartoon avatars, RandomUser for real people photos with gender selection, Pravatar for profile photos, Multiavatar for unique avatars, RoboHash for robot avatars, all with CORS proxy support via corsproxy.io, plus Picsum/Unsplash for images, DummyJSON/FakeStore for product data, JSDelivr CDN for the Faker.js library, Google Sheets API for syncing data from shared spreadsheets, and Gumroad API for license key validation to unlock unlimited usage."
   }
 } 

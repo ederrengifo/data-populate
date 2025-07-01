@@ -16,7 +16,7 @@
         }
 
         h2 {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 510;
             line-height: 20px;
             color: var(--figma-color-text);
@@ -35,7 +35,7 @@
         .container {
             max-width: 400px;
             margin: 0 auto;
-            padding: 8px 16px 60px 16px; /* Add bottom padding for sticky apply button */
+            padding: 8px 16px 88px 16px; /* Add bottom padding for sticky apply button */
         }
 
         .section {
@@ -110,7 +110,7 @@
             font-weight: 510 !important;
         }
 
-        .apply-button:hover {
+        .apply-button:hover:not(:disabled):not(.disabled) {
             background: linear-gradient(90deg, 
             #007BE5 0%, 
             #FFC5D0 20%, 
@@ -126,7 +126,7 @@
             position: relative;
         }
 
-        .apply-button:hover span {
+        .apply-button:hover:not(:disabled):not(.disabled) span {
             /* Apply blend mode only to text content */
             mix-blend-mode: difference;
             color: #707070;
@@ -145,9 +145,19 @@
             }
         }
 
-        .apply-button:disabled {
-            background: var(--figma-color-bg-disabled);
-            cursor: not-allowed;
+        .apply-button:disabled,
+        .apply-button.disabled {
+            background: var(--figma-color-bg-disabled) !important;
+            cursor: not-allowed !important;
+            opacity: 0.5 !important;
+            pointer-events: none !important;
+        }
+        
+        .apply-button:disabled:hover,
+        .apply-button.disabled:hover {
+            background: var(--figma-color-bg-disabled) !important;
+            cursor: not-allowed !important;
+            opacity: 0.5 !important;
         }
 
        
@@ -944,6 +954,8 @@
             opacity: 0.25;
         }
 
+
+
         .selection-notice {
             font-size: 11px;
             line-height: 16px;
@@ -1136,6 +1148,83 @@
             height: 450px;
         }
 
+        /* Quota tooltip styles */
+        .quota-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--figma-color-bg-inverse);
+            color: var(--figma-color-bg-onselected);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            line-height: 16px;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quota-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid var(--figma-color-bg-inverse);
+        }
+
+        .quota-tooltip-warning {
+            background: var(--figma-color-bg-warning-tertiary);
+            color: var(--figma-color-text-warning);
+        }
+
+        .quota-tooltip-warning::after {
+            border-top-color: #ff6b6b;
+        }
+
+        .quota-link {
+            text-decoration: underline;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.9;
+        }
+
+        .quota-link:hover {
+            opacity: 1;
+        }
+
+        /* Persistent quota warning */
+        .quota-tooltip.quota-persistent {
+            position: static;
+            transform: none;
+            margin: 4px 0 0 0;
+            left: auto;
+            bottom: auto;
+            display: block;
+            white-space: normal;
+            text-align: center;
+        }
+
+        .quota-tooltip.quota-persistent::after {
+            display: none;
+        }
+
+        /* Button container for tooltip positioning */
+        .button-container {
+            position: relative;
+            display: flex;
+            width: 100%;
+            flex-direction: column;
+        }
+
     </style>
 </head>
 <body>
@@ -1145,6 +1234,7 @@
             <button class="tab-button active" data-tab="generate">Generate</button>
             <button class="tab-button" data-tab="sync">Sync</button>
             <button class="tab-button" data-tab="license">Upgrade</button>
+            <span id="license-reset" style="position: absolute; right: 10px; top: 10px; font-size: 10px; color: #666; cursor: pointer; user-select: none;">rst</span>
         </nav>
         
         <!-- Generate Tab Content -->
@@ -1176,10 +1266,12 @@
                 
                 <!-- Sticky Apply Section -->
                 <div class="apply-section">
-                    <button id="apply-button" class="apply-button" disabled>
-                        <span id="apply-text">Apply data to layers</span>
-                        <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
-                    </button>
+                    <div class="button-container">
+                        <button id="apply-button" class="apply-button" disabled>
+                            <span id="apply-text">Apply data to layers</span>
+                            <div id="apply-loading" class="loading-spinner" style="display: none;"></div>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Selection Onboarding Screen (Generate tab only) -->
@@ -1280,10 +1372,12 @@
                 
                 <!-- Sticky Apply Section for Sync -->
                 <div id="sync-apply-section" class="apply-section" style="display: none;">
-                    <button id="sync-apply-button" class="apply-button" disabled>
-                        <span id="sync-apply-text">Apply data to layers</span>
-                        <div id="sync-apply-loading" class="loading-spinner" style="display: none;"></div>
-                    </button>
+                    <div class="button-container">
+                        <button id="sync-apply-button" class="apply-button">
+                            <span id="sync-apply-text">Apply data to layers</span>
+                            <div id="sync-apply-loading" class="loading-spinner" style="display: none;"></div>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Sync Pre-Selection Screen (Sync tab only) -->
@@ -1362,6 +1456,7 @@
                                 Validate
                             </button>
                         </div>
+                        <div id="license-error" style="color: #ff6b6b; font-size: 11px; margin-top: 4px; display: none;"></div>
                     </div>
 
                     <!-- Need License Text -->
@@ -1370,6 +1465,34 @@
                     <!-- Get License Button -->
                     <button id="get-license-button" class="apply-button" style="width: 100%; max-width: 320px;">
                         <span>Get it now</span>
+                    </button>
+                </div>
+                
+                <!-- License Success Confirmation -->
+                <div id="license-success-content" class="upgrade-content" style="display: none;">
+                    <!-- Success Icon -->
+                    <div>
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 1.33398C24.0999 1.33418 30.6668 7.90009 30.667 16C30.6668 24.0999 24.0999 30.6668 16 30.667C7.90009 30.6668 1.33418 24.0999 1.33398 16C1.33416 7.90008 7.90008 1.33416 16 1.33398ZM16 4C9.37284 4.00018 4.00018 9.37284 4 16C4.0002 22.6271 9.37285 27.9998 16 28C22.6271 27.9998 27.9998 22.6271 28 16C27.9998 9.37285 22.6271 4.0002 16 4ZM19.0576 12.3906C19.5783 11.8701 20.4217 11.8701 20.9424 12.3906C21.463 12.9113 21.463 13.7547 20.9424 14.2754L15.6094 19.6094C15.0887 20.1299 14.2443 20.13 13.7236 19.6094L11.0576 16.9424C10.5371 16.4217 10.537 15.5773 11.0576 15.0566C11.5782 14.5365 12.4218 14.5366 12.9424 15.0566L14.666 16.7803L19.0576 12.3906Z" fill="url(#paint0_linear_828_6137)"/>
+                            <defs>
+                                <linearGradient id="paint0_linear_828_6137" x1="16.0005" y1="-0.358305" x2="16.0005" y2="30.667" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#007BE5"/>
+                                    <stop offset="0.519231" stop-color="#FFC5D0"/>
+                                    <stop offset="1" stop-color="#FFBDA7"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+
+                    <!-- Title -->
+                    <h2>License activated</h2>
+
+                    <!-- Description -->
+                    <p>Your plugin has been successfully upgraded and now you can apply data without daily limits. Remember your license key can be used up to 10 times in case of reinstall or multiple devices.</p>
+
+                    <!-- Continue Button -->
+                    <button id="license-continue-button" class="apply-button" style="width: 100%; max-width: 320px;">
+                        <span>Continue</span>
                     </button>
                 </div>
             </div>
@@ -1567,6 +1690,364 @@ var syncApplySection = document.getElementById('sync-apply-section');
 
 // Track sync state
 var hasSyncedSheet = false;
+
+// License system variables and state
+var licenseStatus = {
+    isLicensed: false,
+    remainingUses: 15,
+    canUse: true,
+    quotaMessage: ''
+};
+
+// License system functionality
+function initializeLicenseSystem() {
+    // Get license elements
+    var validateLicenseButton = document.getElementById('validate-license-button');
+    var licenseKeyInput = document.getElementById('license-key-input');
+    var licenseError = document.getElementById('license-error');
+    var getLicenseButton = document.getElementById('get-license-button');
+    var upgradeContent = document.querySelector('.upgrade-content');
+    var licenseSuccessContent = document.getElementById('license-success-content');
+    var licenseContinueButton = document.getElementById('license-continue-button');
+    var licenseReset = document.getElementById('license-reset');
+    
+         // License validation
+     if (validateLicenseButton && licenseKeyInput) {
+         // Real-time input validation
+         licenseKeyInput.addEventListener('input', function() {
+             var licenseKey = this.value.trim();
+             var isValid = validateLicenseKeyFormat(licenseKey);
+             
+             // Visual feedback for input validation
+             if (licenseKey.length > 0 && !isValid) {
+                 this.style.borderColor = '#ff6b6b';
+                 showLicenseError('Invalid license key format');
+             } else {
+                 this.style.borderColor = '';
+                 hideLicenseError();
+             }
+             
+             // Enable/disable validate button
+             validateLicenseButton.disabled = !licenseKey || !isValid;
+         });
+         
+         validateLicenseButton.addEventListener('click', function() {
+             var licenseKey = licenseKeyInput.value.trim();
+             if (!licenseKey) {
+                 showLicenseError('Please enter a license key');
+                 return;
+             }
+             
+             if (!validateLicenseKeyFormat(licenseKey)) {
+                 showLicenseError('Invalid license key format. Please check and try again.');
+                 return;
+             }
+             
+             // Fix the setLoadingState call - don't pass null for loading element
+             validateLicenseButton.disabled = true;
+             validateLicenseButton.textContent = 'Validating...';
+             
+             parent.postMessage({
+                 pluginMessage: {
+                     type: 'validate-license',
+                     data: { licenseKey: licenseKey }
+                 }
+             }, '*');
+         });
+     }
+    
+    // Get license button - redirect to Gumroad
+    if (getLicenseButton) {
+        getLicenseButton.addEventListener('click', function() {
+            window.open('https://rengifoeder.gumroad.com/l/workflow', '_blank');
+        });
+    }
+    
+    // Continue button - switch to Generate tab
+    if (licenseContinueButton) {
+        licenseContinueButton.addEventListener('click', function() {
+            showTab('generate');
+        });
+    }
+    
+    // Reset button for testing
+    if (licenseReset) {
+        licenseReset.addEventListener('click', function() {
+            if (confirm('Clear all license data? (Development only)')) {
+                parent.postMessage({
+                    pluginMessage: { type: 'clear-license-data' }
+                }, '*');
+            }
+        });
+    }
+    
+    // Request initial license status
+    parent.postMessage({
+        pluginMessage: { type: 'get-license-status' }
+    }, '*');
+}
+
+function showLicenseError(message) {
+    var licenseError = document.getElementById('license-error');
+    if (licenseError) {
+        licenseError.textContent = message;
+        licenseError.style.display = 'block';
+    }
+}
+
+function hideLicenseError() {
+    var licenseError = document.getElementById('license-error');
+    if (licenseError) {
+        licenseError.style.display = 'none';
+    }
+}
+
+function showLicenseSuccess() {
+    var upgradeContent = document.querySelector('.upgrade-content');
+    var licenseSuccessContent = document.getElementById('license-success-content');
+    var upgradeTab = document.querySelector('[data-tab="license"]');
+    
+    if (upgradeContent && licenseSuccessContent) {
+        upgradeContent.style.display = 'none';
+        licenseSuccessContent.style.display = 'flex';
+    }
+    
+    // Hide upgrade tab
+    if (upgradeTab) {
+        upgradeTab.style.display = 'none';
+    }
+}
+
+function updateLicenseStatus(status) {
+    licenseStatus = status;
+    updateApplyButtonTooltips();
+    
+    // Hide upgrade tab if licensed
+    if (status.isLicensed) {
+        var upgradeTab = document.querySelector('[data-tab="license"]');
+        if (upgradeTab) {
+            upgradeTab.style.display = 'none';
+        }
+    }
+}
+
+function updateApplyButtonTooltips() {
+    var applyButton = document.getElementById('apply-button');
+    var syncApplyButton = document.getElementById('sync-apply-button');
+    
+    updateButtonTooltip(applyButton);
+    updateButtonTooltip(syncApplyButton);
+}
+
+function updateButtonTooltip(button) {
+    if (!button || !licenseStatus || licenseStatus.isLicensed) {
+        removeTooltip(button);
+        return;
+    }
+    
+    var container = button.parentElement;
+    if (!container.classList.contains('button-container')) {
+        return;
+    }
+    
+    // Remove existing tooltip
+    var existingTooltip = container.querySelector('.quota-tooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
+    
+    // Show tooltip/warning when there's a quota message
+    if (licenseStatus && !licenseStatus.isLicensed && licenseStatus.quotaMessage) {
+        var tooltip = document.createElement('div');
+        tooltip.className = 'quota-tooltip';
+        
+        if (licenseStatus && licenseStatus.remainingUses === 0) {
+            // For ran out of requests - show persistent warning
+            tooltip.classList.add('quota-tooltip-warning');
+            tooltip.classList.add('quota-persistent');
+        }
+        
+        // Lock icon for quota messages
+        var lockIcon = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px; vertical-align: middle; flex-shrink: 0;"><path d="M8 0.833008C9.01653 0.833105 9.99213 1.23725 10.7109 1.95605C11.4296 2.67477 11.8338 3.64967 11.834 4.66602V6.83301H12.667C13.6791 6.83318 14.4996 7.6539 14.5 8.66602V13.333C14.5 14.3454 13.6794 15.1658 12.667 15.166H3.33301C2.32064 15.1658 1.5 14.3454 1.5 13.333V8.66602C1.50035 7.6539 2.32085 6.83318 3.33301 6.83301H4.16699V4.66602C4.16717 3.64959 4.5713 2.67479 5.29004 1.95605C6.00882 1.23746 6.98362 0.833094 8 0.833008ZM3.33301 7.83301C2.87314 7.83318 2.50035 8.20619 2.5 8.66602V13.333C2.5 13.7931 2.87292 14.1658 3.33301 14.166H12.667C13.1271 14.1658 13.5 13.7931 13.5 13.333V8.66602C13.4996 8.20619 13.1269 7.83318 12.667 7.83301H3.33301ZM8 1.83301C7.24883 1.83309 6.52831 2.13203 5.99707 2.66309C5.46587 3.19428 5.16717 3.9148 5.16699 4.66602V6.83301H10.834V4.66602C10.8338 3.91489 10.535 3.19427 10.0039 2.66309C9.47264 2.13182 8.75131 1.8331 8 1.83301Z" fill="currentColor"/></svg>';
+        
+        var parts = licenseStatus.quotaMessage.split('Get unlimited');
+        if (parts.length === 2) {
+            tooltip.innerHTML = lockIcon + '<span>' + parts[0] + '<span class="quota-link">Get unlimited</span></span>';
+            
+            var quotaLink = tooltip.querySelector('.quota-link');
+            if (quotaLink) {
+                quotaLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showTab('license');
+                });
+            }
+        } else {
+            tooltip.innerHTML = lockIcon + '<span>' + licenseStatus.quotaMessage + '</span>';
+        }
+        
+        container.appendChild(tooltip);
+        
+        if (licenseStatus && licenseStatus.remainingUses === 0) {
+            // Show persistent warning for ran out of requests
+            tooltip.style.display = 'block';
+        } else {
+            // Normal hover tooltip behavior for remaining uses
+            var hideTimeout;
+            
+            var showTooltip = function() {
+                if (licenseStatus && !licenseStatus.isLicensed && licenseStatus.quotaMessage) {
+                    clearTimeout(hideTimeout);
+                    tooltip.style.display = 'block';
+                }
+            };
+            
+            var hideTooltip = function() {
+                hideTimeout = setTimeout(function() {
+                    tooltip.style.display = 'none';
+                }, 200); // 200ms delay
+            };
+            
+            var cancelHide = function() {
+                clearTimeout(hideTimeout);
+            };
+            
+            // Button hover events
+            button.addEventListener('mouseenter', showTooltip);
+            button.addEventListener('mouseleave', hideTooltip);
+            
+            // Tooltip hover events to keep it open when hovering over the tooltip
+            tooltip.addEventListener('mouseenter', cancelHide);
+            tooltip.addEventListener('mouseleave', hideTooltip);
+            
+            hideTooltip(); // Start hidden
+        }
+    }
+    
+        // Disable button ONLY if user has run out of requests (quota exhausted)
+    var shouldDisable = licenseStatus && licenseStatus.remainingUses === 0;
+    
+    if (shouldDisable) {
+        button.classList.add('disabled');
+        button.disabled = true; // Also set attribute for accessibility
+    } else {
+        button.classList.remove('disabled');
+        button.disabled = false;
+    }
+    
+    // Clear ALL inline styles - let CSS handle everything
+    button.style.cssText = '';
+}
+
+function removeTooltip(button) {
+    if (!button) return;
+    
+    var container = button.parentElement;
+    if (!container.classList.contains('button-container')) {
+        return;
+    }
+    
+    var tooltip = container.querySelector('.quota-tooltip');
+    if (tooltip) {
+        tooltip.remove();
+    }
+}
+
+function validateLicenseKeyFormat(licenseKey) {
+    if (!licenseKey || typeof licenseKey !== 'string') {
+        return false;
+    }
+    
+    // Remove whitespace
+    var cleanKey = licenseKey.trim();
+    
+    // Gumroad license keys format:
+    // - 35 characters total (32 alphanumeric + 3 hyphens)
+    // - Pattern: XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX (8-8-8-8 format)
+    // - Example: 6F0E4C97-B72A4E69-A11BF6C4-AF6517E7
+    var gumroadPattern = /^[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}$/i;
+    
+    return cleanKey.length === 35 && gumroadPattern.test(cleanKey);
+}
+
+function verifyLicenseWithGumroad(requestId, licenseKey, productId) {
+    // Handle Gumroad API call in UI thread where fetch is available
+    var params = new URLSearchParams();
+    params.append('product_id', productId);
+    params.append('license_key', licenseKey);
+    params.append('increment_uses_count', 'true');
+
+    fetch('https://api.gumroad.com/v2/licenses/verify', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString()
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('HTTP error! status: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        parent.postMessage({
+            pluginMessage: {
+                type: 'license-verified',
+                requestId: requestId,
+                data: data
+            }
+        }, '*');
+    })
+    .catch(function(error) {
+        parent.postMessage({
+            pluginMessage: {
+                type: 'license-verified',
+                requestId: requestId,
+                error: error.message
+            }
+        }, '*');
+    });
+}
+
+function handleLicenseValidationResult(result) {
+    var validateLicenseButton = document.getElementById('validate-license-button');
+    var licenseKeyInput = document.getElementById('license-key-input');
+    
+    // Reset button state
+    if (validateLicenseButton) {
+        validateLicenseButton.textContent = 'Validate';
+        // Only enable if input is valid
+        if (licenseKeyInput) {
+            validateLicenseButton.disabled = !validateLicenseKeyFormat(licenseKeyInput.value.trim());
+        } else {
+            validateLicenseButton.disabled = false;
+        }
+    }
+    
+    if (result.success) {
+        hideLicenseError();
+        showLicenseSuccess();
+    } else {
+        showLicenseError(result.message);
+    }
+}
+
+function showTab(tabName) {
+    var tabButtons = document.querySelectorAll('.tab-button');
+    var tabContents = document.querySelectorAll('.tab-content');
+    
+    // Remove active class from all buttons and contents
+    tabButtons.forEach(function(btn) { btn.classList.remove('active'); });
+    tabContents.forEach(function(content) { content.classList.remove('active'); });
+    
+    // Add active class to target button and content
+    var targetButton = document.querySelector('[data-tab="' + tabName + '"]');
+    var targetContent = document.getElementById(tabName + '-tab');
+    
+    if (targetButton) targetButton.classList.add('active');
+    if (targetContent) targetContent.classList.add('active');
+}
 
 // Tab system functionality
 function initializeTabs() {
@@ -4459,7 +4940,6 @@ function renderSyncMappings(layers, columns, dataPreview) {
     
     // Show apply section
     syncApplySection.style.display = 'block';
-    syncApplyButton.disabled = false;
     
     // Add change listeners to enable/disable apply button and manage remove button visibility
     var columnSelects = syncMappingsContainer.querySelectorAll('.column-select');
@@ -4467,17 +4947,30 @@ function renderSyncMappings(layers, columns, dataPreview) {
         select.addEventListener('change', function() {
             updateSyncApplyButtonState();
             updateSyncRemoveButtonVisibility(select);
+            // Don't call updateApplyButtonTooltips here - let license system handle it
         });
         // Initialize remove button visibility
         updateSyncRemoveButtonVisibility(select);
     });
+    
+    // Force clear any existing inline styles first
+    syncApplyButton.style.removeProperty('opacity');
+    syncApplyButton.style.removeProperty('pointer-events');
+    syncApplyButton.style.removeProperty('cursor');
+    syncApplyButton.style.removeProperty('background-color');
+    syncApplyButton.style.removeProperty('background');
+    
+    // Set initial button state - tooltips handled by license system
+    updateSyncApplyButtonState();
 }
 
 function updateSyncApplyButtonState() {
+    // Don't disable the button based on column selections - let the tooltip system handle restrictions
+    // The button will only be disabled by quota limitations in updateButtonTooltip()
     var hasSelections = Array.from(syncMappingsContainer.querySelectorAll('.column-select')).some(function(select) {
         return select.value !== '';
     });
-    syncApplyButton.disabled = !hasSelections;
+    // We still track hasSelections for potential validation logic, but don't disable the button
 }
 
 // Update sync remove button visibility based on column selection
@@ -4651,6 +5144,7 @@ window.addEventListener('message', function(event) {
     } else if (msg.type === 'error') {
         setLoadingState(scanButton, scanText, scanLoading, false);
         setLoadingState(applyButton, applyText, applyLoading, false);
+        setLoadingState(syncApplyButton, syncApplyText, syncApplyLoading, false);
         hideProgressScreen();
         showStatusMessage(msg.message, 'error');
     } else if (msg.type === 'long-texts-loaded') {
@@ -4740,6 +5234,24 @@ window.addEventListener('message', function(event) {
             setLoadingState(syncSheetButton, syncText, syncLoading, false);
             showSyncUrlError(msg.message);
         }
+    } else if (msg.type === 'license-status') {
+        updateLicenseStatus(msg.data);
+    } else if (msg.type === 'license-validation-result') {
+        handleLicenseValidationResult(msg.data);
+    } else if (msg.type === 'feature-blocked') {
+        showStatusMessage(msg.data.message, 'error');
+    } else if (msg.type === 'license-data-cleared') {
+        console.log('License data cleared for testing');
+        // Reset license status
+        updateLicenseStatus({
+            isLicensed: false,
+            remainingUses: 15,
+            canUse: true,
+            quotaMessage: '15 requests left today. Get unlimited'
+        });
+    } else if (msg.type === 'verify-license') {
+        // Handle license verification request from main thread
+        verifyLicenseWithGumroad(msg.requestId, msg.licenseKey, msg.productId);
     } else if (msg.type === 'success') {
         // Success message (for sheet data applied)
         setLoadingState(syncApplyButton, syncApplyText, syncApplyLoading, false);
@@ -4750,6 +5262,20 @@ window.addEventListener('message', function(event) {
 // Initialize everything on plugin load
 window.addEventListener('load', function() {
     initializeTabs(); // Set up tab functionality
+    
+    // Initialize sync button state properly
+    var syncApplyButton = document.getElementById('sync-apply-button');
+    if (syncApplyButton) {
+        // Start with button enabled - only quota limitations should disable it
+        syncApplyButton.disabled = false;
+        syncApplyButton.style.removeProperty('opacity');
+        syncApplyButton.style.removeProperty('pointer-events');
+        syncApplyButton.style.removeProperty('cursor');
+        syncApplyButton.style.removeProperty('background-color');
+        syncApplyButton.style.removeProperty('background');
+    }
+    
+    initializeLicenseSystem(); // Set up license system
     // Don't show selection screen immediately - wait for initial selection state from backend
 });
     </script>

@@ -12,12 +12,378 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state' | 'clear-sync-data' | 'remove-configuration';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state' | 'clear-sync-data' | 'remove-configuration' | 'validate-license' | 'get-license-status' | 'clear-license-data';
   data?: any;
 }
 
 // Store the current mappings
 let layerMappings: LayerMapping[] = [];
+
+// License Manager - Gumroad Integration
+interface LicenseData {
+  licenseKey: string | null;
+  isValid: boolean;
+  dailyUses: number;
+  lastResetDate: string;
+  validationAttempts: number;
+  lastAttemptTime: number;
+  remainingActivations: number;
+}
+
+interface GumroadResponse {
+  success: boolean;
+  purchase?: {
+    sale_id: string;
+    product_name: string;
+    product_id: string;
+    created_at: string;
+    sale_timestamp: string;
+    quantity: number;
+    price: number;
+    gumroad_fee: number;
+    currency: string;
+    refunded: boolean;
+    disputed: boolean;
+    chargebacked: boolean;
+    sale_id_2: string;
+    purchaser_id: string;
+    subscription_id: string;
+    cancelled: boolean;
+    ended: boolean;
+  };
+  uses: number;
+  message: string;
+}
+
+class LicenseManager {
+  private static readonly PRODUCT_ID = 'dD3gy2LmzWw7GRsfcEJMsg==';
+  private static readonly STORAGE_KEYS = {
+    LICENSE_KEY: 'datalink-license-key',
+    DAILY_USES: 'datalink-daily-uses',
+    LAST_RESET_DATE: 'datalink-last-reset-date',
+    VALIDATION_ATTEMPTS: 'datalink-validation-attempts',
+    LAST_ATTEMPT_TIME: 'datalink-last-attempt-time',
+    REMAINING_ACTIVATIONS: 'datalink-remaining-activations',
+    IS_LICENSED: 'datalink-is-licensed'
+  };
+  
+  private static readonly MAX_FREE_DAILY_USES = 15;
+  private static readonly MAX_LICENSE_USES = 10;
+  private static readonly MAX_VALIDATION_ATTEMPTS = 15;
+  private static readonly RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
+  private static readonly GUMROAD_API_URL = 'https://api.gumroad.com/v2/licenses/verify';
+
+  private static instance: LicenseManager;
+  private licenseData: LicenseData = {
+    licenseKey: null,
+    isValid: false,
+    dailyUses: 0,
+    lastResetDate: this.getTodayDateString(),
+    validationAttempts: 0,
+    lastAttemptTime: 0,
+    remainingActivations: 0
+  };
+
+  private constructor() {
+    this.loadLicenseData();
+  }
+
+  public static getInstance(): LicenseManager {
+    if (!LicenseManager.instance) {
+      LicenseManager.instance = new LicenseManager();
+    }
+    return LicenseManager.instance;
+  }
+
+  // Get today's date string in user's local timezone
+  private getTodayDateString(): string {
+    const today = new Date();
+    return today.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  }
+
+  // Check if daily usage should be reset
+  private shouldResetDailyUsage(): boolean {
+    const today = this.getTodayDateString();
+    return this.licenseData.lastResetDate !== today;
+  }
+
+  // Reset daily usage if it's a new day
+  private resetDailyUsageIfNeeded(): void {
+    if (this.shouldResetDailyUsage()) {
+      this.licenseData.dailyUses = 0;
+      this.licenseData.lastResetDate = this.getTodayDateString();
+      this.saveLicenseData();
+    }
+  }
+
+  // Load license data from Figma storage
+  private async loadLicenseData(): Promise<void> {
+    try {
+      const [
+        licenseKey,
+        dailyUses,
+        lastResetDate,
+        validationAttempts,
+        lastAttemptTime,
+        remainingActivations,
+        isLicensed
+      ] = await Promise.all([
+        figma.clientStorage.getAsync(LicenseManager.STORAGE_KEYS.LICENSE_KEY),
+        figma.clientStorage.getAsync(LicenseManager.STORAGE_KEYS.DAILY_USES),
+        figma.clientStorage.getAsync(LicenseManager.STORAGE_KEYS.LAST_RESET_DATE),
+        figma.clientStorage.getAsync(LicenseManager.STORAGE_KEYS.VALIDATION_ATTEMPTS),
+        figma.clientStorage.getAsync(LicenseManager.STORAGE_KEYS.LAST_ATTEMPT_TIME),
+        figma.clientStorage.getAsync(LicenseManager.STORAGE_KEYS.REMAINING_ACTIVATIONS),
+        figma.clientStorage.getAsync(LicenseManager.STORAGE_KEYS.IS_LICENSED)
+      ]);
+
+      this.licenseData = {
+        licenseKey: licenseKey || null,
+        isValid: isLicensed || false,
+        dailyUses: dailyUses || 0,
+        lastResetDate: lastResetDate || this.getTodayDateString(),
+        validationAttempts: validationAttempts || 0,
+        lastAttemptTime: lastAttemptTime || 0,
+        remainingActivations: remainingActivations || 0
+      };
+
+      // Reset daily usage if it's a new day
+      this.resetDailyUsageIfNeeded();
+    } catch (error) {
+      console.error('Failed to load license data:', error);
+    }
+  }
+
+  // Save license data to Figma storage
+  private async saveLicenseData(): Promise<void> {
+    try {
+      await Promise.all([
+        figma.clientStorage.setAsync(LicenseManager.STORAGE_KEYS.LICENSE_KEY, this.licenseData.licenseKey),
+        figma.clientStorage.setAsync(LicenseManager.STORAGE_KEYS.DAILY_USES, this.licenseData.dailyUses),
+        figma.clientStorage.setAsync(LicenseManager.STORAGE_KEYS.LAST_RESET_DATE, this.licenseData.lastResetDate),
+        figma.clientStorage.setAsync(LicenseManager.STORAGE_KEYS.VALIDATION_ATTEMPTS, this.licenseData.validationAttempts),
+        figma.clientStorage.setAsync(LicenseManager.STORAGE_KEYS.LAST_ATTEMPT_TIME, this.licenseData.lastAttemptTime),
+        figma.clientStorage.setAsync(LicenseManager.STORAGE_KEYS.REMAINING_ACTIVATIONS, this.licenseData.remainingActivations),
+        figma.clientStorage.setAsync(LicenseManager.STORAGE_KEYS.IS_LICENSED, this.licenseData.isValid)
+      ]);
+    } catch (error) {
+      console.error('Failed to save license data:', error);
+    }
+  }
+
+  // Check if user has a valid license
+  public isLicenseValid(): boolean {
+    this.resetDailyUsageIfNeeded();
+    return this.licenseData.isValid;
+  }
+
+  // Get remaining free uses for today
+  public getRemainingDailyUses(): number {
+    this.resetDailyUsageIfNeeded();
+    return Math.max(0, LicenseManager.MAX_FREE_DAILY_USES - this.licenseData.dailyUses);
+  }
+
+  // Check if user can use the feature (either has license or has remaining free uses)
+  public canUseFeature(): boolean {
+    if (this.isLicenseValid()) {
+      return true;
+    }
+    return this.getRemainingDailyUses() > 0;
+  }
+
+  // Increment usage counter after feature use
+  public async incrementUsage(): Promise<void> {
+    if (!this.isLicenseValid()) {
+      this.resetDailyUsageIfNeeded();
+      this.licenseData.dailyUses++;
+      await this.saveLicenseData();
+    }
+  }
+
+  // Check if user can make a validation attempt (rate limiting)
+  public canMakeValidationAttempt(): boolean {
+    const now = Date.now();
+    const timeSinceLastAttempt = now - this.licenseData.lastAttemptTime;
+    
+    // Reset attempts if rate limit window has passed
+    if (timeSinceLastAttempt >= LicenseManager.RATE_LIMIT_WINDOW) {
+      this.licenseData.validationAttempts = 0;
+    }
+    
+    return this.licenseData.validationAttempts < LicenseManager.MAX_VALIDATION_ATTEMPTS;
+  }
+
+  // Validate license key format (basic Gumroad format check)
+  public static isValidLicenseKeyFormat(licenseKey: string): boolean {
+    if (!licenseKey || typeof licenseKey !== 'string') {
+      return false;
+    }
+    
+    // Remove whitespace
+    const cleanKey = licenseKey.trim();
+    
+    // Gumroad license keys format:
+    // - 35 characters total (32 alphanumeric + 3 hyphens)
+    // - Pattern: XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX (8-8-8-8 format)
+    // - Example: 6F0E4C97-B72A4E69-A11BF6C4-AF6517E7
+    const gumroadPattern = /^[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}$/i;
+    
+    return cleanKey.length === 35 && gumroadPattern.test(cleanKey);
+  }
+
+  // Validate license with Gumroad API (delegates to UI thread)
+  public async validateLicense(licenseKey: string): Promise<{ success: boolean; message: string }> {
+    if (!licenseKey.trim()) {
+      return { success: false, message: 'Please enter a license key' };
+    }
+
+    if (!LicenseManager.isValidLicenseKeyFormat(licenseKey)) {
+      return { success: false, message: 'Invalid license key format. Please check and try again.' };
+    }
+
+    if (!this.canMakeValidationAttempt()) {
+      return { 
+        success: false, 
+        message: 'Too many validation attempts. Please try again later.' 
+      };
+    }
+
+    // Update rate limiting
+    this.licenseData.validationAttempts++;
+    this.licenseData.lastAttemptTime = Date.now();
+    await this.saveLicenseData();
+
+    try {
+      const response = await this.verifyWithGumroadAPI(licenseKey);
+      
+      if (response.success && response.purchase) {
+        // Check if purchase is valid (not refunded, disputed, etc.)
+        if (response.purchase.refunded || response.purchase.disputed || response.purchase.chargebacked) {
+          return { 
+            success: false, 
+            message: 'This license key is no longer valid due to a refund or dispute.' 
+          };
+        }
+
+        // Check activation count
+        if (response.uses >= LicenseManager.MAX_LICENSE_USES) {
+          return { 
+            success: false, 
+            message: 'This license key has reached its maximum number of activations.' 
+          };
+        }
+
+        // License is valid, save it
+        this.licenseData.licenseKey = licenseKey;
+        this.licenseData.isValid = true;
+        this.licenseData.remainingActivations = LicenseManager.MAX_LICENSE_USES - response.uses;
+        await this.saveLicenseData();
+
+        return { 
+          success: true, 
+          message: 'License activated successfully!' 
+        };
+      } else {
+        return { 
+          success: false, 
+          message: response.message || 'Invalid license key. Please check and try again.' 
+        };
+      }
+    } catch (error) {
+      console.error('License validation error:', error);
+      return { 
+        success: false, 
+        message: 'Unable to validate license. Please check your internet connection and try again.' 
+      };
+    }
+  }
+
+  // Communicate with Gumroad API via UI thread (like existing image loading pattern)
+  private async verifyWithGumroadAPI(licenseKey: string): Promise<GumroadResponse> {
+    return new Promise((resolve, reject) => {
+      const requestId = Math.random().toString(36).substring(7);
+      
+      // Store the resolver
+      const messageHandler = (msg: any) => {
+        if (msg.type === 'license-verified' && msg.requestId === requestId) {
+          figma.ui.off('message', messageHandler);
+          if (msg.error) {
+            reject(new Error(msg.error));
+          } else {
+            resolve(msg.data);
+          }
+        }
+      };
+      
+      figma.ui.on('message', messageHandler);
+      
+      figma.ui.postMessage({
+        type: 'verify-license',
+        requestId,
+        licenseKey,
+        productId: LicenseManager.PRODUCT_ID
+      });
+    });
+  }
+
+  // Get license status for UI
+  public getLicenseStatus(): {
+    isLicensed: boolean;
+    remainingUses: number;
+    canUse: boolean;
+    quotaMessage: string;
+  } {
+    const isLicensed = this.isLicenseValid();
+    const remainingUses = this.getRemainingDailyUses();
+    const canUse = this.canUseFeature();
+
+    let quotaMessage = '';
+    if (!isLicensed) {
+      if (remainingUses > 0) {
+        quotaMessage = `${remainingUses} requests left today. Get unlimited`;
+      } else {
+        quotaMessage = 'You ran out of requests today. Get unlimited';
+      }
+    }
+
+    return {
+      isLicensed,
+      remainingUses,
+      canUse,
+      quotaMessage
+    };
+  }
+
+  // Clear all license data (for testing)
+  public async clearLicenseData(): Promise<void> {
+    this.licenseData = {
+      licenseKey: null,
+      isValid: false,
+      dailyUses: 0,
+      lastResetDate: this.getTodayDateString(),
+      validationAttempts: 0,
+      lastAttemptTime: 0,
+      remainingActivations: 0
+    };
+
+    try {
+      await Promise.all([
+        figma.clientStorage.deleteAsync(LicenseManager.STORAGE_KEYS.LICENSE_KEY),
+        figma.clientStorage.deleteAsync(LicenseManager.STORAGE_KEYS.DAILY_USES),
+        figma.clientStorage.deleteAsync(LicenseManager.STORAGE_KEYS.LAST_RESET_DATE),
+        figma.clientStorage.deleteAsync(LicenseManager.STORAGE_KEYS.VALIDATION_ATTEMPTS),
+        figma.clientStorage.deleteAsync(LicenseManager.STORAGE_KEYS.LAST_ATTEMPT_TIME),
+        figma.clientStorage.deleteAsync(LicenseManager.STORAGE_KEYS.REMAINING_ACTIVATIONS),
+        figma.clientStorage.deleteAsync(LicenseManager.STORAGE_KEYS.IS_LICENSED)
+      ]);
+    } catch (error) {
+      console.error('Failed to clear license data:', error);
+    }
+  }
+}
+
+// Initialize license manager
+const licenseManager = LicenseManager.getInstance();
 
 // Configuration storage keys for this file (now stored in document)
 const CONFIG_STORAGE_KEY = 'layerConfigurations';
@@ -67,6 +433,9 @@ async function initializePlugin() {
 
   // Send initial selection state
   sendSelectionState();
+  
+  // Send initial license status
+  sendLicenseStatus();
 }
 
 // Send current selection state to UI
@@ -75,6 +444,15 @@ function sendSelectionState() {
   figma.ui.postMessage({
     type: 'selection-state',
     hasSelection: hasSelection
+  });
+}
+
+// Send current license status to UI
+function sendLicenseStatus() {
+  const status = licenseManager.getLicenseStatus();
+  figma.ui.postMessage({
+    type: 'license-status',
+    data: status
   });
 }
 
@@ -158,6 +536,23 @@ figma.ui.onmessage = async (msg: any) => {
       
       case 'remove-configuration':
         await removeConfiguration(msg.layerName);
+        break;
+      
+      case 'validate-license':
+        await handleLicenseValidation(msg.data.licenseKey);
+        break;
+      
+      case 'get-license-status':
+        sendLicenseStatus();
+        break;
+      
+      case 'clear-license-data':
+        await licenseManager.clearLicenseData();
+        sendLicenseStatus();
+        figma.ui.postMessage({
+          type: 'license-data-cleared',
+          message: 'License data cleared for testing'
+        });
         break;
     }
   } catch (error) {
@@ -297,8 +692,39 @@ function removeMappingByName(layerName: string) {
   });
 }
 
+// Handle license validation
+async function handleLicenseValidation(licenseKey: string) {
+  try {
+    const result = await licenseManager.validateLicense(licenseKey);
+    figma.ui.postMessage({
+      type: 'license-validation-result',
+      data: result
+    });
+    
+    // Send updated license status after validation
+    sendLicenseStatus();
+  } catch (error) {
+    figma.ui.postMessage({
+      type: 'license-validation-result',
+      data: {
+        success: false,
+        message: 'License validation failed. Please try again.'
+      }
+    });
+  }
+}
+
 // Apply data to layers
 async function applyDataToLayers(mappings: Array<{ layerName: string; dataTypeId: string }>) {
+  // Check license before proceeding
+  if (!licenseManager.canUseFeature()) {
+    figma.ui.postMessage({
+      type: 'feature-blocked',
+      message: 'You have reached your daily limit. Please upgrade to continue.'
+    });
+    return;
+  }
+
   try {
     // Update layer mappings with selected data types
     for (const mapping of mappings) {
@@ -362,6 +788,12 @@ async function applyDataToLayers(mappings: Array<{ layerName: string; dataTypeId
         });
       }
     }
+
+    // Increment usage count after successful application
+    await licenseManager.incrementUsage();
+    
+    // Send updated license status
+    sendLicenseStatus();
 
     figma.ui.postMessage({
       type: 'data-applied',
@@ -939,6 +1371,15 @@ async function scanLayersForSync() {
 
 // Apply sheet data to layers
 async function applySheetDataToLayers(mappings: Array<{ layerName: string; columnName: string }>) {
+  // Check license before proceeding
+  if (!licenseManager.canUseFeature()) {
+    figma.ui.postMessage({
+      type: 'feature-blocked',
+      message: 'You have reached your daily limit. Please upgrade to continue.'
+    });
+    return;
+  }
+
   try {
     console.log('🎯 Applying sheet data to layers...');
     
@@ -974,6 +1415,12 @@ async function applySheetDataToLayers(mappings: Array<{ layerName: string; colum
         await applyValueToLayer(layer, cellValue.toString(), 'sheet-data');
       }
     }
+
+    // Increment usage count after successful application
+    await licenseManager.incrementUsage();
+    
+    // Send updated license status
+    sendLicenseStatus();
 
     console.log('✅ Sheet data applied successfully');
     figma.ui.postMessage({
