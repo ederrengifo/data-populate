@@ -43,6 +43,10 @@ export default {
         'fastly.picsum.photos',
         'source.unsplash.com',
         'pixabay.com',
+        'static.photos',
+        'cdn.statically.io',
+        'cors-anywhere.herokuapp.com',
+        'api.allorigins.win',
         'dummyjson.com',
         'fakestoreapi.com',
         'jsonplaceholder.typicode.com'

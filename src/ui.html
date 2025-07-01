@@ -3910,7 +3910,7 @@ function generateData(dataTypeId, count, layerName) {
                 for (var i = 0; i < count; i++) {
                     fallbackPromises.push(
                         fetchPixabayImage('products').catch(function() {
-                            return getLorumPicsumFallback();
+                            return getStaticPhotosFallback('products');
                         })
                     );
                 }
@@ -3927,7 +3927,7 @@ function generateData(dataTypeId, count, layerName) {
         for (var i = 0; i < count; i++) {
             imagePromises.push(
                 fetchPixabayImage(category).catch(function() {
-                    return getLorumPicsumFallback();
+                    return getStaticPhotosFallback(category);
                 })
             );
         }
@@ -4724,6 +4724,7 @@ function getConfigForLayer(dataTypeId, layerName) {
 // ... existing code ...
 
 // Pixabay API configuration
+// var PIXABAY_API_KEY = 'INVALID_KEY_FOR_TESTING';
 var PIXABAY_API_KEY = '51135270-da8d88cfa7e291253b78f3cd8';
 var PIXABAY_BASE_URL = 'https://pixabay.com/api/';
 
@@ -4748,10 +4749,10 @@ function fetchPixabayImage(category) {
             pixabayRateLimitData.isRateLimited = false;
         }
         
-        // If rate limited or approaching limit, use fallback
+        // If rate limited or approaching limit, use static.photos fallback
         if (pixabayRateLimitData.isRateLimited || pixabayRateLimitData.requestCount >= 95) {
-            console.log('🚫 Pixabay rate limit reached, using Lorem Picsum fallback');
-            resolve(getLorumPicsumFallback());
+            console.log('🚫 Pixabay rate limit reached, using static.photos fallback');
+            getStaticPhotosFallback(category).then(resolve);
             return;
         }
         
@@ -4796,13 +4797,13 @@ function fetchPixabayImage(category) {
                     console.log('✅ Pixabay image found:', imageUrl);
                     resolve(imageUrl);
                 } else {
-                    console.log('⚠️ No Pixabay images found, using fallback');
-                    resolve(getLorumPicsumFallback());
+                    console.log('⚠️ No Pixabay images found, using static.photos fallback');
+                    getStaticPhotosFallback(category).then(resolve);
                 }
             })
             .catch(function(error) {
                 console.error('❌ Pixabay API failed:', error);
-                resolve(getLorumPicsumFallback());
+                getStaticPhotosFallback(category).then(resolve);
             });
     });
 }
@@ -4850,14 +4851,115 @@ function tryPixabayWithCorsWorkarounds(pixabayUrl) {
                         console.log('❌ Pixabay Method 2 failed:', proxyError.message);
                         
                         // Method 3: Final fallback - mark as failed
-                        console.log('❌ All Pixabay methods failed, using Lorem Picsum fallback');
+                        console.log('❌ All Pixabay methods failed, using static.photos fallback');
                         reject(new Error('All Pixabay methods failed'));
                     });
             });
     });
 }
 
-// Lorem Picsum fallback function
+// static.photos fallback function with CORS handling and Lorem Picsum final fallback
+function getStaticPhotosFallback(category) {
+    return new Promise(function(resolve) {
+        // Map our categories to static.photos categories
+        var staticCategory = 'nature'; // default
+        
+        switch (category) {
+            case 'products':
+                // Products > Retail, Studio, Gaming, Automobile
+                var productCategories = ['retail', 'studio', 'gaming', 'automobile'];
+                staticCategory = productCategories[Math.floor(Math.random() * productCategories.length)];
+                break;
+            case 'landscape':
+                // Landscape > Outdoor, Cityscape, Event, Nature, Aerial
+                var landscapeCategories = ['outdoor', 'cityscape', 'event', 'nature', 'aerial'];
+                staticCategory = landscapeCategories[Math.floor(Math.random() * landscapeCategories.length)];
+                break;
+            case 'illustration':
+                // Illustration > Minimal, Gradient
+                var illustrationCategories = ['minimal', 'gradient'];
+                staticCategory = illustrationCategories[Math.floor(Math.random() * illustrationCategories.length)];
+                break;
+            case 'home':
+                // Home > Food, Indoor, Real Estate, Workspace
+                var homeCategories = ['food', 'indoor', 'real-estate', 'workspace'];
+                staticCategory = homeCategories[Math.floor(Math.random() * homeCategories.length)];
+                break;
+            case 'abstract':
+                // Abstract > Abstract, Bokeh, Textures
+                var abstractCategories = ['abstract', 'bokeh', 'textures'];
+                staticCategory = abstractCategories[Math.floor(Math.random() * abstractCategories.length)];
+                break;
+            default: // any
+                staticCategory = 'nature';
+        }
+        
+        // Generate a random ID for variety (static.photos supports specific IDs)
+        var randomId = Math.floor(Math.random() * 1000) + 1;
+        // Use images.weserv.nl to force JPEG conversion for Figma compatibility
+        var originalUrl = 'https://static.photos/640x360/' + staticCategory + '/' + randomId;
+        var staticPhotosUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(originalUrl) + '&output=jpg&q=85';
+        
+        console.log('🔄 Trying static.photos:', staticCategory);
+        
+        // Try static.photos with CORS workarounds
+        tryStaticPhotosWithCorsWorkarounds(staticPhotosUrl)
+            .then(function(imageUrl) {
+                console.log('✅ static.photos SUCCESS:', imageUrl);
+                resolve(imageUrl);
+            })
+            .catch(function(error) {
+                console.log('❌ static.photos failed, using Lorem Picsum final fallback');
+                resolve(getLorumPicsumFallback());
+            });
+    });
+}
+
+// Try static.photos with multiple CORS proxies (following Figma's recommendations)
+function tryStaticPhotosWithCorsWorkarounds(staticPhotosUrl) {
+    return new Promise(function(resolve, reject) {
+        // Method 1: Try alternative CORS proxy (static.photos blocks corsproxy.io)
+        console.log('🔄 static.photos Method 1: Trying cors-anywhere proxy...');
+        var corsAnywhereUrl = 'https://cors-anywhere.herokuapp.com/' + staticPhotosUrl;
+        fetch(corsAnywhereUrl, { method: 'HEAD' })
+            .then(function(response) {
+                if (!response.ok) throw new Error('cors-anywhere failed: ' + response.status);
+                console.log('✅ static.photos Method 1 SUCCESS: cors-anywhere worked!');
+                resolve(corsAnywhereUrl); // Return proxy URL for image loading
+            })
+            .catch(function(error) {
+                console.log('❌ static.photos Method 1 failed:', error.message);
+                
+                // Method 2: Try allorigins proxy
+                console.log('🔄 static.photos Method 2: Trying allorigins proxy...');
+                var alloriginsUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(staticPhotosUrl);
+                fetch(alloriginsUrl, { method: 'HEAD' })
+                    .then(function(response) {
+                        if (!response.ok) throw new Error('allorigins failed: ' + response.status);
+                        console.log('✅ static.photos Method 2 SUCCESS: allorigins worked!');
+                        resolve(alloriginsUrl);
+                    })
+                    .catch(function(alloriginsError) {
+                        console.log('❌ static.photos Method 2 failed:', alloriginsError.message);
+                        
+                        // Method 3: Try direct fetch (last resort)
+                        console.log('🔄 static.photos Method 3: Trying direct fetch...');
+                        fetch(staticPhotosUrl, { method: 'HEAD' })
+                            .then(function(response) {
+                                if (!response.ok) throw new Error('Direct fetch failed: ' + response.status);
+                                console.log('✅ static.photos Method 3 SUCCESS: Direct fetch worked!');
+                                resolve(staticPhotosUrl);
+                            })
+                            .catch(function(directError) {
+                                console.log('❌ static.photos Method 3 failed:', directError.message);
+                                reject(new Error('All static.photos CORS methods failed'));
+                            });
+                    });
+            });
+    });
+}
+
+// Lorem Picsum final fallback function (only if static.photos fails)
 function getLorumPicsumFallback() {
     return 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 1000);
 }
@@ -4929,7 +5031,7 @@ function tryImageWithCorsWorkarounds(imageUrl) {
                                      // Avatar fallback
                                      fallbackUrl = 'https://api.dicebear.com/7.x/avataaars/png?seed=' + Math.random().toString(36).substring(7) + '&size=200&backgroundColor=transparent';
                                  } else {
-                                     // General image fallback - try Pixabay first, then Lorem Picsum
+                                     // General image fallback - use Lorem Picsum for simplicity in image loading context
                                      fallbackUrl = getLorumPicsumFallback();
                                  }
                                 
