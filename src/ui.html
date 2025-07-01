@@ -1690,6 +1690,7 @@ var syncApplySection = document.getElementById('sync-apply-section');
 
 // Track sync state
 var hasSyncedSheet = false;
+var needsRescan = false; // Flag to force rescan instead of showing cached mappings
 
 // License system variables and state
 var licenseStatus = {
@@ -5201,25 +5202,39 @@ window.addEventListener('message', function(event) {
         // Google Sheets sync completed
         setLoadingState(syncSheetButton, syncText, syncLoading, false);
         hasSyncedSheet = true; // Mark that a sheet has been synced
+        needsRescan = false; // Reset rescan flag since we just did a fresh sync
         hideSyncSelectionScreen(); // Hide the pre-sync screen
         renderSyncMappings(msg.data.layers, msg.data.columns, msg.data.dataPreview);
         showStatusMessage('Google Sheets synced successfully! Found ' + msg.data.layers.length + ' layer(s) and ' + msg.data.columns.length + ' column(s).');
     } else if (msg.type === 'sync-data-restored') {
         // Google Sheets sync data was restored from storage
         setLoadingState(syncSheetButton, syncText, syncLoading, false);
-        hasSyncedSheet = true; // Mark that we have synced data
+        
+        // Keep hasSyncedSheet true to prevent selection screen, but set needsRescan flag
+        hasSyncedSheet = true; // Keep true to prevent sync selection screen from showing
+        needsRescan = true; // Force fresh scan instead of using cached mappings
         hideSyncSelectionScreen(); // Hide the pre-sync screen
         
-        // Update the URL input with the saved URL
+        // Update the URL input with the saved URL for convenience
         if (sheetUrlInput && msg.data.url) {
             sheetUrlInput.value = msg.data.url;
         }
         
-        renderSyncMappings(msg.data.layers, msg.data.columns, msg.data.dataPreview);
-        showStatusMessage('Document Google Sheets sync restored! Found ' + msg.data.layers.length + ' layer(s) and ' + msg.data.columns.length + ' column(s).');
+        // Show the sheet preview (keep this functionality)
+        renderSheetPreview(msg.data.columns, msg.data.dataPreview);
+        
+        // Show "Rescan layers" message instead of cached layer mappings
+        syncMappingsContainer.innerHTML = '<div class="empty-state" style="text-align: center; padding: 20px; color: var(--figma-color-text); opacity: 0.5; font-size: 11px">Re-scan layers to populate data.</div>';
+        
+        // Hide apply section until fresh scan
+        syncApplySection.style.display = 'none';
+        
+        // Optional: Show a subtle status message
+        showStatusMessage('Please re-scan layers to ensure data is up to date');
     } else if (msg.type === 'sync-data-cleared') {
         // Google Sheets sync data was cleared
         hasSyncedSheet = false;
+        needsRescan = false; // Reset rescan flag
         if (sheetUrlInput) {
             sheetUrlInput.value = '';
         }
