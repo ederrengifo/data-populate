@@ -1,7 +1,8 @@
 {
   "name": "Datalink",
-  "id": "datalink-plugin",
+  "id": "1522062120150108781",
   "api": "1.0.0",
+  "documentAccess": "dynamic-page",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
   "capabilities": [],
