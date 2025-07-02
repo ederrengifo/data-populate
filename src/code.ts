@@ -12,7 +12,7 @@ interface LayerMapping {
 }
 
 interface PluginMessage {
-  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state' | 'clear-sync-data' | 'remove-configuration' | 'validate-license' | 'get-license-status' | 'clear-license-data' | 'refresh-plugin';
+  type: 'scan-layers' | 'apply-data' | 'remove-mapping' | 'get-data-types' | 'long-texts-loaded' | 'progress-update' | 'selection-changed' | 'save-detailed-config' | 'sync-google-sheet' | 'apply-sheet-data' | 'get-selection-state' | 'clear-sync-data' | 'remove-configuration' | 'validate-license' | 'get-license-status' | 'clear-license-data' | 'refresh-plugin' | 'sync-input-error';
   data?: any;
 }
 
@@ -1234,12 +1234,26 @@ async function getSheetNameFromGid(spreadsheetId: string, gid: string): Promise<
     const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(metadataUrl)}`;
     
     const response = await fetch(proxiedUrl);
+    
+    // Check for restriction-related status codes
+    if (response.status === 403 || response.status === 401) {
+      throw new Error('RESTRICTED_FILE');
+    }
+    
     if (!response.ok) {
       console.error('Failed to fetch spreadsheet metadata:', response.status);
       return null;
     }
     
     const metadata = await response.json();
+    
+    // Check for Google Sheets API error in response
+    if (metadata.error) {
+      if (metadata.error.code === 403 || metadata.error.code === 401 || 
+          (metadata.error.message && metadata.error.message.toLowerCase().includes('permission'))) {
+        throw new Error('RESTRICTED_FILE');
+      }
+    }
     
     // Find the sheet with matching gid
     const targetSheet = metadata.sheets && metadata.sheets.find((sheet: any) => 
@@ -1248,6 +1262,9 @@ async function getSheetNameFromGid(spreadsheetId: string, gid: string): Promise<
     
     return targetSheet ? targetSheet.properties.title : null;
   } catch (error) {
+    if (error instanceof Error && error.message === 'RESTRICTED_FILE') {
+      throw error; // Re-throw restriction errors
+    }
     console.error('Error fetching sheet name from gid:', error);
     return null;
   }
@@ -1278,30 +1295,64 @@ async function syncGoogleSheet(sheetUrl: string) {
     
     // Get sheet name from gid (either specified or default 0)
     console.log('🔍 Getting sheet name from gid:', targetGid);
-    const extractedSheetName = await getSheetNameFromGid(spreadsheetId, targetGid);
-    
-    if (extractedSheetName) {
-      sheetName = extractedSheetName;
-      console.log('✅ Found sheet name:', sheetName);
-    } else {
-      // Fallback: try to get first sheet from metadata if gid lookup fails
-      console.warn('⚠️ Could not find sheet name for gid:', targetGid, '- trying first sheet fallback');
-      try {
-        const metadataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?key=${GOOGLE_SHEETS_API_KEY}`;
-        const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(metadataUrl)}`;
-        
-        const response = await fetch(proxiedUrl);
-        if (response.ok) {
-          const metadata = await response.json();
-          const firstSheet = metadata.sheets && metadata.sheets[0];
-          if (firstSheet) {
-            sheetName = firstSheet.properties.title;
-            console.log('✅ Using first sheet as fallback:', sheetName);
+    try {
+      const extractedSheetName = await getSheetNameFromGid(spreadsheetId, targetGid);
+      
+      if (extractedSheetName) {
+        sheetName = extractedSheetName;
+        console.log('✅ Found sheet name:', sheetName);
+      } else {
+        // Fallback: try to get first sheet from metadata if gid lookup fails
+        console.warn('⚠️ Could not find sheet name for gid:', targetGid, '- trying first sheet fallback');
+        try {
+          const metadataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?key=${GOOGLE_SHEETS_API_KEY}`;
+          const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(metadataUrl)}`;
+          
+          const response = await fetch(proxiedUrl);
+          
+          // Check for restriction in fallback request too
+          if (response.status === 403 || response.status === 401) {
+            figma.ui.postMessage({
+              type: 'sync-input-error',
+              message: 'Unable to sync, restricted file'
+            });
+            return;
           }
+          
+          if (response.ok) {
+            const metadata = await response.json();
+            
+            // Check for Google Sheets API error in fallback response
+            if (metadata.error) {
+              if (metadata.error.code === 403 || metadata.error.code === 401 || 
+                  (metadata.error.message && metadata.error.message.toLowerCase().includes('permission'))) {
+                figma.ui.postMessage({
+                  type: 'sync-input-error',
+                  message: 'Unable to sync, restricted file'
+                });
+                return;
+              }
+            }
+            
+            const firstSheet = metadata.sheets && metadata.sheets[0];
+            if (firstSheet) {
+              sheetName = firstSheet.properties.title;
+              console.log('✅ Using first sheet as fallback:', sheetName);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to get sheet metadata:', error);
         }
-      } catch (error) {
-        console.error('Failed to get sheet metadata:', error);
       }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'RESTRICTED_FILE') {
+        figma.ui.postMessage({
+          type: 'sync-input-error',
+          message: 'Unable to sync, restricted file'
+        });
+        return;
+      }
+      console.error('Error getting sheet name:', error);
     }
     
     // Final check - if we still don't have a sheet name, something is wrong
@@ -1320,11 +1371,32 @@ async function syncGoogleSheet(sheetUrl: string) {
     
     const dataResponse = await fetch(proxiedUrl);
     
+    // Check for restriction-related status codes in data fetch
+    if (dataResponse.status === 403 || dataResponse.status === 401) {
+      figma.ui.postMessage({
+        type: 'sync-input-error',
+        message: 'Unable to sync, restricted file'
+      });
+      return;
+    }
+    
     if (!dataResponse.ok) {
       throw new Error(`Google Sheets API error: ${dataResponse.status} ${dataResponse.statusText}`);
     }
 
     const data = await dataResponse.json();
+    
+    // Check for Google Sheets API error in data response
+    if (data.error) {
+      if (data.error.code === 403 || data.error.code === 401 || 
+          (data.error.message && data.error.message.toLowerCase().includes('permission'))) {
+        figma.ui.postMessage({
+          type: 'sync-input-error',
+          message: 'Unable to sync, restricted file'
+        });
+        return;
+      }
+    }
     console.log('📥 Sheet data received:', data);
 
     if (!data.values || data.values.length === 0) {
