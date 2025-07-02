@@ -1341,7 +1341,7 @@
                                 <input 
                                 type="text" 
                                 id="sheet-url-input" 
-                                placeholder="https://docs.google.com/spreadsheets/d/your-sheet-id/edit"
+                                placeholder="Paste your shared URL"
                                 class="sync-url-input"
                                 />
                                 <button id="clear-sync-button" class="clear-sync-button" title="Clear sync">
@@ -1418,7 +1418,7 @@
                             <input 
                                 type="text" 
                                 id="sync-url-input" 
-                                placeholder="Paste Google Sheet shared link"
+                                placeholder="Paste your Google Sheet shared URL"
                                 class="sync-url-input"
                             />
                             <div id="sync-url-error" class="sync-url-error"></div>
@@ -2417,13 +2417,13 @@ function validateGoogleSheetsUrl(url) {
         return { isValid: false, error: '' }; // Empty URL, no error message needed
     }
     
-    // Check if it's a Google Sheets URL pattern
-    var sheetsUrlPattern = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/;
+    // Check if it's a Google Sheets URL pattern (allows parameters like gid)
+    var sheetsUrlPattern = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)(\/(edit|view))?(\?.*)?(\#.*)?$/;
     
     if (!sheetsUrlPattern.test(url)) {
         return { 
             isValid: false, 
-            error: 'Invalid Google Sheets URL.' 
+            error: 'Invalid Google Sheets URL. URLs with specific sheet tabs (gid) are supported.' 
         };
     }
     

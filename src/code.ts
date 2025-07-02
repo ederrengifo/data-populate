@@ -1215,10 +1215,42 @@ async function clearSyncDataFromStorage() {
   }
 }
 
-// Extract spreadsheet ID from Google Sheets URL
-function extractSpreadsheetId(url: string): string | null {
-  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-  return match ? match[1] : null;
+// Extract spreadsheet ID and gid from Google Sheets URL
+function extractSpreadsheetInfo(url: string): { spreadsheetId: string | null; gid: string | null } {
+  const spreadsheetMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  const spreadsheetId = spreadsheetMatch ? spreadsheetMatch[1] : null;
+  
+  // Extract gid from URL (can be in ?gid=xxx or #gid=xxx)
+  const gidMatch = url.match(/[?&#]gid=([0-9]+)/);
+  const gid = gidMatch ? gidMatch[1] : null;
+  
+  return { spreadsheetId, gid };
+}
+
+// Get sheet name from spreadsheet metadata using gid
+async function getSheetNameFromGid(spreadsheetId: string, gid: string): Promise<string | null> {
+  try {
+    const metadataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?key=${GOOGLE_SHEETS_API_KEY}`;
+    const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(metadataUrl)}`;
+    
+    const response = await fetch(proxiedUrl);
+    if (!response.ok) {
+      console.error('Failed to fetch spreadsheet metadata:', response.status);
+      return null;
+    }
+    
+    const metadata = await response.json();
+    
+    // Find the sheet with matching gid
+    const targetSheet = metadata.sheets && metadata.sheets.find((sheet: any) => 
+      sheet.properties.sheetId.toString() === gid
+    );
+    
+    return targetSheet ? targetSheet.properties.title : null;
+  } catch (error) {
+    console.error('Error fetching sheet name from gid:', error);
+    return null;
+  }
 }
 
 // Sync with Google Sheet and scan layers
@@ -1226,8 +1258,8 @@ async function syncGoogleSheet(sheetUrl: string) {
   try {
     console.log('🔄 Starting Google Sheets sync...');
     
-    // Extract spreadsheet ID from URL
-    const spreadsheetId = extractSpreadsheetId(sheetUrl);
+    // Extract spreadsheet ID and gid from URL
+    const { spreadsheetId, gid } = extractSpreadsheetInfo(sheetUrl);
     if (!spreadsheetId) {
       figma.ui.postMessage({
         type: 'error',
@@ -1237,25 +1269,68 @@ async function syncGoogleSheet(sheetUrl: string) {
     }
 
     console.log('📊 Spreadsheet ID:', spreadsheetId);
+    
+    // Determine which sheet to use
+    const targetGid = gid || '0'; // Default to gid=0 (first sheet) if none specified
+    console.log('📊 Target Sheet GID:', targetGid, gid ? '(from URL)' : '(default)');
 
-    // Fetch data from Google Sheets API (via CORS proxy)
-    const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1?key=${GOOGLE_SHEETS_API_KEY}`;
-    const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+    let sheetName = '';
     
-    console.log('🌐 Fetching sheet data via CORS proxy...');
-    const response = await fetch(proxiedUrl);
+    // Get sheet name from gid (either specified or default 0)
+    console.log('🔍 Getting sheet name from gid:', targetGid);
+    const extractedSheetName = await getSheetNameFromGid(spreadsheetId, targetGid);
     
-    if (!response.ok) {
-      throw new Error(`Google Sheets API error: ${response.status} ${response.statusText}`);
+    if (extractedSheetName) {
+      sheetName = extractedSheetName;
+      console.log('✅ Found sheet name:', sheetName);
+    } else {
+      // Fallback: try to get first sheet from metadata if gid lookup fails
+      console.warn('⚠️ Could not find sheet name for gid:', targetGid, '- trying first sheet fallback');
+      try {
+        const metadataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?key=${GOOGLE_SHEETS_API_KEY}`;
+        const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(metadataUrl)}`;
+        
+        const response = await fetch(proxiedUrl);
+        if (response.ok) {
+          const metadata = await response.json();
+          const firstSheet = metadata.sheets && metadata.sheets[0];
+          if (firstSheet) {
+            sheetName = firstSheet.properties.title;
+            console.log('✅ Using first sheet as fallback:', sheetName);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to get sheet metadata:', error);
+      }
+    }
+    
+    // Final check - if we still don't have a sheet name, something is wrong
+    if (!sheetName) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: 'Could not access the spreadsheet. Please ensure it is publicly viewable (Anyone with the link can view).'
+      });
+      return;
     }
 
-    const data = await response.json();
+    // Fetch data from the specific sheet
+    console.log('🌐 Fetching data from sheet:', sheetName);
+    const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(sheetName)}?key=${GOOGLE_SHEETS_API_KEY}`;
+    const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+    
+    const dataResponse = await fetch(proxiedUrl);
+    
+    if (!dataResponse.ok) {
+      throw new Error(`Google Sheets API error: ${dataResponse.status} ${dataResponse.statusText}`);
+    }
+
+    const data = await dataResponse.json();
     console.log('📥 Sheet data received:', data);
 
     if (!data.values || data.values.length === 0) {
       figma.ui.postMessage({
         type: 'error',
-        message: 'No data found in the Google Sheet or sheet is empty.'
+        message: 'No data found in the specified sheet or sheet is empty.'
       });
       return;
     }
